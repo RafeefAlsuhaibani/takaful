@@ -95,7 +95,7 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
 
           {/* Meta Information */}
           {details.meta && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="mb-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {details.meta.map((meta, index) => (
                   <div key={index} className="flex items-center gap-2 text-sm">

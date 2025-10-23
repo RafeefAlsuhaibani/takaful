@@ -91,7 +91,7 @@ export default function Home() {
                 className="animate-fadeIn"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <Card className="p-6 hover:bg-brand-50">
+                <Card className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">
