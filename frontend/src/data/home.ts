@@ -33,6 +33,6 @@ export const mockServices: HomeService[] = [
     title: "التطوع", 
     desc: "إدارة وتنظيم الأنشطة التطوعية في مجالات مختلفة.", 
     ctaLabel: "قدّم على التطوع", 
-    href: "/volunteer" 
+    href: "/volunteers" 
   }
 ];

@@ -12,7 +12,6 @@ export default function Home() {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -30,13 +29,12 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Hero />
-      
-      {/* Feature Cards */}
+
       <section className="py-16">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="animate-fadeIn" style={{ animationDelay: '0.2s' }}>
-              <Card className="p-6">
+              <Card className="p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold text-gray-900 mb-3">
@@ -54,7 +52,7 @@ export default function Home() {
               </Card>
             </div>
             <div className="animate-fadeIn" style={{ animationDelay: '0.4s' }}>
-              <Card className="p-6">
+              <Card className="p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold text-gray-900 mb-3">
@@ -75,7 +73,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Services Section */}
       <section id="services" className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12 animate-fadeIn">
@@ -83,15 +80,15 @@ export default function Home() {
               خدماتنا الأساسية المؤثّرة
             </h2>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {mockServices.map((service, index) => (
-              <div 
+              <div
                 key={service.id}
                 className="animate-fadeIn"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <Card className="p-6">
+                <Card className="p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">
@@ -101,12 +98,14 @@ export default function Home() {
                         {service.desc}
                       </p>
                     </div>
-                    <Icon 
-                      name={service.id === 'saqya' ? 'Droplets' : 
-                            service.id === 'balsam' ? 'Stethoscope' :
-                            service.id === 'transport' ? 'Ambulance' : 'Users'} 
-                      className="text-brand-600 ml-4 flex-shrink-0" 
-                      size={24} 
+                    <Icon
+                      name={
+                        service.id === 'saqya' ? 'Droplets' :
+                          service.id === 'balsam' ? 'Stethoscope' :
+                            service.id === 'transport' ? 'Ambulance' : 'Users'
+                      }
+                      className="text-[#DFC775] ml-4 flex-shrink-0"
+                      size={24}
                     />
                   </div>
                   <Button variant="outline" size="sm" href={service.href}>
