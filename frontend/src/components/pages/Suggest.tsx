@@ -1,16 +1,50 @@
 import { useState } from 'react';
+import Button from '../ui/Button';
+import { useToast } from '../../contexts/ToastContext';
+import { sanitizeInput } from '../../utils/sanitize';
 // import { suggests, type Suggest } from '../../data/Suggest';
 
 
 export default function Suggest() {
     const [suggestion, setSuggestion] = useState("");
     const [email, setEmail] = useState("");
+    const { success, error } = useToast();
   
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      console.log("Suggestion:", suggestion);
-      console.log("Email:", email);
+      
+      // FIX: Sanitize inputs before processing
+      const sanitizedSuggestion = sanitizeInput(suggestion);
+      const sanitizedEmail = sanitizeInput(email);
+      
+      if (!sanitizedSuggestion.trim()) {
+        error({
+          title: "الرجاء إدخال الاقتراح",
+          description: "فضلاً اكتب اقتراحك قبل الإرسال.",
+          duration: 4000
+        });
+        return;
+      }
+      if (!sanitizedEmail.trim()) {
+        error({
+          title: "الرجاء إدخال البريد الإلكتروني",
+          description: "فضلاً أدخل بريدك الإلكتروني للتواصل.",
+          duration: 4000
+        });
+        return;
+      }
+      
+      // FIX: Use sanitized data for processing
+      console.log("Suggestion:", sanitizedSuggestion);
+      console.log("Email:", sanitizedEmail);
       // Here you can send data to your backend or API
+      success({
+        title: "تم استلام اقتراحك",
+        description: "شاكرين لك مشاركتنا في التطور.",
+        duration: 4000
+      });
+      setSuggestion("");
+      setEmail("");
     };
   
     return (
@@ -44,7 +78,8 @@ export default function Suggest() {
           onChange={(e) => setSuggestion(e.target.value)}
           placeholder="هنا..."
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none 
-                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                     focus:ring-2 focus:ring-[#DFC775] focus:border-[#DFC775] resize-none"
+          required
         />
       </div>
 
@@ -60,18 +95,20 @@ export default function Suggest() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="example@email.com"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none 
-                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                     focus:ring-2 focus:ring-[#DFC775] focus:border-[#DFC775]"
+          required
         />
       </div>
 
       {/* Submit Button */}
-      <button
+      <Button
         type="submit"
-        className="w-full bg-yellow-600 text-white py-2 rounded-lg hover:bg-yellow-800
-                   transition duration-200 font-medium"
+        variant="outlineGold"
+        size="lg"
+        className="w-full"
       >
-        Submit
-      </button>
+        ارسال
+      </Button>
     </form>
         </div>
         

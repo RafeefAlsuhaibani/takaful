@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { services } from '../../data/services';
 import type { Service } from '../../types';
@@ -7,26 +7,43 @@ import Chip from '../ui/Chip';
 import ServiceCard from '../ui/ServiceCard';
 import ServiceDialog from '../ui/ServiceDialog';
 
-export default function Services() {
+// FIX: Memoize filter options to prevent unnecessary re-renders
+const filters = [
+  { id: 'All', label: 'الكل' },
+  { id: 'متاحة', label: 'الخدمات المتاحة' },
+  { id: 'قادمة', label: 'الخدمات القادمة' },
+  { id: 'مكتملة', label: 'الخدمات المكتملة' },
+];
+
+function Services() {
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [activeService, setActiveService] = useState<Service | null>(null);
   const navigate = useNavigate();
 
-  const filters = [
-    { id: 'All', label: 'الكل' },
-    { id: 'متاحة', label: 'الخدمات المتاحة' },
-    { id: 'قادمة', label: 'الخدمات القادمة' },
-    { id: 'مكتملة', label: 'الخدمات المكتملة' },
-  ];
+  // FIX: Memoize filtered services to prevent unnecessary recalculations
+  const filteredServices = useMemo(() => 
+    selectedFilter === 'All' 
+      ? services 
+      : services.filter(service => service.status === selectedFilter),
+    [selectedFilter]
+  );
 
-  const filteredServices = selectedFilter === 'All' 
-    ? services 
-    : services.filter(service => service.status === selectedFilter);
-
-  const handleRegister = (_service: Service) => {
-    // Navigate to volunteers page
-    navigate('/volunteers');
-  };
+  // FIX: Memoize services list to prevent unnecessary re-renders
+  const servicesList = useMemo(() => 
+    filteredServices.map((service, index) => (
+      <div 
+        key={service.id}
+        className="animate-fadeIn"
+        style={{ animationDelay: `${index * 0.1}s` }}
+      >
+        <ServiceCard
+          service={service}
+          onDetails={setActiveService}
+          onRegister={() => navigate('/volunteers')}
+        />
+      </div>
+    )), [filteredServices, navigate]
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -76,19 +93,7 @@ export default function Services() {
       <section className="py-16">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredServices.map((service, index) => (
-              <div 
-                key={service.id}
-                className="animate-fadeIn"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <ServiceCard
-                  service={service}
-                  onDetails={setActiveService}
-                  onRegister={handleRegister}
-                />
-              </div>
-            ))}
+            {servicesList}
           </div>
           
           {filteredServices.length === 0 && (
@@ -108,3 +113,5 @@ export default function Services() {
     </div>
   );
 }
+
+export default memo(Services);

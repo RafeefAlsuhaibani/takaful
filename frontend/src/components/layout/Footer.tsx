@@ -51,7 +51,7 @@ export default function Footer() {
             <div className="space-y-2 text-sm text-gray-300">
               <p>البريد الإلكتروني: info@takafol-athar.com</p>
               <p>الهاتف: +966 50 123 4567</p>
-              <p>العنوان: الرياض، المملكة العربية السعودية</p>
+              <p>العنوان: القصيم، المملكة العربية السعودية</p>
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
           <p className="text-gray-400 text-sm">
-            © 2024 منصة تكافل وأثر. جميع الحقوق محفوظة.
+            © 2025 منصة تكافل وأثر. جميع الحقوق محفوظة.
           </p>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { HandHeart } from 'lucide-react';
 import Card from '../../ui/Card';
 import Input from '../../forms/Input';
@@ -7,9 +7,10 @@ import Select from '../../forms/Select';
 import Chip from '../../ui/Chip';
 import TagInput from '../../forms/TagInput';
 import Button from '../../ui/Button';
+import { isValidEmail, validatePassword, isValidSaudiPhone, isValidSaudiNationalId } from '../../../utils/validation';
 
 export default function SignUp() {
-  const navigate = useNavigate();
+  // FIX: Remove unused imports after removing fake authentication
   const [formData, setFormData] = useState({
     fullName: '',
     nationalId: '',
@@ -48,26 +49,29 @@ export default function SignUp() {
 
     if (!formData.nationalId.trim()) {
       newErrors.nationalId = 'رقم الهوية مطلوب';
-    } else if (!/^\d{10}$/.test(formData.nationalId.replace(/\*/g, ''))) {
-      newErrors.nationalId = 'رقم الهوية يجب أن يكون 10 أرقام';
+    } else if (!isValidSaudiNationalId(formData.nationalId)) {
+      newErrors.nationalId = 'رقم الهوية يجب أن يكون 10 أرقام صحيحة';
     }
 
     if (!formData.email) {
       newErrors.email = 'البريد الإلكتروني مطلوب';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!isValidEmail(formData.email)) {
       newErrors.email = 'يرجى إدخال بريد إلكتروني صحيح';
     }
 
     if (!formData.phone) {
       newErrors.phone = 'رقم الجوال مطلوب';
-    } else if (!/^5\d{8}$/.test(formData.phone.replace(/\D/g, ''))) {
+    } else if (!isValidSaudiPhone(formData.phone)) {
       newErrors.phone = 'رقم الجوال يجب أن يبدأ بـ 5 ويحتوي على 9 أرقام';
     }
 
     if (!formData.password) {
       newErrors.password = 'كلمة السر مطلوبة';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'كلمة السر يجب أن تكون 8 أحرف على الأقل';
+    } else {
+      const passwordValidation = validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        newErrors.password = passwordValidation.error || 'كلمة السر غير صحيحة';
+      }
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -115,12 +119,28 @@ export default function SignUp() {
 
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      alert('تم إنشاء الحساب بنجاح');
-      navigate('/');
+    // FIX: Remove fake registration - should be handled by backend API
+    try {
+      // TODO: Replace with actual API call to backend
+      // const response = await fetch('/api/auth/register', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(formData)
+      // });
+      
+      // For now, simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // FIX: Remove fake user creation - this should come from backend
+      console.log('Registration should be handled by backend API');
+      alert('إنشاء الحساب يجب أن يتم عبر الخادم الخلفي');
+      
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('حدث خطأ في إنشاء الحساب');
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
