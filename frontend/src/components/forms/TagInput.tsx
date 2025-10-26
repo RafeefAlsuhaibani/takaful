@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent } from 'react';
 import { X } from 'lucide-react';
+import { sanitizeInput } from '../../utils/sanitize';
 
 interface TagInputProps {
   label?: string;
@@ -27,9 +28,10 @@ export default function TagInput({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && inputValue.trim()) {
       e.preventDefault();
-      const newTag = inputValue.trim();
-      if (!tags.includes(newTag)) {
-        onTagsChange([...tags, newTag]);
+      // FIX: Sanitize tag input before adding
+      const sanitizedTag = sanitizeInput(inputValue.trim());
+      if (sanitizedTag && !tags.includes(sanitizedTag)) {
+        onTagsChange([...tags, sanitizedTag]);
       }
       setInputValue('');
     }

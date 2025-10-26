@@ -131,4 +131,3 @@ export default function ParticipationSuccessDialog({
     document.body
   );
 }
-

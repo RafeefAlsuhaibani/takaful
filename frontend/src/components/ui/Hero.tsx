@@ -1,4 +1,5 @@
 import { Lightbulb } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { mockStats } from '../../data/home';
 import StatCounter from './StatCounter';
 import Card from './Card';
@@ -23,9 +24,14 @@ export default function Hero() {
           </h1>
           
           {/* Subtitle with icon */}
-          <div className="mt-4 mx-auto flex items-center justify-center gap-2 max-w-2xl text-base md:text-lg text-white/85">
-            <Lightbulb className="shrink-0" style={{ color: "#DFC775" }} aria-hidden="true" />
-            حيث يلتقي العطاء بالأثر — انضم إلى مجتمع من المتكافلين واصنع أثرًا يدوم
+          <div className="mt-4 mx-auto max-w-2xl">
+            <div className="flex items-center justify-center gap-2 text-base md:text-lg mb-2">
+              <span style={{ color: "#DFC775" }}>حيث يلتقي العطاء بالأثر</span>
+              <Lightbulb className="shrink-0" style={{ color: "#DFC775" }} aria-hidden="true" />
+            </div>
+            <div className="text-base md:text-lg text-white/85">
+              انضم إلى مجتمع من المتكافلين واصنع أثرًا يدوم
+            </div>
           </div>
         </div>
 
@@ -49,9 +55,12 @@ export default function Hero() {
         
         {/* CTA Button */}
         <div className="mt-8 md:mt-10">
-          <button className="inline-flex items-center justify-center rounded-full px-7 py-3 bg-[#DFC775] text-gray-900 font-semibold shadow-sm hover:shadow-md hover:bg-[#D1B45F] transition-all duration-200 motion-safe:hover:-translate-y-0.5 focus-visible:ring-2 ring-offset-2 ring-brand-600">
+          <Link 
+            to="/about"
+            className="inline-flex items-center justify-center rounded-full px-7 py-3 bg-[#DFC775] text-gray-900 font-semibold shadow-sm hover:shadow-md hover:bg-[#D1B45F] transition-all duration-200 motion-safe:hover:-translate-y-0.5 focus-visible:ring-2 ring-offset-2 ring-brand-600"
+          >
             اعرف أكثر
-          </button>
+          </Link>
         </div>
       </div>
       
