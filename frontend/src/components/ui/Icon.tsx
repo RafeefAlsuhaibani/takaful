@@ -27,7 +27,8 @@ import {
   Check,
   AlertCircle,
   Info,
-  CheckCircle2
+  CheckCircle2 ,
+  Rocket
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -68,6 +69,7 @@ const iconMap: Record<string, LucideIcon> = {
   AlertCircle,
   Info,
   CheckCircle2,
+  Rocket,
 };
 
 export default function Icon({ name, className = '', size = 24, style }: IconProps) {
