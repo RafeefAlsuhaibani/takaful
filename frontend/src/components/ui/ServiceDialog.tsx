@@ -1,7 +1,5 @@
 import { X, Star, Heart, ArrowRight, ShoppingBag, MapPin, CalendarDays, Building } from 'lucide-react';
-import { useState } from 'react';
-import { useToast } from '../../contexts/ToastContext';
-import { participationSuccessCopy } from '../../utils/notifyParticipationSuccess';
+import { useEffect, useState } from 'react';
 import ParticipationSuccessDialog from '../feedback/ParticipationSuccessDialog';
 import type { Service } from '../../types';
 import Modal from './Modal';
@@ -16,21 +14,23 @@ interface ServiceDialogProps {
 }
 
 export default function ServiceDialog({ service, open, onClose }: ServiceDialogProps) {
-  const { success } = useToast();
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   
-  if (!service || !service.details) return null;
+  // reset success when dialog is closed or service changes
+  useEffect(() => {
+    if (!open || !service) {
+      setShowSuccessDialog(false);
+    }
+  }, [open, service]);
 
-  const { details } = service;
+  if (!service) return null;
+
+  const details = service.details;
 
   const handleJoinService = () => {
-    // Simulate API call success
-    setTimeout(() => {
-      success(participationSuccessCopy);
-      setShowSuccessDialog(true);
-    }, 100);
-    
-    onClose(); // Close dialog first
+    // Show success immediately and then close the main dialog
+    setShowSuccessDialog(true);
+    onClose && onClose();
   };
 
   const getStatusVariant = (status: string) => {
@@ -48,7 +48,7 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
 
   return (
     <>
-      <Modal open={open} onClose={onClose} labelledById="service-title">
+      <Modal open={open} onClose={onClose} labelledById="service-title" lockTargetSelector="#app">
         <div className="p-6 md:p-8">
           {/* Header */}
           <div className="flex items-start justify-between mb-6 animate-slideUp">
@@ -89,12 +89,12 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
           <div className="mb-6">
             <h2 className="text-lg font-bold text-gray-900 mb-3">وصف الخدمة</h2>
             <p className="text-gray-700 leading-8">
-              {details.summary}
+              {details?.summary ?? service.desc}
             </p>
           </div>
 
           {/* Meta Information */}
-          {details.meta && (
+          {details?.meta && (
             <div className="mb-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {details.meta.map((meta, index) => (
@@ -115,7 +115,7 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
           <div className="border-t border-gray-100 mt-6"></div>
 
           {/* Target Audiences */}
-          {details.audiences && (
+          {details?.audiences && (
             <section className="mt-8 animate-fadeIn">
               <h2 className="text-lg font-bold text-gray-900 mb-3">الفئات المستهدفة</h2>
               <div className="flex flex-wrap gap-2">
@@ -131,7 +131,7 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
           <div className="border-t border-gray-100 mt-6"></div>
 
           {/* Requirements */}
-          {details.requirements && (
+          {details?.requirements && (
             <section className="mt-8 animate-fadeIn">
               <h2 className="text-lg font-bold text-gray-900 mb-3">متطلبات التنفيذ</h2>
               <div className="space-y-3">
@@ -153,7 +153,7 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
           <div className="border-t border-gray-100 mt-6"></div>
 
           {/* Volunteers Progress */}
-          {details.volunteers && (
+          {details?.volunteers && (
             <section className="mt-8 animate-fadeIn">
               <h2 className="text-lg font-bold text-gray-900 mb-3">عدد المتطوعين</h2>
               <ProgressBar 
@@ -185,7 +185,10 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
       <ParticipationSuccessDialog
         type="service"
         isOpen={showSuccessDialog}
-        onClose={() => setShowSuccessDialog(false)}
+        onClose={() => {
+          setShowSuccessDialog(false);
+          onClose && onClose();
+        }}
       />
     </>
   );

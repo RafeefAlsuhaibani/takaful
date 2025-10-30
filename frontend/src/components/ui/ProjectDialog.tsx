@@ -1,7 +1,5 @@
 import { X, Star, Heart, ArrowRight } from 'lucide-react';
-import { useState } from 'react';
-import { useToast } from '../../contexts/ToastContext';
-import { participationSuccessCopy } from '../../utils/notifyParticipationSuccess';
+import { useEffect, useState } from 'react';
 import ParticipationSuccessDialog from '../feedback/ParticipationSuccessDialog';
 import type { Project } from '../../types';
 import Modal from './Modal';
@@ -15,26 +13,28 @@ interface ProjectDialogProps {
 }
 
 export default function ProjectDialog({ project, open, onClose }: ProjectDialogProps) {
-  const { success } = useToast();
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  
-  if (!project || !project.details) return null;
 
-  const { details } = project;
+  // reset success when dialog is closed or project changes
+  useEffect(() => {
+    if (!open || !project) {
+      setShowSuccessDialog(false);
+    }
+  }, [open, project]);
+
+  if (!project) return null;
+
+  const details = project.details;
 
   const handleJoinProject = () => {
-    // Simulate API call success
-    setTimeout(() => {
-      success(participationSuccessCopy);
-      setShowSuccessDialog(true);
-    }, 100);
-    
-    onClose(); // Close dialog first
+    // Show success immediately and then close the main dialog
+    setShowSuccessDialog(true);
+    onClose && onClose();
   };
 
   return (
     <>
-      <Modal open={open} onClose={onClose} labelledById="project-title">
+      <Modal open={open} onClose={onClose} labelledById="project-title" lockTargetSelector="#app">
         <div className="p-6 md:p-8">
           {/* Header */}
           <div className="flex items-start justify-between mb-6 animate-slideUp">
@@ -60,7 +60,7 @@ export default function ProjectDialog({ project, open, onClose }: ProjectDialogP
           {/* Project Summary */}
           <div className="mb-6">
             <p className="text-gray-700 leading-8">
-              {details.summary}
+              {details?.summary ?? project.desc}
             </p>
           </div>
 
@@ -70,7 +70,7 @@ export default function ProjectDialog({ project, open, onClose }: ProjectDialogP
           <section className="mt-8 animate-fadeIn">
             <h2 className="text-lg font-bold text-gray-900 mb-3">مايشمله المشروع</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {details.includes.map((item, index) => (
+              {(details?.includes ?? []).map((item, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Star 
                     size={16} 
@@ -90,7 +90,7 @@ export default function ProjectDialog({ project, open, onClose }: ProjectDialogP
           <section className="mt-8 animate-fadeIn">
             <h2 className="text-lg font-bold text-gray-900 mb-3">الفئات المستهدفة</h2>
             <div className="flex flex-wrap gap-2">
-              {details.audiences.map((audience, index) => (
+              {(details?.audiences ?? []).map((audience, index) => (
                 <Tag key={index}>
                   {audience}
                 </Tag>
@@ -104,7 +104,7 @@ export default function ProjectDialog({ project, open, onClose }: ProjectDialogP
           <section className="mt-8 animate-fadeIn">
             <h2 className="text-lg font-bold text-gray-900 mb-3">متطلبات التنفيذ</h2>
             <div className="space-y-3">
-              {details.requirements.map((requirement, index) => (
+              {(details?.requirements ?? []).map((requirement, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Star 
                     size={16} 
@@ -140,7 +140,10 @@ export default function ProjectDialog({ project, open, onClose }: ProjectDialogP
       <ParticipationSuccessDialog
         type="project"
         isOpen={showSuccessDialog}
-        onClose={() => setShowSuccessDialog(false)}
+        onClose={() => {
+          setShowSuccessDialog(false);
+          onClose && onClose();
+        }}
       />
     </>
   );
