@@ -27,7 +27,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="relative min-h-screen bg-white overflow-hidden">
       <Hero />
 
       <section className="py-16">
@@ -44,13 +44,14 @@ export default function Home() {
                       اكتشف مشاريعنا المتنوعة واختر المشروع الذي يناسب اهتماماتك للمشاركة في صنع الأثر
                     </p>
                   </div>
-                  <Icon name="HandHeart" className="text-brand-600 ml-4 flex-shrink-0" size={32} />
+                  <Icon name="HandHeart" className="text-[#DFC775] ml-4 flex-shrink-0" size={32} />
                 </div>
                 <Button variant="primary" href="/projects">
                   المشاريع
                 </Button>
               </Card>
             </div>
+
             <div className="animate-fadeIn" style={{ animationDelay: '0.4s' }}>
               <Card className="p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
@@ -62,7 +63,7 @@ export default function Home() {
                       شاركنا أفكارك لمبادرات تكافلية جديدة يمكن أن تُحدث أثرًا إيجابيًا في المجتمع
                     </p>
                   </div>
-                  <Icon name="Lightbulb" className="text-brand-600 ml-4 flex-shrink-0" size={32} />
+                  <Icon name="Lightbulb" className="text-[#DFC775] ml-4 flex-shrink-0" size={32} />
                 </div>
                 <Button variant="outline" href="/suggest">
                   شارك اقتراحك
@@ -73,7 +74,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="services" className="py-16 bg-gray-50">
+      <section id="services" className="py-16 bg-gray-50 relative z-10">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12 animate-fadeIn">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
