@@ -21,26 +21,33 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
       style.id = styleId;
-      style.textContent = `.cm-no-scroll{overflow:hidden!important;overscroll-behavior:none!important}`;
+      style.textContent = `
+        .cm-no-scroll{overflow:hidden!important;overscroll-behavior:none!important;position:fixed!important;width:100%!important}
+        body.cm-no-scroll{overflow:hidden!important;overscroll-behavior:none!important;position:fixed!important;width:100%!important;height:100%!important}
+      `;
       document.head.appendChild(style);
     }
   };
 
   const getScrollContainer = (): Element | null => {
     if (typeof document === 'undefined') return null;
-    if (lockTargetSelector) {
-      return document.querySelector(lockTargetSelector);
-    }
-    return (document.scrollingElement || document.documentElement);
+    // Always lock body and html to prevent scrolling
+    return document.body;
   };
 
   useEffect(() => {
     if (!open) {
       // Cleanup and focus restore when closing
-      const sc = getScrollContainer();
-      if (sc && sc.classList.contains('cm-no-scroll')) {
-        sc.classList.remove('cm-no-scroll');
+      const body = document.body;
+      const html = document.documentElement;
+      
+      if (body.classList.contains('cm-no-scroll')) {
+        body.classList.remove('cm-no-scroll');
       }
+      if (html.classList.contains('cm-no-scroll')) {
+        html.classList.remove('cm-no-scroll');
+      }
+      
       if (wheelListenerRef.current) {
         document.removeEventListener('wheel', wheelListenerRef.current, { capture: true } as any);
       }
@@ -59,9 +66,11 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
     // Store the currently focused element
     previousActiveElement.current = document.activeElement as HTMLElement;
 
-    // Lock the scroll container
-    const sc = getScrollContainer();
-    if (sc) sc.classList.add('cm-no-scroll');
+    // Lock both body and html to prevent scrolling
+    const body = document.body;
+    const html = document.documentElement;
+    body.classList.add('cm-no-scroll');
+    html.classList.add('cm-no-scroll');
 
     // Prevent wheel/touch scrolling outside the dialog panel
     const blockIfOutside = (target: EventTarget | null) => {
@@ -72,10 +81,16 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
     };
 
     const onWheel = (e: WheelEvent) => {
-      if (blockIfOutside(e.target)) e.preventDefault();
+      if (blockIfOutside(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (blockIfOutside(e.target)) e.preventDefault();
+      if (blockIfOutside(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     };
 
     wheelListenerRef.current = onWheel;
@@ -91,10 +106,16 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
 
     // Cleanup on unmount/close
     return () => {
-      const sc2 = getScrollContainer();
-      if (sc2 && sc2.classList.contains('cm-no-scroll')) {
-        sc2.classList.remove('cm-no-scroll');
+      const body2 = document.body;
+      const html2 = document.documentElement;
+      
+      if (body2.classList.contains('cm-no-scroll')) {
+        body2.classList.remove('cm-no-scroll');
       }
+      if (html2.classList.contains('cm-no-scroll')) {
+        html2.classList.remove('cm-no-scroll');
+      }
+      
       document.removeEventListener('wheel', onWheel, { capture: true } as any);
       document.removeEventListener('touchmove', onTouchMove, { capture: true } as any);
     };
@@ -126,11 +147,17 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-black/50 opacity-0 animate-fadeIn touch-none overscroll-none"
-      style={{ animation: 'fadeIn 200ms ease-out forwards' }}
+      className="fixed inset-0 z-50 bg-black/50 opacity-0 animate-fadeIn overscroll-none"
+      style={{ animation: 'fadeIn 200ms ease-out forwards', touchAction: 'none' }}
       onClick={handleOverlayClick}
+      onTouchMove={(e) => {
+        // Prevent touch move on overlay
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+        }
+      }}
     >
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ touchAction: 'none' }}>
         <div
           ref={dialogRef}
           role="dialog"
@@ -138,8 +165,12 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
           aria-labelledby={labelledById}
           dir="rtl"
           className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl outline-none overflow-y-auto overscroll-contain max-h-[85vh] scale-95 opacity-0 animate-slideUp [-webkit-overflow-scrolling:touch]"
-          style={{ animation: 'slideUp 250ms ease-out forwards' }}
+          style={{ animation: 'slideUp 250ms ease-out forwards', touchAction: 'pan-y' }}
           tabIndex={-1}
+          onTouchMove={(e) => {
+            // Allow scrolling inside dialog
+            e.stopPropagation();
+          }}
         >
           {children}
         </div>
