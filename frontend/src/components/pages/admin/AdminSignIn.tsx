@@ -9,28 +9,25 @@ import Button from '../../ui/Button';
 export default function AdminSignIn() {
   const navigate = useNavigate();
   const { login } = useAuth();
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false
+    rememberMe: false,
   });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    if (!formData.email) {
-      newErrors.email = 'البريد الإلكتروني مطلوب';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (!formData.email) newErrors.email = 'البريد الإلكتروني مطلوب';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       newErrors.email = 'يرجى إدخال بريد إلكتروني صحيح';
-    }
 
-    if (!formData.password) {
-      newErrors.password = 'كلمة السر مطلوبة';
-    } else if (formData.password.length < 6) {
+    if (!formData.password) newErrors.password = 'كلمة السر مطلوبة';
+    else if (formData.password.length < 6)
       newErrors.password = 'كلمة السر يجب أن تكون 6 أحرف على الأقل';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -38,76 +35,92 @@ export default function AdminSignIn() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-
     setIsSubmitting(true);
-    
-    // Simulate API call
     setTimeout(() => {
-      // Extract name from email (for demo purposes)
       const name = formData.email.split('@')[0];
-      
-      // Store admin data
-      login({
-        name: name,
-        email: formData.email,
-        role: 'admin'
-      });
-      
-      alert('تم تسجيل دخول المشرف بنجاح');
-      navigate('/admin/dashboard'); // Redirect to admin dashboard
+      login({ name, email: formData.email, role: 'admin' });
+      navigate('/admin/dashboard');
       setIsSubmitting(false);
-    }, 1000);
+    }, 800);
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   return (
-    <div className="min-h-screen bg-white" dir="rtl">
-      {/* Hero Header */}
-      <section className="bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 text-white">
-        <div className="max-w-6xl mx-auto px-4 py-10 md:py-12">
-          <div className="flex items-center justify-end gap-3">
-            <h1 className="text-3xl md:text-4xl font-extrabold">
-              حيّاك الله، مشرفنا العزيز
+    // ✅ نفس ملاحظة صفحة SignIn: بدون min-h-screen ونفس المقاسات
+    <div className="bg-white">
+      {/* Hero */}
+      <header className="relative isolate text-white bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 pb-8 md:pb-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay"
+          style={{
+            background:
+              'radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,.18), transparent 60%)',
+          }}
+        />
+        <div className="max-w-6xl mx-auto px-4 pt-12 md:pt-16">
+          <div className="text-center animate-slideUp motion-reduce:animate-none">
+            <div className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm font-medium ring-1 ring-inset ring-white/20 mb-4">
+              <span>حيّاك الله، مشرفنا العزيز</span>
+              <Shield size={20} style={{ color: '#DFC775' }} aria-hidden="true" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.1]">
+              أهلاً بعودتك إلى لوحة التحكم ✨
             </h1>
-            <Shield 
-              size={32} 
-              className="text-[#DFC775] flex-shrink-0" 
-              aria-hidden="true"
-            />
+            <p className="mt-3 max-w-2xl mx-auto text-white/85 md:text-lg leading-relaxed">
+              بوجودك تكتمل المنظومة ونمضي بخطى ثابتة نحو التمكين.
+            </p>
           </div>
-          <p className="mt-2 text-white/85 text-lg">
-            بوجودك تكتمل المنظومة ونمضي بخطى ثابتة نحو التمكين.
-          </p>
         </div>
-      </section>
 
-      {/* Admin Sign In Form */}
-      <div className="max-w-2xl mx-auto -mt-8 md:-mt-10 px-4">
-        <Card className="rounded-3xl shadow-xl p-6 md:p-8 border border-gray-100 relative animate-fadeIn">
-          {/* Top border glow */}
-          <div className="absolute inset-x-6 top-0 h-[2px] bg-[#DFC775]/40 rounded-full"></div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        {/* الموجة */}
+        <div className="absolute -bottom-px left-0 right-0 h-10" aria-hidden>
+          <svg
+            viewBox="0 0 1200 120"
+            preserveAspectRatio="none"
+            className="w-full h-full"
+            style={{ transform: 'scaleY(-1)' }}
+          >
+            <path
+              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
+              opacity=".25"
+              fill="#f7f7f7"
+            />
+            <path
+              d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z"
+              opacity=".5"
+              fill="#f7f7f7"
+            />
+            <path
+              d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"
+              fill="#fffcfcff"
+            />
+          </svg>
+        </div>
+      </header>
+
+      {/* Admin Form */}
+      {/* 👇 نفس مقاس صفحة SignIn: max-w-2xl وبدون هوامش سفلية زائدة */}
+      <main className="max-w-2xl mx-auto mt-10 md:mt-12 px-4 mb-12">
+        <Card className="rounded-3xl shadow-soft p-6 md:p-8 border border-gray-100 relative animate-fadeIn motion-reduce:animate-none">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
             تسجيل دخول المشرف
           </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <Input
               type="email"
               label="البريد الإلكتروني"
-              placeholder="ادخل بريدك الالكتروني"
+              placeholder="ادخل بريدك الإلكتروني"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               error={errors.email}
+              inputProps={{ dir: 'ltr', autoComplete: 'email' }}
               required
             />
 
@@ -118,18 +131,33 @@ export default function AdminSignIn() {
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
               error={errors.password}
+              inputProps={{ autoComplete: 'current-password' }}
               required
             />
 
-            <div className="flex items-center">
-              <input
-                id="rememberMe"
-                type="checkbox"
-                checked={formData.rememberMe}
-                onChange={(e) => handleInputChange('rememberMe', e.target.checked)}
-                className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded"
-              />
-              <label htmlFor="rememberMe" className="mr-2 text-sm text-gray-700">
+            {/* تذكرني */}
+            <div className="flex w-full items-center">
+              <label
+                htmlFor="rememberMe"
+                className="ml-auto flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 hover:text-brand-700 transition-colors select-none"
+              >
+                <input
+                  id="rememberMe"
+                  type="checkbox"
+                  checked={formData.rememberMe}
+                  onChange={(e) => handleInputChange('rememberMe', e.target.checked)}
+                  className="h-5 w-5 appearance-none rounded-md border border-gray-300 bg-white
+                             checked:bg-[#DFC775] checked:border-[#DFC775]
+                             focus:ring-2 focus:ring-[#DFC775]/40 focus:ring-offset-1 transition-all duration-150"
+                  style={{
+                    backgroundImage: formData.rememberMe
+                      ? "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"white\" stroke-width=\"3\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M5 13l4 4L19 7\" /></svg>')"
+                      : 'none',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                    backgroundSize: '70%',
+                  }}
+                />
                 تذكرني
               </label>
             </div>
@@ -144,11 +172,11 @@ export default function AdminSignIn() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center space-y-0.5">
             <p className="text-sm text-gray-600">
-              ليس لديك صلاحيات مشرف؟{' '}
-              <Link 
-                to="/signin" 
+              لست مشرفًا؟{' '}
+              <Link
+                to="/signin"
                 className="text-brand-600 hover:text-brand-700 font-medium transition-colors"
               >
                 تسجيل دخول عادي ←
@@ -156,7 +184,7 @@ export default function AdminSignIn() {
             </p>
           </div>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }

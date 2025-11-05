@@ -122,11 +122,6 @@ export default function UserProfileDropdown({ userName, userRole }: UserProfileD
         onClick: handleProfileClick
       },
       {
-        label: 'إعدادات الحساب',
-        icon: 'Settings',
-        onClick: handleSettingsClick
-      },
-      {
         label: 'تسجيل الخروج',
         icon: 'LogOut',
         onClick: handleLogout,

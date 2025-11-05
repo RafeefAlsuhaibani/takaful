@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HeartHandshake } from 'lucide-react';
+import { HeartHandshake, Handshake, MonitorSmartphone, BarChart3 } from 'lucide-react';
 
 export default function About() {
   const [isLoading, setIsLoading] = useState(true);
@@ -24,9 +24,8 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative isolate text-white bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 py-20 md:py-28">
-        {/* تأثير الإضاءة */}
+      {/* Hero Section (الهيدر الأصلي) */}
+      <header className="relative isolate text-white bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 py-20 md:py-28">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay"
@@ -36,24 +35,41 @@ export default function About() {
           }}
         />
 
-        <div className="max-w-6xl mx-auto px-4 text-center">
+        <div className="max-w-6xl mx-auto px-4 text-center md:text-right">
           <div className="animate-slideUp">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.1]">
-              من نحن
-            </h1>
-            <p className="mt-4 mx-auto flex items-center justify-center gap-2 max-w-3xl text-base md:text-lg text-white/85 leading-relaxed">
-              منصة تكافل وأثر - رؤيتنا ورسالتنا في خدمة المجتمع
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm md:text-base font-medium ring-1 ring-inset ring-white/20 mb-5">
+              <span>إدارة التكافل المجتمعي – جمعية الزاد</span>
               <HeartHandshake
-                size={22}
+                size={20}
                 style={{ color: '#DFC775' }}
-                className="shrink-0"
                 aria-hidden="true"
+                className="shrink-0"
               />
             </p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05]">
+              من نحن
+            </h1>
+            <p className="mt-4 max-w-2xl md:ml-auto md:text-lg text-white/85 leading-relaxed">
+              منصة تكافل وأثر تحول العمل الخيري إلى منظومة رقمية شفافة، تُظهر الأثر وتربط
+              المانحين بالمستفيدين بطرق حديثة وسهلة.
+            </p>
+            <div className="mt-8 flex flex-col md:flex-row gap-3 justify-center md:justify-end">
+              <a
+                href="/projects"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/95 px-6 py-3 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-600"
+              >
+                استكشف المشاريع
+              </a>
+              <a
+                href="/suggest"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-transparent ring-1 ring-inset ring-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-600"
+              >
+                شارك اقتراحك
+              </a>
+            </div>
           </div>
         </div>
 
-        {/* الموجة الزخرفية تحت الهيرو */}
         <div className="absolute -bottom-px left-0 right-0 h-10" aria-hidden>
           <svg
             viewBox="0 0 1200 120"
@@ -77,21 +93,19 @@ export default function About() {
             />
           </svg>
         </div>
-      </section>
+      </header>
 
       {/* Main Content */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 animate-fadeIn">
             <div className="text-right space-y-8">
-              {/* Title */}
               <div className="border-b border-gray-200 pb-6">
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                   عن منصة تكافل وأثر
                 </h2>
               </div>
 
-              {/* Main Content */}
               <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
                 <p className="text-lg md:text-xl mb-6 leading-8">
                   منصة تكافل وأثر هي منصة إلكترونية ابتكارية تابعة لإدارة التكافل المجتمعي في جمعية الزاد، تهدف إلى تحويل قيمة التكافل الاجتماعي إلى أثرٍ ملموس من خلال منظومة رقمية تجمع بين العمل الخيري، والتمكين، والشفافية.
@@ -104,32 +118,36 @@ export default function About() {
 
               {/* Features Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-                <div className="bg-brand-50 rounded-xl p-6 text-center">
-                  <div className="w-16 h-16 bg-brand-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🤝</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">التكافل الاجتماعي</h3>
-                  <p className="text-gray-600 text-sm">تحويل قيمة التكافل إلى أثر ملموس</p>
+                <div className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center transition">
+                  <Handshake size={30} style={{ color: '#DFC775' }} className="mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">التكافل الاجتماعي</h3>
+                  <p className="text-sm leading-relaxed text-gray-600">
+                    تحويل التبرع والدعم إلى مبادرات واقعية يمكن متابعتها.
+                  </p>
                 </div>
 
-                <div className="bg-brand-50 rounded-xl p-6 text-center">
-                  <div className="w-16 h-16 bg-brand-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">💻</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">المنظومة الرقمية</h3>
-                  <p className="text-gray-600 text-sm">تجمع بين العمل الخيري والتمكين والشفافية</p>
+                <div className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center transition">
+                  <MonitorSmartphone
+                    size={30}
+                    style={{ color: '#DFC775' }}
+                    className="mx-auto mb-3"
+                  />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">المنظومة الرقمية</h3>
+                  <p className="text-sm leading-relaxed text-gray-600">
+                    واجهة موحّدة تجمع العمل الخيري والتمكين ولوحات الأثر.
+                  </p>
                 </div>
 
-                <div className="bg-brand-50 rounded-xl p-6 text-center">
-                  <div className="w-16 h-16 bg-brand-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">📊</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">الشفافية</h3>
-                  <p className="text-gray-600 text-sm">متابعة الأثر من خلال لوحات بيانات تفاعلية</p>
+                <div className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center transition">
+                  <BarChart3 size={30} style={{ color: '#DFC775' }} className="mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">شفافية الأثر</h3>
+                  <p className="text-sm leading-relaxed text-gray-600">
+                    عرض الأثر الفعلي للمشاريع والمشاركات بطريقة واضحة.
+                  </p>
                 </div>
               </div>
 
-              {/* Call to Action */}
+              {/* CTA */}
               <div className="bg-gradient-to-r from-brand-50 to-brand-100 rounded-xl p-8 mt-12 text-center">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">
                   انضم إلينا في رحلة التكافل والأثر

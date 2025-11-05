@@ -1,8 +1,6 @@
-import { useState, type KeyboardEvent } from 'react';
-import { X } from 'lucide-react';
-import { sanitizeInput } from '../../utils/sanitize';
+import React, { useState, type KeyboardEvent } from 'react';
 
-interface TagInputProps {
+type TagInputProps = {
   label?: string;
   error?: string;
   helperText?: string;
@@ -10,99 +8,116 @@ interface TagInputProps {
   onTagsChange: (tags: string[]) => void;
   placeholder?: string;
   className?: string;
-}
+  /** لتلوين كل وسم (مثلاً ألوان الباستيل) */
+  getTagClassName?: (tag: string, index: number) => string;
+  /** خصائص إضافية للـ input (dir, inputMode, autoComplete, ...إلخ) */
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+};
 
-export default function TagInput({ 
-  label, 
-  error, 
-  helperText, 
-  tags, 
-  onTagsChange, 
-  placeholder = "اضغط Enter لإضافة مهارة",
-  className = '' 
+export default function TagInput({
+  label,
+  error,
+  helperText,
+  tags,
+  onTagsChange,
+  placeholder = 'اضغط Enter لإضافة مهارة',
+  className = '',
+  getTagClassName,
+  inputProps,
 }: TagInputProps) {
-  const [inputValue, setInputValue] = useState('');
+  const [value, setValue] = useState('');
   const hasError = !!error;
-  const inputId = `taginput-${Math.random().toString(36).substr(2, 9)}`;
+  const inputId = `taginput-${Math.random().toString(36).slice(2, 9)}`;
+
+  const addTag = (t: string) => {
+    const clean = t.trim();
+    if (!clean) return;
+    if (tags.includes(clean)) return;
+    onTagsChange([...tags, clean]);
+    setValue('');
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
+    if ((e.key === 'Enter' || e.key === ',') && value.trim()) {
       e.preventDefault();
-      // FIX: Sanitize tag input before adding
-      const sanitizedTag = sanitizeInput(inputValue.trim());
-      if (sanitizedTag && !tags.includes(sanitizedTag)) {
-        onTagsChange([...tags, sanitizedTag]);
-      }
-      setInputValue('');
+      addTag(value);
+    }
+    if (e.key === 'Backspace' && !value && tags.length > 0) {
+      e.preventDefault();
+      onTagsChange(tags.slice(0, -1));
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
-    onTagsChange(tags.filter(tag => tag !== tagToRemove));
+  const removeTag = (idx: number) => {
+    const copy = [...tags];
+    copy.splice(idx, 1);
+    onTagsChange(copy);
   };
 
   return (
     <div className={`w-full ${className}`}>
       {label && (
-        <label 
-          htmlFor={inputId}
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
+        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-2">
           {label}
         </label>
       )}
-      
-      <div className={`
-        w-full min-h-[48px] px-4 py-3 border rounded-lg transition-colors duration-200
-        focus-within:outline-none focus-within:ring-2 ring-brand-600 ring-offset-2
-        ${hasError 
-          ? 'border-red-300 focus-within:border-red-500' 
-          : 'border-gray-300 focus-within:border-brand-500'
-        }
-      `}>
-        {/* Tags */}
+
+      <div
+        className={`
+          w-full min-h-[48px] px-4 py-3 border rounded-xl bg-white
+          transition-colors duration-200
+          focus-within:outline-none focus-within:ring-2 focus-within:ring-brand-600
+          ${hasError ? 'border-red-300' : 'border-gray-200'}
+        `}
+      >
+        {/* ✅ الوسوم في سطر مستقل */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
-            {tags.map((tag, index) => (
+            {tags.map((tag, i) => (
               <span
-                key={index}
-                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                key={`${tag}-${i}`}
+                className={`inline-flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-full shadow-sm ${
+                  getTagClassName ? getTagClassName(tag, i) : 'bg-gray-100 text-gray-800'
+                }`}
               >
                 {tag}
                 <button
                   type="button"
-                  onClick={() => removeTag(tag)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
                   aria-label={`إزالة ${tag}`}
+                  onClick={() => removeTag(i)}
+                  className="grid place-items-center w-5 h-5 rounded-full bg-white/60 text-gray-600 hover:bg-white/90 hover:text-gray-800 transition"
                 >
-                  <X size={14} />
+                  ×
                 </button>
               </span>
             ))}
           </div>
         )}
-        
-        {/* Input */}
+
+        {/* ✅ الـ input تحت الوسوم وبعرض كامل */}
         <input
           id={inputId}
           type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? placeholder : ''}
-          className="w-full border-none outline-none bg-transparent text-gray-900 placeholder-gray-500"
+          className="w-full border-none outline-none bg-transparent text-sm text-gray-900 placeholder-gray-500"
           aria-invalid={hasError}
-          aria-describedby={hasError ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
+          aria-describedby={
+            hasError ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
+          }
+          {...inputProps}
         />
       </div>
-      
+
       {hasError && (
         <p id={`${inputId}-error`} className="mt-1 text-sm text-red-600">
           {error}
         </p>
       )}
-      
-      {helperText && !hasError && (
+
+      {!hasError && helperText && (
         <p id={`${inputId}-helper`} className="mt-1 text-sm text-gray-500">
           {helperText}
         </p>
