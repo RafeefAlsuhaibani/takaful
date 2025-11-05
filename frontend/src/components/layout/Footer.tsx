@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -11,6 +12,20 @@ export default function Footer() {
             <p className="text-gray-300 text-sm leading-relaxed">
               منصة تكافل وأثر تهدف إلى ربط المحتاجين بالمتبرعين والمتطوعين لصنع أثر إيجابي في المجتمع.
             </p>
+            <div className="mt-4 flex items-center gap-4">
+              <a href="#" aria-label="Facebook" className="text-white/80 hover:text-white transition-colors duration-200">
+                <Facebook size={20} />
+              </a>
+              <a href="#" aria-label="Twitter" className="text-white/80 hover:text-white transition-colors duration-200">
+                <Twitter size={20} />
+              </a>
+              <a href="#" aria-label="Instagram" className="text-white/80 hover:text-white transition-colors duration-200">
+                <Instagram size={20} />
+              </a>
+              <a href="#" aria-label="LinkedIn" className="text-white/80 hover:text-white transition-colors duration-200">
+                <Linkedin size={20} />
+              </a>
+            </div>
           </div>
 
           {/* Quick Links */}
@@ -48,10 +63,29 @@ export default function Footer() {
           {/* Contact Info */}
           <div>
             <h3 className="text-lg font-semibold mb-4">تواصل معنا</h3>
-            <div className="space-y-2 text-sm text-gray-300">
-              <p>البريد الإلكتروني: info@takafol-athar.com</p>
-              <p>الهاتف: +966 50 123 4567</p>
-              <p>العنوان: القصيم، المملكة العربية السعودية</p>
+            <div className="space-y-4 text-sm text-gray-300">
+              <div className="flex items-center gap-3">
+                <Mail size={20} className="text-white flex-shrink-0" />
+                <a 
+                  href="mailto:info@takafol-athar.com" 
+                  className="hover:text-white transition-colors duration-200"
+                >
+                  info@takafol-athar.com
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone size={20} className="text-white flex-shrink-0" />
+                <a 
+                  href="tel:+966501234567" 
+                  className="hover:text-white transition-colors duration-200"
+                >
+                  +966 50 123 4567
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin size={20} className="text-white flex-shrink-0" />
+                <span>القصيم، المملكة العربية السعودية</span>
+              </div>
             </div>
           </div>
         </div>
