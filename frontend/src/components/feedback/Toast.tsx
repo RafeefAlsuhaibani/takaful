@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { X, Check, AlertCircle, Info } from 'lucide-react';
 
 export interface ToastProps {
@@ -83,12 +82,12 @@ export default function Toast({
     }
   };
 
-  return createPortal(
+  return (
     <div
-      className={`fixed top-4 left-4 z-50 max-w-sm w-full transform transition-all duration-200 ease-out ${
+      className={`relative max-w-sm w-full transform transition-all duration-200 ease-out ${
         isVisible && !isLeaving 
           ? 'translate-x-0 opacity-100' 
-          : '-translate-x-full opacity-0'
+          : 'translate-x-full opacity-0'
       }`}
       dir="rtl"
     >
@@ -118,7 +117,6 @@ export default function Toast({
           </button>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }

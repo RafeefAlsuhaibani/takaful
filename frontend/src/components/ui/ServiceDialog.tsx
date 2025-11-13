@@ -1,6 +1,7 @@
 import { X, Star, Heart, ArrowRight, MapPin, CalendarDays, Building } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import ParticipationSuccessDialog from '../feedback/ParticipationSuccessDialog';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import type { Service } from '../../types';
 import Modal from './Modal';
 import Badge from './Badge';
@@ -15,18 +16,40 @@ interface ServiceDialogProps {
 }
 
 export default function ServiceDialog({ service, open, onClose }: ServiceDialogProps) {
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-
-  useEffect(() => {
-    if (!open || !service) setShowSuccessDialog(false);
-  }, [open, service]);
+  const { success, info } = useToast();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   if (!service) return null;
 
   const details = service.details;
   const handleJoinService = () => {
-    setShowSuccessDialog(true);
+    // التحقق من تسجيل الدخول
+    if (!isAuthenticated) {
+      // إغلاق الدايلوج
+      onClose && onClose();
+      // عرض رسالة تطلب تسجيل الدخول
+      info({
+        title: 'تسجيل الدخول مطلوب',
+        description: 'يجب عليك تسجيل الدخول أولاً للمشاركة في هذه الخدمة.',
+        duration: 3000
+      });
+      // توجيه المستخدم إلى صفحة تسجيل الدخول بعد تأخير قصير
+      setTimeout(() => {
+        navigate('/signin');
+      }, 500);
+      return;
+    }
+
+    // إذا كان المستخدم مسجل دخول
+    // إغلاق الدايلوج
     onClose && onClose();
+    // عرض رسالة النجاح
+    success({
+      title: 'تم إرسال مشاركتك بنجاح',
+      description: 'سيتم التواصل معك عبر البريد الإلكتروني في حال القبول.',
+      duration: 2000
+    });
   };
 
   const getStatusVariant = (status: string) => {
@@ -221,15 +244,6 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
           }
         `}</style>
       </Modal>
-
-      <ParticipationSuccessDialog
-        type="service"
-        isOpen={showSuccessDialog}
-        onClose={() => {
-          setShowSuccessDialog(false);
-          onClose && onClose();
-        }}
-      />
     </>
   );
 }

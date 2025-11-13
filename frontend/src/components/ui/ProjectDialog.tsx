@@ -1,6 +1,7 @@
-import { X, Heart, ArrowRight, ArrowLeft, ArrowLeftIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import ParticipationSuccessDialog from '../feedback/ParticipationSuccessDialog';
+import { X, Heart, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import type { Project } from '../../types';
 import Modal from './Modal';
 import Badge from './Badge';
@@ -13,18 +14,40 @@ interface ProjectDialogProps {
 }
 
 export default function ProjectDialog({ project, open, onClose }: ProjectDialogProps) {
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-
-  useEffect(() => {
-    if (!open || !project) setShowSuccessDialog(false);
-  }, [open, project]);
+  const { success, info } = useToast();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   if (!project) return null;
 
   const details = project.details;
   const handleJoinProject = () => {
-    setShowSuccessDialog(true);
+    // التحقق من تسجيل الدخول
+    if (!isAuthenticated) {
+      // إغلاق الدايلوج
+      onClose && onClose();
+      // عرض رسالة تطلب تسجيل الدخول
+      info({
+        title: 'تسجيل الدخول مطلوب',
+        description: 'يجب عليك تسجيل الدخول أولاً للمشاركة في هذا المشروع.',
+        duration: 3000
+      });
+      // توجيه المستخدم إلى صفحة تسجيل الدخول بعد تأخير قصير
+      setTimeout(() => {
+        navigate('/signin');
+      }, 500);
+      return;
+    }
+
+    // إذا كان المستخدم مسجل دخول
+    // إغلاق الدايلوج
     onClose && onClose();
+    // عرض رسالة النجاح
+    success({
+      title: 'تم إرسال مشاركتك بنجاح',
+      description: 'سيتم التواصل معك عبر البريد الإلكتروني في حال القبول.',
+      duration: 2000
+    });
   };
 
   return (
@@ -184,15 +207,6 @@ export default function ProjectDialog({ project, open, onClose }: ProjectDialogP
           }
         `}</style>
       </Modal>
-
-      <ParticipationSuccessDialog
-        type="project"
-        isOpen={showSuccessDialog}
-        onClose={() => {
-          setShowSuccessDialog(false);
-          onClose && onClose();
-        }}
-      />
     </>
   );
 }
