@@ -1,8 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+
 import Home from './components/pages/Home';
 import Projects from './components/pages/Projects';
 import Services from './components/pages/Services';
@@ -13,26 +15,53 @@ import AdminSignIn from './components/pages/admin/AdminSignIn';
 import Suggest from './components/pages/Suggest';
 import About from './components/pages/About';
 
+import UserMain from './components/pages/user/main';
+import UserTasks from './components/pages/user/Task';
+import UserSettings from './components/pages/user/Setting';
+
+// هذا الكومبوننت هو اللي يقدر يستخدم useLocation
+function AppContent() {
+  const location = useLocation();
+
+  // لو الرابط يبدأ بـ /user نخفي الهيدر والفوتر
+  const isUserPage = location.pathname.startsWith('/user');
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Navbar للصفحات العادية فقط */}
+      {!isUserPage && <Navbar />}
+
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/volunteers" element={<Volunteers />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/admin/signin" element={<AdminSignIn />} />
+          <Route path="/suggest" element={<Suggest />} />
+          <Route path="/about" element={<About />} />
+
+          {/* صفحات اليوزر */}
+          <Route path="/user/main" element={<UserMain />} />
+          <Route path="/user/tasks" element={<UserTasks />} />
+          <Route path="/user/settings" element={<UserSettings />} />
+        </Routes>
+      </main>
+
+      {/* Footer للصفحات العادية فقط */}
+      {!isUserPage && <Footer />}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
         <Router>
-          <div className="min-h-screen bg-white">
-            <Navbar />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/projects" element={<Projects />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/volunteers" element={<Volunteers />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/admin/signin" element={<AdminSignIn />} />
-                  <Route path="/suggest" element={<Suggest />} />
-                  <Route path="/about" element={<About />} />
-                </Routes>
-            <Footer />
-          </div>
+          <AppContent />
         </Router>
       </ToastProvider>
     </AuthProvider>

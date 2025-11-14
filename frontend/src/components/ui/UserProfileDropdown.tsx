@@ -87,7 +87,7 @@ export default function UserProfileDropdown({ userName, userRole }: UserProfileD
   };
 
   const handleProfileClick = () => {
-    navigate('/profile');
+    navigate('/user/main');
     setIsOpen(false);
     setFocusedIndex(-1);
   };
