@@ -18,6 +18,7 @@ import About from './components/pages/About';
 import UserMain from './components/pages/user/main';
 import UserTasks from './components/pages/user/Task';
 import UserSettings from './components/pages/user/Setting';
+import PersonalInfo from './components/pages/user/PersonalInfo';
 
 // هذا الكومبوننت هو اللي يقدر يستخدم useLocation
 function AppContent() {
@@ -47,6 +48,7 @@ function AppContent() {
           <Route path="/user/main" element={<UserMain />} />
           <Route path="/user/tasks" element={<UserTasks />} />
           <Route path="/user/settings" element={<UserSettings />} />
+          <Route path="/user/personal-info" element={<PersonalInfo />} />
         </Routes>
       </main>
 
