@@ -1,8 +1,8 @@
 import type { ReactNode, JSX } from 'react';
-import { Bell, Settings, Home, ClipboardList, ExternalLink } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { Bell, Settings, Home, ClipboardList, ExternalLink, UserCircle } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
 
-type MenuKey = 'home' | 'tasks' | 'settings' | 'takaful';
+type MenuKey = 'home' | 'personal-info' | 'tasks' | 'settings' | 'takaful';
 
 interface SidebarLayoutProps {
     children: ReactNode;
@@ -10,6 +10,7 @@ interface SidebarLayoutProps {
 
 const menuItems = [
     { key: 'home' as MenuKey, label: 'الرئيسية', icon: Home, to: '/user/main', exact: true },
+    { key: 'personal-info' as MenuKey, label: 'المعلومات الشخصية', icon: UserCircle, to: '/user/personal-info', exact: true },
     { key: 'tasks' as MenuKey, label: 'المهام', icon: ClipboardList, to: '/user/tasks' },
     { key: 'settings' as MenuKey, label: 'الإعدادات', icon: Settings, to: '/user/settings' },
 ];
@@ -71,15 +72,17 @@ export default function ArabicSidebar({ children }: SidebarLayoutProps): JSX.Ele
                     <nav className="flex-1 space-y-1">
                         {menuItems.map((item) => {
                             const Icon = item.icon;
+                            
                             return (
                                 <NavLink
                                     key={item.key}
                                     to={item.to}
                                     end={item.exact}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-3 px-4 py-2 backdrop-blur rounded-full transition-all ${isActive
-                                            ? 'bg-white/90 text-gray-800 shadow-sm'
-                                            : 'bg-transparent text-gray-500 hover:bg-white/40'
+                                        `flex items-center gap-3 px-4 py-2 backdrop-blur rounded-full transition-all ${
+                                            isActive
+                                                ? 'bg-white/90 text-gray-800 shadow-sm'
+                                                : 'bg-transparent text-gray-500 hover:bg-white/40'
                                         }`
                                     }
                                 >
