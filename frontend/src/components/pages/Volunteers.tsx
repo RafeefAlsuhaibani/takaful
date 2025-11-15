@@ -152,8 +152,27 @@ function AnimatedDonut({
 /* ============================
    Volunteers Page
 ============================ */
+/* Simple shape for volunteers coming from backend */
+
+type Volunteer = {
+  id: number;
+  gender?: string;
+  total_hours?: number;
+  participations_count?: number;
+  participation_count?: number;
+  successes_count?: number;
+  success_count?: number;
+  [key: string]: any;
+};
+
+
 export default function Volunteers() {
   const navigate = useNavigate();
+// backend
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
 
   // English digits
   const toEn = (n: number) => n.toLocaleString('en-US');
@@ -161,20 +180,79 @@ export default function Volunteers() {
   const BRAND_DARK = '#711f2c';
   const BRAND_GOLD = '#DFC775';
 
+    // Load volunteers from backend
+    useEffect(() => {
+      const fetchVolunteers = async () => {
+        try {
+          setIsLoading(true);
+          setError(null);
+  
+          const res = await fetch('http://127.0.0.1:8000/api/admin/volunteers/');
+          if (!res.ok) {
+            throw new Error('Failed to load volunteers');
+          }
+  
+          const data = await res.json();
+          setVolunteers(data);
+        } catch (err) {
+          console.error(err);
+          setError('حدث خطأ أثناء تحميل بيانات المتطوعين، حاول مرة أخرى.');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+  
+      fetchVolunteers();
+    }, []);
+  
+
   // تأكد أن القطاع الذهبي (نساء) هو الثاني عشان يكمل باقي الدائرة
+  // === Derived stats from API data ===
+  const totalVolunteers = volunteers.length;
+
+  // gender distribution (supports Arabic & English)
+  let maleCount = 0;
+  let femaleCount = 0;
+
+  volunteers.forEach((v) => {
+    const g = (v.gender || '').toString().trim().toLowerCase();
+    if (['m', 'male', 'ذكر'].includes(g)) maleCount += 1;
+    else if (['f', 'female', 'أنثى', 'انثى'].includes(g)) femaleCount += 1;
+  });
+
+  const knownGender = maleCount + femaleCount;
+  const malePercent =
+    knownGender > 0 ? Math.round((maleCount / knownGender) * 100) : 52; // fallback to design
+  const femalePercent = 100 - malePercent;
+
+  const totalHours = volunteers.reduce(
+    (sum, v: any) => sum + (v.total_hours ?? 0),
+    0
+  );
+  const totalParticipations = volunteers.reduce(
+    (sum, v: any) => sum + (v.participations_count ?? v.participation_count ?? 0),
+    0
+  );
+  const totalSuccesses = volunteers.reduce(
+    (sum, v: any) => sum + (v.successes_count ?? v.success_count ?? 0),
+    0
+  );
+
+  // Make sure women (gold) segment is second
   const donutData: { segments: DonutSeg[] } = {
     segments: [
-      { value: 52, color: BRAND_DARK, label: 'رجال' },
-      { value: 48, color: BRAND_GOLD, label: 'نساء' },
+      { value: malePercent, color: BRAND_DARK, label: 'رجال' },
+      { value: femalePercent, color: BRAND_GOLD, label: 'نساء' },
     ],
   };
 
   const stats = [
-    { icon: Users, value: 170, label: 'متطوع', accent: BRAND_DARK },
-    { icon: Clock, value: 284, label: 'ساعة تطوعية', accent: BRAND_GOLD },
-    { icon: CheckCircle, value: 32, label: 'مشاركات', accent: '#4caf50' },
-    { icon: Award, value: 21, label: 'نجاحات', accent: '#ff9800' },
+    { icon: Users, value: totalVolunteers, label: 'متطوع', accent: BRAND_DARK },
+    { icon: Clock, value: totalHours, label: 'ساعة تطوعية', accent: BRAND_GOLD },
+    { icon: CheckCircle, value: totalParticipations, label: 'مشاركات', accent: '#4caf50' },
+    { icon: Award, value: totalSuccesses, label: 'نجاحات', accent: '#ff9800' },
   ];
+
 
   // ظهور scale خفيف للحاوية (لا يغيّر التخطيط)
   const [reveal, setReveal] = useState(false);

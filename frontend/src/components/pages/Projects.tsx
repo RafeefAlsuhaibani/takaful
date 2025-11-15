@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, useEffect, memo } from 'react';
 import { projects } from '../../data/projects';
 import type { Project } from '../../types';
 import Icon from '../ui/Icon';
@@ -89,14 +89,46 @@ function Projects() {
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [activeProject, setActiveProject] = useState<Project | null>(null);
 
+  // Backend data state
+  const [projectsData, setProjectsData] = useState<Project[]>(projects); // start with mock as fallback
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+  
+        const res = await fetch('http://127.0.0.1:8000/api/admin/projects/');
+        if (!res.ok) {
+          throw new Error('فشل في تحميل المشاريع');
+        }
+  
+        const data: Project[] = await res.json();
+        setProjectsData(data);
+      } catch (err) {
+        console.error(err);
+        setError('حدث خطأ أثناء تحميل المشاريع');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchProjects();
+  }, []);
+  
+
+
 
   const filteredProjects = useMemo(
     () =>
       selectedFilter === 'All'
-        ? projects
-        : projects.filter((project) => project.category === selectedFilter),
-    [selectedFilter]
+        ? projectsData
+        : projectsData.filter((project) => project.category === selectedFilter),
+    [selectedFilter, projectsData]
   );
+  
 
   const projectsList = useMemo(
     () =>

@@ -34,14 +34,51 @@ export default function SignIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+  
     setIsSubmitting(true);
-    setTimeout(() => {
-      const name = formData.email.split('@')[0];
-      login({ name, email: formData.email, role: 'user' });
+    setErrors((prev) => ({ ...prev, form: '' }));
+  
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+  
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const msg = (data as any).detail || 'فشل تسجيل الدخول، تأكد من البيانات';
+        setErrors((prev) => ({ ...prev, form: msg }));
+        setIsSubmitting(false);
+        return;
+      }
+  
+      const data = await res.json();
+  
+      // Use the same AuthContext shape as before
+      login({
+        name: data.name ?? formData.email.split('@')[0],
+        email: data.email ?? formData.email,
+        role: data.role ?? 'user',
+      });
+  
       navigate('/');
+    } catch (err) {
+      console.error(err);
+      setErrors((prev) => ({
+        ...prev,
+        form: 'حدث خطأ غير متوقع، حاول مرة أخرى.',
+      }));
+    } finally {
       setIsSubmitting(false);
-    }, 800);
+    }
   };
+  
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

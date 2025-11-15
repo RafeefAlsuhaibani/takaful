@@ -42,28 +42,44 @@ export default function SignUp() {
     { value: 'elementary', label: 'ابتدائي' },
   ];
   const dayOptions = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+ 
+ //تعديل لحل مشكلة الرقم ورقم الهوية
+  const digitsOnly = (value: string) => value.replace(/\D/g, '');
+  // Keep only digits for numeric fields
+const cleanNationalId = (value: string) => digitsOnly(value).slice(0, 10); // max 10 digits
+const cleanPhone = (value: string) => digitsOnly(value).slice(0, 9);       // max 9 digits (5XXXXXXXX)
+
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.fullName.trim()) newErrors.fullName = 'الاسم الكامل مطلوب';
-
-    if (!formData.nationalId.trim()) newErrors.nationalId = 'رقم الهوية مطلوب';
-    else if (!isValidSaudiNationalId(formData.nationalId))
+  
+    
+    const nationalDigits = digitsOnly(formData.nationalId);
+    if (!nationalDigits) {
+      newErrors.nationalId = 'رقم الهوية مطلوب';
+    } else if (!isValidSaudiNationalId(nationalDigits)) {
       newErrors.nationalId = 'رقم الهوية يجب أن يكون 10 أرقام صحيحة';
-
+    }
+  
+    
     if (!formData.email) newErrors.email = 'البريد الإلكتروني مطلوب';
-    else if (!isValidEmail(formData.email)) newErrors.email = 'يرجى إدخال بريد إلكتروني صحيح';
-
-    if (!formData.phone) newErrors.phone = 'رقم الجوال مطلوب';
-    else if (!isValidSaudiPhone(formData.phone))
+    else if (!isValidEmail(formData.email))
+      newErrors.email = 'يرجى إدخال بريد إلكتروني صحيح';
+  
+    
+    const phoneDigits = digitsOnly(formData.phone);
+    if (!phoneDigits) {
+      newErrors.phone = 'رقم الجوال مطلوب';
+    } else if (!isValidSaudiPhone(phoneDigits)) {
       newErrors.phone = 'رقم الجوال يجب أن يبدأ بـ 5 ويحتوي على 9 أرقام';
-
+    }
+  
     if (!formData.password) newErrors.password = 'كلمة السر مطلوبة';
     else {
       const pv = validatePassword(formData.password);
       if (!pv.isValid) newErrors.password = pv.error || 'كلمة السر غير صحيحة';
     }
-
+// انتهى التعديل
     if (formData.password !== formData.confirmPassword)
       newErrors.confirmPassword = 'كلمة السر غير متطابقة';
 
@@ -82,22 +98,44 @@ export default function SignUp() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+  
     setIsSubmitting(true);
+  
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-      alert('إنشاء الحساب يجب أن يتم عبر الخادم الخلفي');
-    } catch (err) {
-      console.error('Registration error:', err);
-      alert('حدث خطأ في إنشاء الحساب');
+      const payload = {
+        full_name: formData.fullName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.replace(/\D/g, ''),  
+        password: formData.password,
+      };
+  
+      const res = await fetch("http://127.0.0.1:8000/api/auth/register/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      const data = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(data.detail || "فشل في إنشاء الحساب");
+      }
+  
+      alert("تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.");
+  
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      alert(err.message || "حدث خطأ أثناء إنشاء الحساب");
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
@@ -169,11 +207,15 @@ export default function SignUp() {
           <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Input label="الاسم كامل" placeholder="الاسم كامل" value={formData.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} error={errors.fullName} required />
-              <Input label="رقم الهوية" placeholder="11******" value={formData.nationalId} onChange={(e) => handleInputChange('nationalId', formatNationalId(e.target.value))} error={errors.nationalId} required />
+              {/* FIX: Remove masking + keep original style + allow normal typing/pasting */}
+              <Input label="رقم الهوية" placeholder="11******" value={formData.nationalId} onChange={(e) => handleInputChange('nationalId', e.target.value.replace(/\D/g, '').slice(0,10))} error={errors.nationalId} required />
+
 
               {/* LTR للحقلين لسهولة الإدخال */}
               <Input type="email" label="البريد الإلكتروني" placeholder="example@mail.com" value={formData.email} onChange={(e) => handleInputChange('email', e.target.value)} error={errors.email} inputProps={{ dir: 'ltr', autoComplete: 'email' }} required />
-              <Input label="رقم الجوال" placeholder="+966 5X XXX XX" value={formData.phone} onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))} error={errors.phone} inputProps={{ dir: 'ltr', inputMode: 'tel' }} required />
+              {/* FIX: Remove auto-formatting that changed numbers + allow clean digits only */}
+              <Input label="رقم الجوال" placeholder="+966 5X XXX XX" value={formData.phone} onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, '').slice(-9))} error={errors.phone} inputProps={{ dir: 'ltr', inputMode: 'tel' }} required />
+
 
               <Input type="password" label="كلمة السر" placeholder="••••••••" value={formData.password} onChange={(e) => handleInputChange('password', e.target.value)} error={errors.password} required />
               <Input type="password" label="تأكيد كلمة السر" placeholder="••••••••" value={formData.confirmPassword} onChange={(e) => handleInputChange('confirmPassword', e.target.value)} error={errors.confirmPassword} required />

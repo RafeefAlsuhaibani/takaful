@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { services } from '../../data/services';
 import type { Service } from '../../types';
@@ -19,13 +19,46 @@ function Services() {
   const [activeService, setActiveService] = useState<Service | null>(null);
   const navigate = useNavigate();
 
-  const filteredServices = useMemo(
-    () =>
-      selectedFilter === 'All'
-        ? services
-        : services.filter((service) => service.status === selectedFilter),
-    [selectedFilter]
-  );
+    // Backend data state 
+    const [servicesData, setServicesData] = useState<Service[]>(services);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+
+    useEffect(() => {
+      const fetchServices = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+  
+          const res = await fetch('http://127.0.0.1:8000/api/admin/services/');
+          if (!res.ok) {
+            throw new Error('فشل في تحميل الخدمات');
+          }
+  
+          const data: Service[] = await res.json();
+          setServicesData(data);
+        } catch (err) {
+          console.error(err);
+          setError('حدث خطأ أثناء تحميل الخدمات');
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchServices();
+    }, []);
+  
+  
+
+    const filteredServices = useMemo(
+      () =>
+        selectedFilter === 'All'
+          ? servicesData
+          : servicesData.filter((service) => service.status === selectedFilter),
+      [selectedFilter, servicesData]
+    );
+  
 
   const servicesList = useMemo(
     () =>

@@ -10,13 +10,13 @@ export default function Suggest() {
     const [email, setEmail] = useState("");
     const { success, error } = useToast();
   
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      
-      // FIX: Sanitize inputs before processing
+    
+      // Sanitize inputs
       const sanitizedSuggestion = sanitizeInput(suggestion);
       const sanitizedEmail = sanitizeInput(email);
-      
+    
       if (!sanitizedSuggestion.trim()) {
         error({
           title: "الرجاء إدخال الاقتراح",
@@ -25,6 +25,7 @@ export default function Suggest() {
         });
         return;
       }
+    
       if (!sanitizedEmail.trim()) {
         error({
           title: "الرجاء إدخال البريد الإلكتروني",
@@ -33,20 +34,45 @@ export default function Suggest() {
         });
         return;
       }
-      
-      // FIX: Use sanitized data for processing
-      console.log("Suggestion:", sanitizedSuggestion);
-      console.log("Email:", sanitizedEmail);
-      // Here you can send data to your backend or API
-      success({
-        title: "تم استلام اقتراحك",
-        description: "شاكرين لك مشاركتنا في التطور.",
-        duration: 4000
-      });
-      setSuggestion("");
-      setEmail("");
+    
+      try {
+        // Build payload for existing Suggestion API
+        const payload = {
+          title: sanitizedSuggestion.slice(0, 80),   // short title from suggestion
+          description: sanitizedSuggestion,
+          submitted_by: sanitizedEmail
+        };
+    
+        const res = await fetch("http://127.0.0.1:8000/api/admin/suggestions/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+    
+        if (!res.ok) {
+          throw new Error("Failed to submit suggestion");
+        }
+    
+        success({
+          title: "تم استلام اقتراحك",
+          description: "شاكرين لك مشاركتنا في التطور.",
+          duration: 4000
+        });
+    
+        setSuggestion("");
+        setEmail("");
+      } catch (err) {
+        console.error(err);
+        error({
+          title: "حدث خطأ",
+          description: "لم يتم إرسال الاقتراح، حاول مرة أخرى.",
+          duration: 4000
+        });
+      }
     };
-  
+      
     return (
         <div className="min-h-screen bg-gray-50">
          {/* Hero Section */}
