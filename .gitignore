@@ -67,3 +67,4 @@ Thumbs.db
 
 # Backup files
 backup/
+__pycache__/
