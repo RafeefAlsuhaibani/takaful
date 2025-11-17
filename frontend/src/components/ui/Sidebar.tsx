@@ -10,8 +10,8 @@ interface SidebarLayoutProps {
 
 const menuItems = [
     { key: 'home' as MenuKey, label: 'الرئيسية', icon: Home, to: '/user/main', exact: true },
-    { key: 'personal-info' as MenuKey, label: 'المعلومات الشخصية', icon: UserCircle, to: '/user/personal-info', exact: true },
     { key: 'tasks' as MenuKey, label: 'المهام', icon: ClipboardList, to: '/user/tasks' },
+    { key: 'personal-info' as MenuKey, label: 'المعلومات الشخصية', icon: UserCircle, to: '/user/personal-info', exact: true },
     { key: 'settings' as MenuKey, label: 'الإعدادات', icon: Settings, to: '/user/settings' },
 ];
 
