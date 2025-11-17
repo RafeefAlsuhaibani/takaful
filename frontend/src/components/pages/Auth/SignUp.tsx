@@ -13,6 +13,7 @@ import {
   isValidSaudiPhone,
   isValidSaudiNationalId,
 } from '../../../utils/validation';
+import { API_BASE_URL } from '../../../config';
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -112,7 +113,8 @@ const cleanPhone = (value: string) => digitsOnly(value).slice(0, 9);       // ma
         password: formData.password,
       };
   
-      const res = await fetch("http://127.0.0.1:8000/api/auth/register/", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register/`, {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",

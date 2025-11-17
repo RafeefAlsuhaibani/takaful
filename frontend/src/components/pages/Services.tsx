@@ -6,6 +6,8 @@ import Icon from '../ui/Icon';
 import Chip from '../ui/Chip';
 import ServiceCard from '../ui/ServiceCard';
 import ServiceDialog from '../ui/ServiceDialog';
+import { API_BASE_URL } from '../../config';
+
 
 const filters = [
   { id: 'All', label: 'الكل' },
@@ -31,7 +33,7 @@ function Services() {
           setLoading(true);
           setError(null);
   
-          const res = await fetch('http://127.0.0.1:8000/api/admin/services/');
+          const res = await fetch(`${API_BASE_URL}/api/admin/services/`);
           if (!res.ok) {
             throw new Error('فشل في تحميل الخدمات');
           }

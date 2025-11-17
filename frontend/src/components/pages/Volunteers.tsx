@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import { Users, Clock, CheckCircle, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
+
 
 /* ============================
    AnimatedDonut (Spin + باقي الدائرة ذهبي)
@@ -187,7 +189,7 @@ export default function Volunteers() {
           setIsLoading(true);
           setError(null);
   
-          const res = await fetch('http://127.0.0.1:8000/api/admin/volunteers/');
+          const res = await fetch(`${API_BASE_URL}/api/admin/volunteers/`);
           if (!res.ok) {
             throw new Error('Failed to load volunteers');
           }

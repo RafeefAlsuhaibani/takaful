@@ -5,6 +5,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import Card from '../../ui/Card';
 import Input from '../../forms/Input';
 import Button from '../../ui/Button';
+import { API_BASE_URL } from '../../../config';
+
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -39,7 +41,8 @@ export default function SignIn() {
     setErrors((prev) => ({ ...prev, form: '' }));
   
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login/`, {
+
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

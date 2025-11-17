@@ -5,6 +5,8 @@ import Icon from '../ui/Icon';
 import Card from '../ui/Card';
 import Chip from '../ui/Chip';
 import ProjectDialog from '../ui/ProjectDialog';
+import { API_BASE_URL } from '../../config';
+
 
 const filters = [
   { id: 'All', label: 'الكل' },
@@ -100,7 +102,7 @@ function Projects() {
         setLoading(true);
         setError(null);
   
-        const res = await fetch('http://127.0.0.1:8000/api/admin/projects/');
+        const res = await fetch(`${API_BASE_URL}/api/admin/projects/`);
         if (!res.ok) {
           throw new Error('فشل في تحميل المشاريع');
         }

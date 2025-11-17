@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Button from '../ui/Button';
 import { useToast } from '../../contexts/ToastContext';
 import { sanitizeInput } from '../../utils/sanitize';
+import { API_BASE_URL } from '../../config';
+
 // import { suggests, type Suggest } from '../../data/Suggest';
 
 
@@ -43,7 +45,7 @@ export default function Suggest() {
           submitted_by: sanitizedEmail
         };
     
-        const res = await fetch("http://127.0.0.1:8000/api/admin/suggestions/", {
+        const res = await fetch(`${API_BASE_URL}/api/admin/suggestions/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
