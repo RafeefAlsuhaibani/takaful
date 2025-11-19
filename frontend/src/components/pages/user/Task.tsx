@@ -1,7 +1,7 @@
-import { useAuth } from '../../../contexts/AuthContext';
 import SidebarLayout from '../../ui/Sidebar';
-import React, { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { API_BASE_URL } from '../../../config';
 
 /* ---------------- Types ---------------- */
 interface Task {
@@ -26,10 +26,100 @@ interface DataType {
     [key: string]: Project[];
 }
 
+/* ---------------- Backend Types ---------------- */
+interface BackendProject {
+    id: number;
+    title: string;
+    desc: string;
+    status: string;
+    location: string;
+    category: string;
+    beneficiaries: number;
+    created_at: string;
+}
+
 /* ---------------- Tabs ---------------- */
 const tabs = ["قيد التنفيذ", "جديدة", "معلقة", "ملغية", "مكتملة"];
 
-/* ---------------- Demo Data ---------------- */
+/* ---------------- Hijri Helpers ---------------- */
+function getHijriParts(date: Date) {
+    const formatter = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
+        day: "numeric",
+        month: "numeric",
+        year: "numeric",
+    });
+
+    const parts = formatter.formatToParts(date);
+
+    const convertArabicNumber = (str: string) =>
+        Number(str.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString()));
+
+    return {
+        hy: convertArabicNumber(parts.find((p) => p.type === "year")?.value ?? "0"),
+        hm: convertArabicNumber(parts.find((p) => p.type === "month")?.value ?? "0"),
+        hd: convertArabicNumber(parts.find((p) => p.type === "day")?.value ?? "0"),
+    };
+}
+
+/* ---------------- Helper Functions ---------------- */
+// تحويل بيانات الباك إند إلى الشكل المطلوب في الواجهة
+function mapBackendProjectToFrontend(backendProject: BackendProject): Project {
+    // مهام افتراضية (يمكن إضافتها لاحقاً في الباك إند)
+    const defaultTasks: Task[] = [
+        { text: "مراجعة المتطلبات الأساسية", done: false },
+        { text: "إعداد خطة العمل", done: false },
+        { text: "بدء التنفيذ", done: false },
+    ];
+
+    // تحويل التاريخ
+    const date = new Date(backendProject.created_at);
+    const hijriDate = getHijriParts(date);
+    const monthNamesHijri = [
+        "محرم", "صفر", "ربيع الأول", "ربيع الثاني",
+        "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
+        "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
+    ];
+    const formattedDate = `${hijriDate.hd} ${monthNamesHijri[hijriDate.hm - 1]}`;
+
+    return {
+        id: backendProject.id,
+        title: backendProject.title,
+        association: backendProject.category || "جمعية التكافل",
+        description: backendProject.desc || "لا يوجد وصف",
+        progress: backendProject.status === "COMPLETED" ? 100 : backendProject.status === "ACTIVE" ? 50 : 0,
+        tasks: defaultTasks,
+        startDate: formattedDate,
+        supervisor: "مشرف المشروع",
+        location: backendProject.location || "غير محدد",
+        duration: "30 ساعة",
+    };
+}
+
+// تحويل قائمة المشاريع من الباك إند إلى DataType
+function organizeProjectsByStatus(backendProjects: BackendProject[]): DataType {
+    const result: DataType = {
+        "قيد التنفيذ": [],
+        "جديدة": [],
+        "معلقة": [],
+        "ملغية": [],
+        "مكتملة": [],
+    };
+
+    backendProjects.forEach((backendProject) => {
+        const frontendProject = mapBackendProjectToFrontend(backendProject);
+        const statusMap: Record<string, string> = {
+            "PLANNED": "جديدة",
+            "ACTIVE": "قيد التنفيذ",
+            "COMPLETED": "مكتملة",
+        };
+        const tab = statusMap[backendProject.status] || "جديدة";
+        result[tab].push(frontendProject);
+    });
+
+    return result;
+}
+
+/* ---------------- Demo Data (Fallback) ---------------- */
 const data: DataType = {
     "قيد التنفيذ": [
         {
@@ -142,26 +232,6 @@ const data: DataType = {
     }],
 };
 
-/* ---------------- Hijri Helpers ---------------- */
-function getHijriParts(date: Date) {
-    const formatter = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
-        day: "numeric",
-        month: "numeric",
-        year: "numeric",
-    });
-
-    const parts = formatter.formatToParts(date);
-
-    const convertArabicNumber = (str: string) =>
-        Number(str.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString()));
-
-    return {
-        hy: convertArabicNumber(parts.find((p) => p.type === "year")?.value ?? "0"),
-        hm: convertArabicNumber(parts.find((p) => p.type === "month")?.value ?? "0"),
-        hd: convertArabicNumber(parts.find((p) => p.type === "day")?.value ?? "0"),
-    };
-}
-
 function generateHijriMonthDates(hYear: number, hMonth: number) {
     const found: Date[] = [];
     const today = new Date();
@@ -202,6 +272,10 @@ export default function Tasks() {
     const [withdrawProjectId, setWithdrawProjectId] = useState<number | null>(null);
     const [withdrawProjectTab, setWithdrawProjectTab] = useState<string | null>(null);
 
+    /* Loading and Error states */
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
     /* Tasks state */
     const [tasksState, setTasksState] = useState<DataType>(() => {
         const copy: DataType = {};
@@ -213,6 +287,43 @@ export default function Tasks() {
         }
         return copy;
     });
+
+    /* Fetch projects from backend */
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const res = await fetch(`${API_BASE_URL}/api/admin/projects/`);
+                if (!res.ok) {
+                    throw new Error('فشل في تحميل المشاريع');
+                }
+
+                const backendProjects: BackendProject[] = await res.json();
+                const organizedData = organizeProjectsByStatus(backendProjects);
+
+                // Deep copy to maintain immutability
+                const copy: DataType = {};
+                for (const tab in organizedData) {
+                    copy[tab] = organizedData[tab].map((p) => ({
+                        ...p,
+                        tasks: p.tasks.map((t) => ({ ...t })),
+                    }));
+                }
+
+                setTasksState(copy);
+            } catch (err) {
+                console.error('Error fetching projects:', err);
+                setError('حدث خطأ أثناء تحميل المشاريع. جاري استخدام البيانات المحلية.');
+                // Keep the demo data as fallback
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProjects();
+    }, []);
 
     /* Hijri Calendar state */
     const today = new Date();
@@ -277,9 +388,10 @@ export default function Tasks() {
         setShowWithdrawPopup(true);
     };
 
-    const handleConfirmWithdraw = () => {
+    const handleConfirmWithdraw = async () => {
         if (!withdrawProjectId || !withdrawProjectTab) return;
 
+        // تحديث الحالة المحلية أولاً
         setTasksState((prev) => {
             const newState: DataType = {};
 
@@ -296,6 +408,20 @@ export default function Tasks() {
 
             return newState;
         });
+
+        // حذف من الباك إند (أو تحديث الحالة)
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/projects/${withdrawProjectId}/`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok && res.status !== 404) {
+                throw new Error('فشل في حذف المشروع');
+            }
+        } catch (err) {
+            console.error('Error deleting project:', err);
+            setError('حدث خطأ أثناء حذف المشروع');
+        }
 
         setShowWithdrawPopup(false);
         setWithdrawProjectId(null);
@@ -336,9 +462,13 @@ export default function Tasks() {
         });
     };
 
-    const handleSaveProgress = () => {
+    const handleSaveProgress = async () => {
         if (!selectedProjectId) return;
 
+        const project = tasksState[activeTab]?.find((p) => p.id === selectedProjectId);
+        if (!project) return;
+
+        // تحديث الحالة المحلية أولاً
         setTasksState((prev) => {
             const newState: DataType = {};
             for (const key in prev) {
@@ -352,24 +482,54 @@ export default function Tasks() {
             const index = list.findIndex((p) => p.id === selectedProjectId);
             if (index === -1) return newState;
 
-            const project = list[index];
+            const updatedProject = list[index];
 
-            if (project.progress === 100) {
+            if (updatedProject.progress === 100) {
                 newState[activeTab] = newState[activeTab].filter(
-                    (p) => p.id !== project.id
+                    (p) => p.id !== updatedProject.id
                 );
-                newState["مكتملة"].push(project);
+                newState["مكتملة"].push(updatedProject);
             }
 
-            if (project.progress < 100 && activeTab === "مكتملة") {
+            if (updatedProject.progress < 100 && activeTab === "مكتملة") {
                 newState["مكتملة"] = newState["مكتملة"].filter(
-                    (p) => p.id !== project.id
+                    (p) => p.id !== updatedProject.id
                 );
-                newState["قيد التنفيذ"].push(project);
+                newState["قيد التنفيذ"].push(updatedProject);
             }
 
             return newState;
         });
+
+        // تحديث الباك إند
+        try {
+            const statusMap: Record<string, string> = {
+                "قيد التنفيذ": "ACTIVE",
+                "جديدة": "PLANNED",
+                "معلقة": "PLANNED",
+                "ملغية": "PLANNED",
+                "مكتملة": "COMPLETED",
+            };
+
+            const newStatus = project.progress === 100 ? "COMPLETED" : statusMap[activeTab] || "ACTIVE";
+
+            const res = await fetch(`${API_BASE_URL}/api/admin/projects/${selectedProjectId}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: newStatus,
+                }),
+            });
+
+            if (!res.ok) {
+                throw new Error('فشل في تحديث المشروع');
+            }
+        } catch (err) {
+            console.error('Error updating project:', err);
+            setError('حدث خطأ أثناء تحديث المشروع');
+        }
 
         setShowPopup(false);
     };
@@ -390,6 +550,28 @@ export default function Tasks() {
     return (
         <SidebarLayout>
             <div className="h-full w-full overflow-auto bg-gray-50">
+                {/* Error Message */}
+                {error && (
+                    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50" style={{ direction: "rtl" }}>
+                        {error}
+                        <button
+                            onClick={() => setError(null)}
+                            className="mr-2 text-red-700 hover:text-red-900"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
+
+                {/* Loading State */}
+                {loading && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg p-8 text-center" style={{ direction: "rtl" }}>
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8D2E46] mx-auto mb-4"></div>
+                            <p className="text-[#6F1A28]">جاري تحميل المشاريع...</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Popup Modal */}
                 {showPopup && selectedProject && (
