@@ -92,12 +92,6 @@ export default function UserProfileDropdown({ userName, userRole }: UserProfileD
     setFocusedIndex(-1);
   };
 
-  const handleSettingsClick = () => {
-    navigate('/settings');
-    setIsOpen(false);
-    setFocusedIndex(-1);
-  };
-
   const handleAdminClick = () => {
     navigate('/admin');
     setIsOpen(false);

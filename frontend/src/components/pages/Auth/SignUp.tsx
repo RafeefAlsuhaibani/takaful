@@ -44,12 +44,8 @@ export default function SignUp() {
   ];
   const dayOptions = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
  
- //تعديل لحل مشكلة الرقم ورقم الهوية
+//تعديل لحل مشكلة الرقم ورقم الهوية
   const digitsOnly = (value: string) => value.replace(/\D/g, '');
-  // Keep only digits for numeric fields
-const cleanNationalId = (value: string) => digitsOnly(value).slice(0, 10); // max 10 digits
-const cleanPhone = (value: string) => digitsOnly(value).slice(0, 9);       // max 9 digits (5XXXXXXXX)
-
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -148,21 +144,6 @@ const cleanPhone = (value: string) => digitsOnly(value).slice(0, 9);       // ma
       ? formData.availableDays.filter((d) => d !== day)
       : [...formData.availableDays, day];
     handleInputChange('availableDays', newDays);
-  };
-
-  const formatNationalId = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    if (digits.length <= 2) return digits;
-    return digits.slice(0, 2) + '*'.repeat(Math.min(digits.length - 2, 6)) + digits.slice(-2);
-  };
-
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    if (digits.length === 0) return '';
-    if (digits.length <= 1) return `+966 ${digits}`;
-    if (digits.length <= 4) return `+966 ${digits.slice(1)}`;
-    if (digits.length <= 7) return `+966 ${digits.slice(1, 4)} ${digits.slice(4)}`;
-    return `+966 ${digits.slice(1, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 9)}`;
   };
 
   return (
@@ -269,7 +250,7 @@ const cleanPhone = (value: string) => digitsOnly(value).slice(0, 9);       // ma
             tags={formData.skills}
             onTagsChange={(skills) => handleInputChange('skills', skills)}
             placeholder="اضغط Enter لإضافة مهارة"
-            getTagClassName={(tag, i) => {
+            getTagClassName={(_, i) => {
               const pastel = [
                 'bg-[#FDE2E4] text-gray-800', // وردي فاتح
                 'bg-[#E2ECE9] text-gray-800', // أخضر باهت

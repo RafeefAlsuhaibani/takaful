@@ -7,7 +7,6 @@ export default function PersonalInfo() {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingEducation, setIsEditingEducation] = useState(false);
-  const [isEditingGender, setIsEditingGender] = useState(false);
   
   const [formData, setFormData] = useState({
     name: user?.name || 'فرح صالح الحربي',
@@ -38,7 +37,6 @@ export default function PersonalInfo() {
   const handleCancel = () => {
     setIsEditing(false);
     setIsEditingEducation(false);
-    setIsEditingGender(false);
     setShowGenderOptions(false);
   };
 
@@ -53,7 +51,6 @@ export default function PersonalInfo() {
   const handleGenderSelect = (gender: string) => {
     handleInputChange('gender', gender);
     setShowGenderOptions(false);
-    setIsEditingGender(false);
   };
 
   return (
@@ -139,10 +136,7 @@ export default function PersonalInfo() {
               {isEditing ? (
                 <>
                   <button
-                    onClick={() => {
-                      setIsEditingGender(true);
-                      setShowGenderOptions(!showGenderOptions);
-                    }}
+                    onClick={() => setShowGenderOptions(!showGenderOptions)}
                     className="w-full text-right text-gray-700 text-base focus:outline-none"
                   >
                     <span className="font-semibold">الجنس :</span> {formData.gender}

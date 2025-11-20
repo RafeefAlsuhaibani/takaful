@@ -1,6 +1,6 @@
 import type { ReactNode, JSX } from 'react';
 import { Bell, Settings, Home, ClipboardList, ExternalLink, UserCircle } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 type MenuKey = 'home' | 'personal-info' | 'tasks' | 'settings' | 'takaful';
 
@@ -12,7 +12,6 @@ const menuItems = [
     { key: 'home' as MenuKey, label: 'الرئيسية', icon: Home, to: '/user/main', exact: true },
     { key: 'tasks' as MenuKey, label: 'المهام', icon: ClipboardList, to: '/user/tasks' },
     { key: 'personal-info' as MenuKey, label: 'المعلومات الشخصية', icon: UserCircle, to: '/user/personal-info', exact: true },
-    { key: 'settings' as MenuKey, label: 'الإعدادات', icon: Settings, to: '/user/settings' },
 ];
 
 export default function ArabicSidebar({ children }: SidebarLayoutProps): JSX.Element {

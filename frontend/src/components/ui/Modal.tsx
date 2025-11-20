@@ -9,11 +9,11 @@ interface ModalProps {
   lockTargetSelector?: string;
 }
 
-export default function Modal({ open, onClose, children, labelledById, lockTargetSelector }: ModalProps) {
+export default function Modal({ open, onClose, children, labelledById }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
-  const wheelListenerRef = useRef<(e: WheelEvent) => void>();
-  const touchMoveListenerRef = useRef<(e: TouchEvent) => void>();
+  const wheelListenerRef = useRef<(e: WheelEvent) => void | null>(null);
+  const touchMoveListenerRef = useRef<(e: TouchEvent) => void | null>(null);
 
   const ensureNoScrollStyle = () => {
     if (typeof document === 'undefined') return;
@@ -27,12 +27,6 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
       `;
       document.head.appendChild(style);
     }
-  };
-
-  const getScrollContainer = (): Element | null => {
-    if (typeof document === 'undefined') return null;
-    // Always lock body and html to prevent scrolling
-    return document.body;
   };
 
   useEffect(() => {

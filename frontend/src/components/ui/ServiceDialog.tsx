@@ -1,4 +1,4 @@
-import { X, Star, Heart, ArrowRight, MapPin, CalendarDays, Building } from 'lucide-react';
+import { X, Star, Heart, MapPin, CalendarDays, Building } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';

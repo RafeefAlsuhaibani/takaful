@@ -168,12 +168,10 @@ type Volunteer = {
 };
 
 
-export default function Volunteers() {
-  const navigate = useNavigate();
-// backend
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  export default function Volunteers() {
+    const navigate = useNavigate();
+  // backend
+    const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
 
 
   // English digits
@@ -186,9 +184,6 @@ export default function Volunteers() {
     useEffect(() => {
       const fetchVolunteers = async () => {
         try {
-          setIsLoading(true);
-          setError(null);
-  
           const res = await fetch(`${API_BASE_URL}/api/admin/volunteers/`);
           if (!res.ok) {
             throw new Error('Failed to load volunteers');
@@ -198,9 +193,6 @@ export default function Volunteers() {
           setVolunteers(data);
         } catch (err) {
           console.error(err);
-          setError('حدث خطأ أثناء تحميل بيانات المتطوعين، حاول مرة أخرى.');
-        } finally {
-          setIsLoading(false);
         }
       };
   

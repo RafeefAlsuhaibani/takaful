@@ -93,15 +93,10 @@ function Projects() {
 
   // Backend data state
   const [projectsData, setProjectsData] = useState<Project[]>(projects); // start with mock as fallback
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        setLoading(true);
-        setError(null);
-  
         const res = await fetch(`${API_BASE_URL}/api/admin/projects/`);
         if (!res.ok) {
           throw new Error('فشل في تحميل المشاريع');
@@ -111,12 +106,9 @@ function Projects() {
         setProjectsData(data);
       } catch (err) {
         console.error(err);
-        setError('حدث خطأ أثناء تحميل المشاريع');
-      } finally {
-        setLoading(false);
       }
     };
-  
+
     fetchProjects();
   }, []);
   

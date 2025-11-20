@@ -23,16 +23,11 @@ function Services() {
 
     // Backend data state 
     const [servicesData, setServicesData] = useState<Service[]>(services);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
 
     useEffect(() => {
       const fetchServices = async () => {
         try {
-          setLoading(true);
-          setError(null);
-  
           const res = await fetch(`${API_BASE_URL}/api/admin/services/`);
           if (!res.ok) {
             throw new Error('فشل في تحميل الخدمات');
@@ -42,9 +37,6 @@ function Services() {
           setServicesData(data);
         } catch (err) {
           console.error(err);
-          setError('حدث خطأ أثناء تحميل الخدمات');
-        } finally {
-          setLoading(false);
         }
       };
   

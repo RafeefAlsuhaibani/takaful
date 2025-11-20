@@ -15,7 +15,7 @@ import AdminSignIn from './components/pages/admin/AdminSignIn';
 import Suggest from './components/pages/Suggest';
 import About from './components/pages/About';
 
-import UserMain from './components/pages/user/main';
+import UserMain from './components/pages/user/Main';
 import UserTasks from './components/pages/user/Task';
 import UserSettings from './components/pages/user/Setting';
 import PersonalInfo from './components/pages/user/PersonalInfo';
