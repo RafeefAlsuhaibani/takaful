@@ -62,16 +62,13 @@ function getHijriParts(date: Date) {
 }
 
 /* ---------------- Helper Functions ---------------- */
-// تحويل بيانات الباك إند إلى الشكل المطلوب في الواجهة
 function mapBackendProjectToFrontend(backendProject: BackendProject): Project {
-    // مهام افتراضية (يمكن إضافتها لاحقاً في الباك إند)
     const defaultTasks: Task[] = [
         { text: "مراجعة المتطلبات الأساسية", done: false },
         { text: "إعداد خطة العمل", done: false },
         { text: "بدء التنفيذ", done: false },
     ];
 
-    // تحويل التاريخ
     const date = new Date(backendProject.created_at);
     const hijriDate = getHijriParts(date);
     const monthNamesHijri = [
@@ -95,7 +92,6 @@ function mapBackendProjectToFrontend(backendProject: BackendProject): Project {
     };
 }
 
-// تحويل قائمة المشاريع من الباك إند إلى DataType
 function organizeProjectsByStatus(backendProjects: BackendProject[]): DataType {
     const result: DataType = {
         "قيد التنفيذ": [],
@@ -159,7 +155,6 @@ const data: DataType = {
             duration: "24 ساعة",
         }
     ],
-
     "جديدة": [
         {
             id: 3,
@@ -179,7 +174,6 @@ const data: DataType = {
             duration: "40 ساعة",
         }
     ],
-
     "معلقة": [
         {
             id: 4,
@@ -191,7 +185,7 @@ const data: DataType = {
                 { text: "اعداد واجهة تسجيل دخول.", done: true },
                 { text: "تصميم صفحة لوحة التحكم.", done: true },
                 { text: "ربط قاعدة بيانات التجارب.", done: true },
-                { text: "اختبار نسخة اولية.", done: false },
+                { text: "اختبار نسخة اوليه.", done: false },
             ],
             startDate: "25 جمادى الاخر",
             supervisor: "ساره العتيبي",
@@ -199,7 +193,6 @@ const data: DataType = {
             duration: "28 ساعة",
         }
     ],
-
     "ملغية": [{
         id: 5,
         title: "تطوير تطبيق متابعةالتبرعات",
@@ -210,16 +203,15 @@ const data: DataType = {
             { text: "اعداد واجهة تسجيل دخول.", done: true },
             { text: "تصميم صفحة لوحة التحكم.", done: true },
             { text: "ربط قاعدة بيانات التجارب.", done: true },
-            { text: "اختبار نسخة اولية.", done: false },
+            { text: "اختبار نسخة اوليه.", done: false },
         ],
         startDate: "25 جمادى الاخر",
         supervisor: "ساره العتيبي",
         location: "مقر الجمعية",
         duration: "28 ساعة",
     }],
-
     "مكتملة": [{
-        id: 4,
+        id: 6,
         title: "تطوير موقع الأسر المنتجة",
         association: "جمعية الوفاء النسائية",
         description: "اعادة تصميم الموقع الأكتروني لعرض منتجات الأسر المنتجة بشكل عصري.",
@@ -264,19 +256,14 @@ function jsWeekdayToFigmaIndex(js: number) {
 /* ---------------- Component ---------------- */
 export default function Tasks() {
     const [activeTab, setActiveTab] = useState("قيد التنفيذ");
-
     const [showPopup, setShowPopup] = useState(false);
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-
     const [showWithdrawPopup, setShowWithdrawPopup] = useState(false);
     const [withdrawProjectId, setWithdrawProjectId] = useState<number | null>(null);
     const [withdrawProjectTab, setWithdrawProjectTab] = useState<string | null>(null);
-
-    /* Loading and Error states */
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    /* Tasks state */
     const [tasksState, setTasksState] = useState<DataType>(() => {
         const copy: DataType = {};
         for (const tab in data) {
@@ -288,22 +275,15 @@ export default function Tasks() {
         return copy;
     });
 
-    /* Fetch projects from backend */
     useEffect(() => {
         const fetchProjects = async () => {
             try {
                 setLoading(true);
                 setError(null);
-
                 const res = await fetch(`${API_BASE_URL}/api/admin/projects/`);
-                if (!res.ok) {
-                    throw new Error('فشل في تحميل المشاريع');
-                }
-
+                if (!res.ok) throw new Error('فشل في تحميل المشاريع');
                 const backendProjects: BackendProject[] = await res.json();
                 const organizedData = organizeProjectsByStatus(backendProjects);
-
-                // Deep copy to maintain immutability
                 const copy: DataType = {};
                 for (const tab in organizedData) {
                     copy[tab] = organizedData[tab].map((p) => ({
@@ -311,28 +291,21 @@ export default function Tasks() {
                         tasks: p.tasks.map((t) => ({ ...t })),
                     }));
                 }
-
                 setTasksState(copy);
             } catch (err) {
                 console.error('Error fetching projects:', err);
                 setError('حدث خطأ أثناء تحميل المشاريع. جاري استخدام البيانات المحلية.');
-                // Keep the demo data as fallback
             } finally {
                 setLoading(false);
             }
         };
-
         fetchProjects();
     }, []);
 
-    /* Hijri Calendar state */
     const today = new Date();
     const todayHijri = getHijriParts(today);
-
     const [currentHijriMonth, setCurrentHijriMonth] = useState(todayHijri.hm);
-    const [currentHijriYear, setCurrentHijriYear] =
-        useState(todayHijri.hy);
-
+    const [currentHijriYear, setCurrentHijriYear] = useState(todayHijri.hy);
     const deadlines = [5, 12, 30];
 
     const monthNamesHijri = [
@@ -348,21 +321,16 @@ export default function Tasks() {
 
     const gridDays = useMemo(() => {
         if (!monthDates.length) return [];
-
         const firstDate = monthDates[0];
         const firstIndex = jsWeekdayToFigmaIndex(firstDate.getDay());
-
         const days: (number | null)[] = Array(firstIndex).fill(null);
-
         for (const d of monthDates) {
             days.push(getHijriParts(d).hd);
         }
-
         while (days.length % 7 !== 0) days.push(null);
         return days;
     }, [monthDates]);
 
-    /* Calendar handlers */
     const handlePrevHijri = () => {
         if (currentHijriMonth === 1) {
             setCurrentHijriMonth(12);
@@ -381,7 +349,6 @@ export default function Tasks() {
         }
     };
 
-    /* Withdraw handlers */
     const handleOpenWithdrawPopup = (projectId: number) => {
         setWithdrawProjectId(projectId);
         setWithdrawProjectTab(activeTab);
@@ -390,45 +357,33 @@ export default function Tasks() {
 
     const handleConfirmWithdraw = async () => {
         if (!withdrawProjectId || !withdrawProjectTab) return;
-
-        // تحديث الحالة المحلية أولاً
         setTasksState((prev) => {
             const newState: DataType = {};
-
             for (const key in prev) {
                 newState[key] = prev[key].map((p) => ({
                     ...p,
                     tasks: p.tasks.map((t) => ({ ...t })),
                 }));
             }
-
             newState[withdrawProjectTab] = newState[withdrawProjectTab].filter(
                 (p) => p.id !== withdrawProjectId
             );
-
             return newState;
         });
-
-        // حذف من الباك إند (أو تحديث الحالة)
         try {
             const res = await fetch(`${API_BASE_URL}/api/admin/projects/${withdrawProjectId}/`, {
                 method: 'DELETE',
             });
-
-            if (!res.ok && res.status !== 404) {
-                throw new Error('فشل في حذف المشروع');
-            }
+            if (!res.ok && res.status !== 404) throw new Error('فشل في حذف المشروع');
         } catch (err) {
             console.error('Error deleting project:', err);
             setError('حدث خطأ أثناء حذف المشروع');
         }
-
         setShowWithdrawPopup(false);
         setWithdrawProjectId(null);
         setWithdrawProjectTab(null);
     };
 
-    /* Progress popup */
     const handleOpenPopup = (projectId: number) => {
         setSelectedProjectId(projectId);
         setShowPopup(true);
@@ -436,39 +391,30 @@ export default function Tasks() {
 
     const handleToggleTask = (taskIndex: number) => {
         if (selectedProjectId === null) return;
-
         setTasksState((prev) => {
             const newState: DataType = {};
-
             for (const key in prev) {
                 newState[key] = prev[key].map((p) => ({
                     ...p,
                     tasks: p.tasks.map((t) => ({ ...t })),
                 }));
             }
-
             const list = newState[activeTab];
             const index = list.findIndex((p) => p.id === selectedProjectId);
             if (index === -1) return newState;
-
             const project = list[index];
             project.tasks[taskIndex].done = !project.tasks[taskIndex].done;
-
             const completed = project.tasks.filter((t) => t.done).length;
             const total = project.tasks.length;
             project.progress = Math.round((completed / total) * 100);
-
             return newState;
         });
     };
 
     const handleSaveProgress = async () => {
         if (!selectedProjectId) return;
-
         const project = tasksState[activeTab]?.find((p) => p.id === selectedProjectId);
         if (!project) return;
-
-        // تحديث الحالة المحلية أولاً
         setTasksState((prev) => {
             const newState: DataType = {};
             for (const key in prev) {
@@ -477,31 +423,24 @@ export default function Tasks() {
                     tasks: p.tasks.map((t) => ({ ...t })),
                 }));
             }
-
             const list = newState[activeTab];
             const index = list.findIndex((p) => p.id === selectedProjectId);
             if (index === -1) return newState;
-
             const updatedProject = list[index];
-
             if (updatedProject.progress === 100) {
                 newState[activeTab] = newState[activeTab].filter(
                     (p) => p.id !== updatedProject.id
                 );
                 newState["مكتملة"].push(updatedProject);
             }
-
             if (updatedProject.progress < 100 && activeTab === "مكتملة") {
                 newState["مكتملة"] = newState["مكتملة"].filter(
                     (p) => p.id !== updatedProject.id
                 );
                 newState["قيد التنفيذ"].push(updatedProject);
             }
-
             return newState;
         });
-
-        // تحديث الباك إند
         try {
             const statusMap: Record<string, string> = {
                 "قيد التنفيذ": "ACTIVE",
@@ -510,27 +449,17 @@ export default function Tasks() {
                 "ملغية": "PLANNED",
                 "مكتملة": "COMPLETED",
             };
-
             const newStatus = project.progress === 100 ? "COMPLETED" : statusMap[activeTab] || "ACTIVE";
-
             const res = await fetch(`${API_BASE_URL}/api/admin/projects/${selectedProjectId}/`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    status: newStatus,
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
             });
-
-            if (!res.ok) {
-                throw new Error('فشل في تحديث المشروع');
-            }
+            if (!res.ok) throw new Error('فشل في تحديث المشروع');
         } catch (err) {
             console.error('Error updating project:', err);
             setError('حدث خطأ أثناء تحديث المشروع');
         }
-
         setShowPopup(false);
     };
 
@@ -546,24 +475,16 @@ export default function Tasks() {
         "مكتملة": "font-bold text-[#6F1A28]",
     };
 
-
     return (
         <SidebarLayout>
-            <div className="h-full w-full overflow-auto bg-gray-50">
-                {/* Error Message */}
+            <div className="h-full w-full overflow-auto">
                 {error && (
                     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50" style={{ direction: "rtl" }}>
                         {error}
-                        <button
-                            onClick={() => setError(null)}
-                            className="mr-2 text-red-700 hover:text-red-900"
-                        >
-                            ✕
-                        </button>
+                        <button onClick={() => setError(null)} className="mr-2 text-red-700 hover:text-red-900">✕</button>
                     </div>
                 )}
 
-                {/* Loading State */}
                 {loading && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-lg p-8 text-center" style={{ direction: "rtl" }}>
@@ -573,206 +494,86 @@ export default function Tasks() {
                     </div>
                 )}
 
-                {/* Popup Modal */}
                 {showPopup && selectedProject && (
-                    <div
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                        onClick={() => setShowPopup(false)}
-                    >
-                        <div
-                            className="bg-white rounded-3xl p-8 w-[500px] shadow-2xl border-4 border-[#C49FA3]"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ direction: "rtl" }}
-                        >
-                            <h2 className="text-2xl font-bold text-[#8D2E46] mb-4">
-                                تحديث التقدم
-                            </h2>
-
-                            <h3 className="text-lg font-semibold text-[#6F1A28] mb-6">
-                                {selectedProject.title}
-                            </h3>
-
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowPopup(false)}>
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-[500px] shadow-2xl border-4 border-[#C49FA3]" onClick={(e) => e.stopPropagation()} style={{ direction: "rtl" }}>
+                            <h2 className="text-xl sm:text-2xl font-bold text-[#8D2E46] mb-4">تحديث التقدم</h2>
+                            <h3 className="text-base sm:text-lg font-semibold text-[#6F1A28] mb-6">{selectedProject.title}</h3>
                             <div className="space-y-3 mb-6">
                                 {selectedProject.tasks.map((task, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="flex items-center gap-3 p-3 bg-gradient-to-br from-[#e3d1d8] to-[#fef3c7] rounded-xl cursor-pointer hover:shadow-md transition-shadow"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={task.done}
-                                            onChange={() => handleToggleTask(idx)}
-                                            className="w-5 h-5 accent-[#8D2E46] cursor-pointer"
-                                        />
-
-                                        <span
-                                            className={`text-sm ${task.done ? "line-through text-gray-400" : "text-[#6F1A28]"
-                                                }`}
-                                        >
-                                            {task.text}
-                                        </span>
+                                    <div key={idx} className="flex items-center gap-3 p-3 bg-gradient-to-br from-[#e3d1d8] to-[#fef3c7] rounded-xl cursor-pointer hover:shadow-md transition-shadow">
+                                        <input type="checkbox" checked={task.done} onChange={() => handleToggleTask(idx)} className="w-5 h-5 accent-[#8D2E46] cursor-pointer" />
+                                        <span className={`text-sm ${task.done ? "line-through text-gray-400" : "text-[#6F1A28]"}`}>{task.text}</span>
                                     </div>
                                 ))}
                             </div>
-
                             <div className="bg-white rounded-full h-4 overflow-hidden mb-3">
-                                <div
-                                    style={{
-                                        width: `${selectedProject.progress}%`,
-                                        backgroundColor: "#E8C150",
-                                    }}
-                                    className="h-4 rounded-full transition-all duration-300"
-                                />
+                                <div style={{ width: `${selectedProject.progress}%`, backgroundColor: "#E8C150" }} className="h-4 rounded-full transition-all duration-300" />
                             </div>
-
-                            <p className="text-center text-sm font-bold text-[#6F1A28] mb-6">
-                                التقدم: {selectedProject.progress}%
-                            </p>
-
+                            <p className="text-center text-sm font-bold text-[#6F1A28] mb-6">التقدم: {selectedProject.progress}%</p>
                             <div className="flex gap-3 justify-center">
-                                <button
-                                    onClick={handleSaveProgress}
-                                    className="px-6 py-2 bg-gradient-to-r from-[#a83451ff] to-[#E4B106] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                                >
-                                    حفظ
-                                </button>
-                                <button
-                                    onClick={() => setShowPopup(false)}
-                                    className="px-6 py-2 border-2 border-[#86676A] text-[#86676A] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-                                >
-                                    إلغاء
-                                </button>
+                                <button onClick={handleSaveProgress} className="px-6 py-2 bg-gradient-to-r from-[#a83451ff] to-[#E4B106] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">حفظ</button>
+                                <button onClick={() => setShowPopup(false)} className="px-6 py-2 border-2 border-[#86676A] text-[#86676A] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">إلغاء</button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Withdraw Popup */}
                 {showWithdrawPopup && (
-                    <div
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                        onClick={() => setShowWithdrawPopup(false)}
-                    >
-                        <div
-                            className="bg-white rounded-3xl p-8 w-[400px] shadow-2xl border-4 border-[#C49FA3]"
-                            style={{ direction: "rtl" }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <h2 className="text-2xl font-bold text-[#8D2E46] mb-4 text-center">
-                                تأكيد الانسحاب
-                            </h2>
-
-                            <p className="text-center text-[#6F1A28] mb-8">
-                                هل أنت متأكد من رغبتك في الانسحاب من هذا المشروع؟
-                            </p>
-
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowWithdrawPopup(false)}>
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-[400px] shadow-2xl border-4 border-[#C49FA3]" style={{ direction: "rtl" }} onClick={(e) => e.stopPropagation()}>
+                            <h2 className="text-xl sm:text-2xl font-bold text-[#8D2E46] mb-4 text-center">تأكيد الانسحاب</h2>
+                            <p className="text-center text-[#6F1A28] mb-8">هل أنت متأكد من رغبتك في الانسحاب من هذا المشروع؟</p>
                             <div className="flex gap-3 justify-center">
-                                <button
-                                    onClick={handleConfirmWithdraw}
-                                    className="px-6 py-2 bg-gradient-to-r from-[#a83451ff] to-[#E4B106] 
-                                    text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                                >
-                                    نعم، انسحب
-                                </button>
-
-                                <button
-                                    onClick={() => setShowWithdrawPopup(false)}
-                                    className="px-6 py-2 border-2 border-[#86676A] 
-                                    text-[#86676A] rounded-lg text-sm font-medium 
-                                    hover:bg-gray-50 transition-colors"
-                                >
-                                    إلغاء
-                                </button>
+                                <button onClick={handleConfirmWithdraw} className="px-6 py-2 bg-gradient-to-r from-[#a83451ff] to-[#E4B106] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">نعم، انسحب</button>
+                                <button onClick={() => setShowWithdrawPopup(false)} className="px-6 py-2 border-2 border-[#86676A] text-[#86676A] rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">إلغاء</button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* MAIN */}
-                <div className="h-full ">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8" style={{ direction: "rtl" }}>
-
-                        {/* TOP CARDS */}
-                        <div className="w-[600px] bg-white border-4 border-[#C49FA3] rounded-3xl p-6 shadow-md flex justify-between mt-4 items-center order-2 lg:order-1">
-
+                <div className="h-full">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 px-4" style={{ direction: "rtl" }}>
+                        <div className="w-full max-w-[600px] bg-white border-4 border-[#C49FA3] rounded-3xl p-6 shadow-md flex justify-between mt-4 items-center order-2 lg:order-1">
                             <div className="flex flex-col items-center flex-1">
-                                <div className="text-3xl font-bold text-[#8D2E46]">22 ربيع الآخرة</div>
-                                <div className="text-sm text-gray-600">أقرب موعد نهائي</div>
+                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#8D2E46]">22 ربيع الآخرة</div>
+                                <div className="text-xs sm:text-sm text-gray-600">أقرب موعد نهائي</div>
                             </div>
-
                             <div className="w-px h-12 bg-[#C49FA3]" />
-
                             <div className="flex flex-col items-center flex-1">
-                                <div className="text-3xl font-bold text-[#8D2E46]">7</div>
-                                <div className="text-sm text-gray-600">إجمالي المهام المنجزة</div>
+                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#8D2E46]">7</div>
+                                <div className="text-xs sm:text-sm text-gray-600">إجمالي المهام المنجزة</div>
                             </div>
                         </div>
-
-                        {/* Search Bar */}
-                        <div className="w-[390px] mr-16 flex items-center relative order-1 lg:order-2">
+                        <div className="w-full max-w-[390px] lg:mr-16 flex items-center relative order-1 lg:order-2">
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
                                 <Search className="text-gray-500 w-6 h-5" />
                             </div>
-
-                            <input
-                                type="text"
-                                placeholder="البحث ..."
-                                className="w-full bg-gradient-to-b from-[#e3d1d8] to-[#fef3c7] rounded-full pr-12 pl-4 py-3 
-                                text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C49FA3]"
-                            />
+                            <input type="text" placeholder="البحث ..." className="w-full bg-gradient-to-b from-[#e3d1d8] to-[#fef3c7] rounded-full pr-12 pl-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C49FA3]" />
                         </div>
                     </div>
 
-
-                    <div className="w-full grid grid-cols-12 gap-10" style={{ direction: "rtl" }}>
-
-                        {/* Calendar */}
-                        <div className="col-span-6 order-2">
-                            <div className="w-[470px] bg-white border-4 border-[#C49FA3] rounded-3xl p-6 shadow-md">
-
+                    <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 px-4" style={{ direction: "rtl" }}>
+                        <div className="order-1 lg:order-2">
+                            <div className="w-full max-w-[470px] mx-auto bg-white border-4 border-[#C49FA3] rounded-3xl p-4 sm:p-6 shadow-md">
                                 <div className="flex items-center justify-between mb-3">
-                                    <button onClick={handlePrevHijri}>
-                                        <ChevronRight className="w-6 h-6 text-[#6E6D6D]" />
-                                    </button>
-
-                                    <div className="text-lg font-bold text-[#4E4A4B]">
-                                        {monthNamesHijri[currentHijriMonth - 1]} {currentHijriYear}
-                                    </div>
-
-                                    <button onClick={handleNextHijri}>
-                                        <ChevronLeft className="w-7 h-6 text-[#6E6D6D]" />
-                                    </button>
+                                    <button onClick={handlePrevHijri}><ChevronRight className="w-6 h-6 text-[#6E6D6D]" /></button>
+                                    <div className="text-base sm:text-lg font-bold text-[#4E4A4B]">{monthNamesHijri[currentHijriMonth - 1]} {currentHijriYear}</div>
+                                    <button onClick={handleNextHijri}><ChevronLeft className="w-7 h-6 text-[#6E6D6D]" /></button>
                                 </div>
-
                                 <div className="w-full h-[1px] bg-[#D0A9B3] mb-4"></div>
-
                                 <div className="grid grid-cols-7 text-center mb-3">
                                     {["خميس", "أربعاء", "ثلاث", "اثنين", "أحد", "سبت", "جمعة"].map((d) => (
-                                        <div key={d} className="text-sm font-semibold text-[#6E6D6D]">
-                                            {d}
-                                        </div>
+                                        <div key={d} className="text-xs sm:text-sm font-semibold text-[#6E6D6D]">{d}</div>
                                     ))}
                                 </div>
-
                                 <div className="grid grid-cols-7 gap-1">
                                     {gridDays.map((d, i) => {
-                                        const isToday =
-                                            d === todayHijri.hd &&
-                                            currentHijriMonth === todayHijri.hm &&
-                                            currentHijriYear === todayHijri.hy;
-
+                                        const isToday = d === todayHijri.hd && currentHijriMonth === todayHijri.hm && currentHijriYear === todayHijri.hy;
                                         return (
-                                            <div
-                                                key={i}
-                                                className={`h-10 flex items-center justify-center rounded-lg text-sm relative
-                                                ${!d ? "text-transparent" : ""}
-                                                ${isToday ? "bg-[#8D2E46] text-white font-bold" : "text-[#4E4A4B]"}`}
-                                            >
+                                            <div key={i} className={`h-8 sm:h-10 flex items-center justify-center rounded-lg text-xs sm:text-sm relative ${!d ? "text-transparent" : ""} ${isToday ? "bg-[#8D2E46] text-white font-bold" : "text-[#4E4A4B]"}`}>
                                                 {d ?? ""}
-
-                                                {d && deadlines.includes(d) && (
-                                                    <span className="absolute w-3 h-3 bg-[#E4B106]/30 rounded-full bottom-1 right-1"></span>
-                                                )}
+                                                {d && deadlines.includes(d) && <span className="absolute w-3 h-3 bg-[#E4B106]/30 rounded-full bottom-1 right-1"></span>}
                                             </div>
                                         );
                                     })}
@@ -780,136 +581,52 @@ export default function Tasks() {
                             </div>
                         </div>
 
-                        {/* Tasks */}
-                        <div className="col-span-6">
-                            <div className="border-b-0 border-[#C49FA3] bg-gradient-to-l from-[#e3d1d8] via-[#f5e6d3] to-[#fef3c7] rounded-t-2xl flex overflow-x-auto shadow-lg">
+                        <div className="order-2 lg:order-1 w-full">
+                            <div className="w-full border-b-0 border-[#C49FA3] bg-gradient-to-l from-[#e3d1d8] via-[#f5e6d3] to-[#fef3c7] rounded-t-2xl flex overflow-x-auto shadow-lg">
                                 {tabs.map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab)}
-                                        className={`
-                                                 w-[470px] py-3 px-6 text-sm font-medium transition-all duration-200
-                                                     ${activeTab === tab ? `
-                                                 bg-white text-[#291613] border-x-4 border-t-4 border-[#C49FA3] rounded-t-2xl shadow-sm`
-                                                : `text-[#7f6f6f] border-b-4 border-[#C49FA3]`
-                                            }`
-                                        }>
-                                        {tab}
-                                    </button>
-
+                                    <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 min-w-[100px] whitespace-nowrap py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium transition-all duration-200 ${activeTab === tab ? `bg-white text-[#291613] border-x-4 border-t-4 border-[#C49FA3] rounded-t-2xl shadow-sm` : `text-[#7f6f6f] border-b-4 border-[#C49FA3]`}`}>{tab}</button>
                                 ))}
                             </div>
-
-                            <div className="bg-white rounded-b-2xl border-4 border-[#C49FA3] border-t-0 p-6 space-y-6">
+                            <div className="w-full bg-white rounded-b-2xl border-4 border-[#C49FA3] border-t-0 p-4 sm:p-6 space-y-6">
                                 {tasksState[activeTab]?.length ? (
                                     tasksState[activeTab].map((project) => (
-                                        <div
-                                            key={project.id}
-                                            className={`bg-gradient-to-br from-[#e3d1d8] to-[#fef3c7] rounded-2xl p-6 shadow-sm
-                                            ${activeTab === "ملغية"
-                                                    ? "line-through text-gray-400 opacity-70"
-                                                    : ""
-                                                }`}
-                                        >
-                                            <div className="w-[470px] grid lg:grid-cols-2 gap-4">
-                                                <h3 className="font-bold text-lg text-[#6F1A28] mb-1">
-                                                    {project.title}
-                                                </h3>
-
-                                                <div className="flex items-center justify-between">
-                                                    <span
-                                                        className={`mr-[150px] text-xs px-3 py-1 rounded-full border 
-                                                        ${badgeColors[activeTab] ||
-                                                            "bg-gray-100 text-gray-700 border-gray-200"
-                                                            }`}
-                                                    >
-                                                        {activeTab}
-                                                    </span>
-                                                </div>
+                                        <div key={project.id} className={`bg-gradient-to-br from-[#e3d1d8] to-[#fef3c7] rounded-2xl p-4 sm:p-6 shadow-sm ${activeTab === "ملغية" ? "line-through text-gray-400 opacity-70" : ""}`}>
+                                            <div className="flex items-center justify-between gap-3 mb-3">
+                                                <h3 className="font-bold text-base sm:text-lg text-[#6F1A28]">{project.title}</h3>
+                                                <span className={`text-xs px-3 py-1 rounded-full border whitespace-nowrap ${badgeColors[activeTab] || "bg-gray-100 text-gray-700 border-gray-200"}`}>{activeTab}</span>
                                             </div>
-
-                                            <p className="text-sm font-medium text-[#6F1A28] mb-2">
-                                                {project.association}
-                                            </p>
-
-                                            <p className="text-xs text-[#6F1A28] mb-4">
-                                                {project.description}
-                                            </p>
-
+                                            <p className="text-sm font-medium text-[#6F1A28] mb-2">{project.association}</p>
+                                            <p className="text-xs text-[#6F1A28] mb-4">{project.description}</p>
                                             <div className="bg-white rounded-full h-3 overflow-hidden mb-2">
-                                                <div
-                                                    style={{
-                                                        width: `${project.progress}%`,
-                                                        backgroundColor: "#E8C150",
-                                                    }}
-                                                    className="h-3 rounded-full"
-                                                />
+                                                <div style={{ width: `${project.progress}%`, backgroundColor: "#E8C150" }} className="h-3 rounded-full" />
                                             </div>
-
-                                            <p className="text-xs mb-4 font-medium text-[#6F1A28]">
-                                                التقدم {project.progress}%
-                                            </p>
-
+                                            <p className="text-xs mb-4 font-medium text-[#6F1A28]">التقدم {project.progress}%</p>
                                             <div className="bg-white/50 rounded-2xl p-3 mb-4">
-                                                <p className="text-xs font-bold text-[#6F1A28] mb-1">
-                                                    المهام الفرعية:
-                                                </p>
-
+                                                <p className="text-xs font-bold text-[#6F1A28] mb-1">المهام الفرعية:</p>
                                                 <ul className="text-xs text-[#6F1A28] space-y-1">
                                                     {project.tasks.map((task, idx) => (
-                                                        <li
-                                                            key={idx}
-                                                            className={`flex gap-2 ${task.done
-                                                                ? "line-through text-gray-400"
-                                                                : ""
-                                                                }`}
-                                                        >
-                                                            • {task.text}
-                                                        </li>
+                                                        <li key={idx} className={`flex gap-2 ${task.done ? "line-through text-gray-400" : ""}`}>• {task.text}</li>
                                                     ))}
                                                 </ul>
                                             </div>
-
-                                            <div className="flex text-xs text-[#6F1A28] gap-6 mb-4">
+                                            <div className="flex flex-wrap text-xs text-[#6F1A28] gap-3 sm:gap-6 mb-4">
                                                 <span>📅 {project.startDate}</span>
                                                 <span>👤 {project.supervisor}</span>
                                                 <span>📍 {project.location}</span>
                                                 <span>⏰ {project.duration}</span>
                                             </div>
-
-                                            <div className="flex gap-3 ">
-                                                {activeTab !== "ملغية" &&
-                                                    activeTab !== "مكتملة" && (
-                                                        <button
-                                                            onClick={() =>
-                                                                handleOpenPopup(project.id)
-                                                            }
-                                                            className="px-4 py-2 bg-gradient-to-r from-[#a83451ff] to-[#E4B106] text-white rounded-lg text-xs hover:opacity-90 transition-opacity"
-                                                        >
-                                                            تحديث التقدم
-                                                        </button>
-                                                    )}
-
-                                                {activeTab !== "ملغية" &&
-                                                    activeTab !== "مكتملة" && (
-                                                        <button
-                                                            onClick={() =>
-                                                                handleOpenWithdrawPopup(
-                                                                    project.id
-                                                                )
-                                                            }
-                                                            className="px-4 py-2 border-2 border-[#86676A] text-[#86676A] rounded-lg text-xs hover:bg-gray-50 transition-colors"
-                                                        >
-                                                            انسحاب
-                                                        </button>
-                                                    )}
+                                            <div className="flex flex-wrap gap-3">
+                                                {activeTab !== "ملغية" && activeTab !== "مكتملة" && (
+                                                    <button onClick={() => handleOpenPopup(project.id)} className="px-4 py-2 bg-gradient-to-r from-[#a83451ff] to-[#E4B106] text-white rounded-lg text-xs hover:opacity-90 transition-opacity">تحديث التقدم</button>
+                                                )}
+                                                {activeTab !== "ملغية" && activeTab !== "مكتملة" && (
+                                                    <button onClick={() => handleOpenWithdrawPopup(project.id)} className="px-4 py-2 border-2 border-[#86676A] text-[#86676A] rounded-lg text-xs hover:bg-gray-50 transition-colors">انسحاب</button>
+                                                )}
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-center text-gray-400 py-10">
-                                        لا توجد مهام في هذا التبويب.
-                                    </p>
+                                    <p className="text-center text-gray-400 py-10">لا توجد مهام في هذا التبويب.</p>
                                 )}
                             </div>
                         </div>

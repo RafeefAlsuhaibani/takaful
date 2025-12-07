@@ -167,10 +167,10 @@ export default function ArabicSidebar({ children }: SidebarLayoutProps): JSX.Ele
                             <h3 className="text-2xl font-bold text-gray-800 mb-1">تكافل</h3>
                             <button
                                 onClick={handleLogout}
-                                className="flex items-center gap-2 mx-auto text-gray-500 text-xs hover:text-gray-700 transition"
+                                className="flex items-center gap-2 mx-auto text-gray-500 text-sm hover:text-gray-700 transition"
                             >
+                                <span className="text-xl">→</span>
                                 <span>تسجيل خروج</span>
-                                <span>←</span>
                             </button>
                         </div>
                     </div>
