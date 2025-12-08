@@ -1,10 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 
+// Layouts
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 
+// Public Pages
 import Home from './components/pages/Home';
 import Projects from './components/pages/Projects';
 import Services from './components/pages/Services';
@@ -15,25 +18,37 @@ import AdminSignIn from './components/pages/admin/AdminSignIn';
 import Suggest from './components/pages/Suggest';
 import About from './components/pages/About';
 
-import UserMain from './components/pages/user/main';
+// User Pages
+import UserMain from './components/pages/user/Main';
 import UserTasks from './components/pages/user/Task';
 import UserSettings from './components/pages/user/Setting';
 import PersonalInfo from './components/pages/user/PersonalInfo';
+
+// Admin Pages
+import AdminMain from './components/pages/admin/main';
+import VolunteerRequests from './components/pages/admin/VolunteerRequests';
+import VolunteerManagement from './components/pages/admin/VolunteerManagement';
+import AddProjectPage from './components/pages/admin/AddProject';
+
 
 // هذا الكومبوننت هو اللي يقدر يستخدم useLocation
 function AppContent() {
   const location = useLocation();
 
-  // لو الرابط يبدأ بـ /user نخفي الهيدر والفوتر
+  // بدون هيدر وفوتر
   const isUserPage = location.pathname.startsWith('/user');
+  const isAdminPage = location.pathname.startsWith('/Admin');
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Navbar للصفحات العادية فقط */}
-      {!isUserPage && <Navbar />}
+
+      {/* Navbar للصفحات العامة فقط */}
+      {!isUserPage && !isAdminPage && <Navbar />}
 
       <main className="flex-1">
         <Routes>
+
+          {/* الصفحات العامة */}
           <Route path="/" element={<Home />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/services" element={<Services />} />
@@ -49,14 +64,22 @@ function AppContent() {
           <Route path="/user/tasks" element={<UserTasks />} />
           <Route path="/user/settings" element={<UserSettings />} />
           <Route path="/user/personal-info" element={<PersonalInfo />} />
+
+          {/* صفحات الأدمن */}
+          <Route path="/Admin" element={<AdminMain />} />
+          <Route path="/Admin/requests" element={<VolunteerRequests />} />
+          <Route path="/Admin/management" element={<VolunteerManagement />} />
+          <Route path="/Admin/tasks" element={<AddProjectPage />} />
+          {/* تبين نضيف المزيد؟ حاضرة */}
         </Routes>
       </main>
 
-      {/* Footer للصفحات العادية فقط */}
-      {!isUserPage && <Footer />}
+      {/* Footer للصفحات العامة فقط */}
+      {!isUserPage && !isAdminPage && <Footer />}
     </div>
   );
 }
+
 
 export default function App() {
   return (

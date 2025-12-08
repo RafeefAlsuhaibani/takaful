@@ -1,11 +1,11 @@
 import { Outlet } from "react-router-dom";
-import Sidebar from "../components/ui/Sidebar";
+import Sidebar from "../ui/Sidebar";
 
 export default function UserLayout() {
     return (
         <div className="min-h-screen flex bg-[#f5f7fb]">
             {/* السايدبار ثابت */}
-            <Sidebar />
+            <Sidebar children={undefined} />
 
             {/* مساحة محتوى الصفحات الفرعية */}
             <div className="flex-1 p-6">
