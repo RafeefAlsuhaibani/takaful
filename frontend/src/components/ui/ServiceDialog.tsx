@@ -19,7 +19,7 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
   const { success, info } = useToast();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-
+  
   if (!service) return null;
 
   const details = service.details;
@@ -35,7 +35,7 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
         duration: 3000
       });
       // توجيه المستخدم إلى صفحة تسجيل الدخول بعد تأخير قصير
-      setTimeout(() => {
+    setTimeout(() => {
         navigate('/signin');
       }, 500);
       return;
@@ -88,7 +88,7 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
                 {service.category && <Badge variant="default">{service.category}</Badge>}
               </div>
             </div>
-
+            
             {/* Close Button */}
             <button
               onClick={onClose}
@@ -101,17 +101,17 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
 
           {/* Body */}
           <div className="custom-scroll overflow-y-auto">
-            {/* Service Summary */}
-            <div className="mb-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-3">وصف الخدمة</h2>
+          {/* Service Summary */}
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">وصف الخدمة</h2>
               <p className="text-gray-700 leading-8">{details?.summary ?? service.desc}</p>
-            </div>
+          </div>
 
             {/* Meta */}
             {details?.meta && (
               <div className="mb-6">
                 <div className="flex flex-wrap justify-right items-center gap-x-8 gap-y-3 text-sm text-gray-600 text-center">
-                  {details.meta.map((meta, index) => (
+                {details.meta.map((meta, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-center gap-2 min-w-[140px]"
@@ -126,59 +126,59 @@ export default function ServiceDialog({ service, open, onClose }: ServiceDialogP
                         <Building size={18} className="text-gray-500" aria-hidden="true" />
                       )}
                       <span className="text-gray-700 font-medium">{meta.value}</span>
-                    </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
-            
+            </div>
+          )}
+
             <div className="border-t border-gray-100 mt-6" />
 
             {/* الفئات المستهدفة */}
             {details?.audiences && (
-              <section className="mt-8 animate-fadeIn">
-                <h2 className="text-lg font-bold text-gray-900 mb-3">الفئات المستهدفة</h2>
-                <div className="flex flex-wrap gap-2">
+            <section className="mt-8 animate-fadeIn">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">الفئات المستهدفة</h2>
+              <div className="flex flex-wrap gap-2">
                   {details.audiences.map((aud, i) => (
                     <Tag key={i}>{aud}</Tag>
-                  ))}
-                </div>
-              </section>
-            )}
+                ))}
+              </div>
+            </section>
+          )}
 
             <div className="border-t border-gray-100 mt-6" />
 
             {/* المتطلبات */}
             {details?.requirements && (
-              <section className="mt-8 animate-fadeIn">
-                <h2 className="text-lg font-bold text-gray-900 mb-3">متطلبات التنفيذ</h2>
-                <div className="space-y-3">
+            <section className="mt-8 animate-fadeIn">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">متطلبات التنفيذ</h2>
+              <div className="space-y-3">
                   {details.requirements.map((req, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <Star size={16} className="text-[#DFC775] mt-1" />
                       <span className="text-gray-700 text-sm">{req}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
             <div className="border-t border-gray-100 mt-6" />
 
             {/* المتطوعين */}
             {details?.volunteers && (
-              <section className="mt-8 animate-fadeIn">
-                <h2 className="text-lg font-bold text-gray-900 mb-3">عدد المتطوعين</h2>
+            <section className="mt-8 animate-fadeIn">
+              <h2 className="text-lg font-bold text-gray-900 mb-3">عدد المتطوعين</h2>
                 <ProgressBar current={details.volunteers.current} total={details.volunteers.need} />
-              </section>
-            )}
+            </section>
+          )}
           </div>
 
           {/* Footer */}
           <footer className="sticky bottom-0 mt-8 pt-6 border-t border-gray-100 bg-white/90 backdrop-blur">
             <div className="flex flex-col sm:flex-row gap-3">
               {/* زر شارك في الخدمة */}
-              <button
+              <button 
                 onClick={handleJoinService}
                 className="group relative overflow-hidden w-full rounded-full bg-[#711F2C] text-white font-semibold py-3
                            transition-all duration-300 focus-visible:ring-2 ring-[#711F2C] ring-offset-2
