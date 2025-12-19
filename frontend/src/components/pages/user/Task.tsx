@@ -582,9 +582,9 @@ export default function Tasks() {
                         </div>
 
                         <div className="order-2 lg:order-1 w-full">
-                            <div className="w-full border-b-0 border-[#C49FA3] bg-gradient-to-l from-[#e3d1d8] via-[#f5e6d3] to-[#fef3c7] rounded-t-2xl flex overflow-x-auto shadow-lg">
+                            <div className="w-full border-b-0 border-[#C49FA3] bg-gradient-to-l from-[#e3d1d8] via-[#f5e6d3] to-[#fef3c7] rounded-t-2xl flex shadow-lg">
                                 {tabs.map((tab) => (
-                                    <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 min-w-[100px] whitespace-nowrap py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium transition-all duration-200 ${activeTab === tab ? `bg-white text-[#291613] border-x-4 border-t-4 border-[#C49FA3] rounded-t-2xl shadow-sm` : `text-[#7f6f6f] border-b-4 border-[#C49FA3]`}`}>{tab}</button>
+                                    <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 whitespace-nowrap py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-all duration-200 ${activeTab === tab ? `bg-white text-[#291613] border-x-4 border-t-4 border-[#C49FA3] rounded-t-2xl shadow-sm` : `text-[#7f6f6f] border-b-4 border-[#C49FA3]`}`}>{tab}</button>
                                 ))}
                             </div>
                             <div className="w-full bg-white rounded-b-2xl border-4 border-[#C49FA3] border-t-0 p-4 sm:p-6 space-y-6">
@@ -598,7 +598,7 @@ export default function Tasks() {
                                             <p className="text-sm font-medium text-[#6F1A28] mb-2">{project.association}</p>
                                             <p className="text-xs text-[#6F1A28] mb-4">{project.description}</p>
                                             <div className="bg-white rounded-full h-3 overflow-hidden mb-2">
-                                                <div style={{ width: `${project.progress}%`, backgroundColor: "#E8C150" }} className="h-3 rounded-full" />
+                                                <div style={{ width: `${project.progress}%`, backgroundColor: "#E8C150" }} className="h-3 rounded-full transition-all duration-300" />
                                             </div>
                                             <p className="text-xs mb-4 font-medium text-[#6F1A28]">التقدم {project.progress}%</p>
                                             <div className="bg-white/50 rounded-2xl p-3 mb-4">
