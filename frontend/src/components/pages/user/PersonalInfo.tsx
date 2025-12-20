@@ -1,39 +1,107 @@
 import { useState } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
 import SidebarLayout from '../../ui/Sidebar';
 import { Edit, Search, Check, X, Mail } from 'lucide-react';
 
+import { useEffect } from "react";
+import { useAuth } from "../../../contexts/AuthContext";
+import { API_BASE_URL } from "../../../config";
+import TagInput from "../../forms/TagInput";
+
+
+
+
 export default function PersonalInfo() {
+
+  const { access, isAuthenticated } = useAuth();
+
+
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingEducation, setIsEditingEducation] = useState(false);
   const [isEditingGender, setIsEditingGender] = useState(false);
   
   const [formData, setFormData] = useState({
-    name: user?.name || 'فرح صالح الحربي',
-    gender: 'أنثى',
-    age: '25',
-    city: 'بريدة',
-    joinDate: '2/1/ 1447هـ',
-    phone: '+9665035839',
-    email: user?.email || 'farah.s@example.com',
-    qualification: 'بكالوريوس تقنية معلومات',
-    university: 'جامعة القصيم',
-    specialization: 'تصميم واجهات وتجربة مستخدم + تطوير Frontend & Backend'
+    name: '',
+    gender: '',
+    age: '',
+    city: '',
+    joinDate: '',
+    phone: '',
+    email: '',
+    qualification: '',
+    university: '',
+    specialization: '',
+    skills: [] as string[],          
   });
+  
 
   const [emailVerified, setEmailVerified] = useState(false);
   const [showGenderOptions, setShowGenderOptions] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !access) return;
+  
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/accounts/me/`, {
+          headers: {
+            Authorization: `Bearer ${access}`,
+          },
+        });
+  
+        if (!res.ok) throw new Error("Failed to fetch profile");
+  
+        const data = await res.json();
+
+        setFormData({
+          name: data.name ?? "",
+          gender: data.gender ?? "",
+          age: data.age ?? "",
+          city: data.city ?? "",
+          joinDate: data.join_date ?? "",
+          phone: data.phone ?? "",
+          email: data.email ?? "",
+          qualification: data.qualification ?? "",
+          university: data.university ?? "",
+          specialization: data.specialization ?? "",
+          skills: Array.isArray(data.skills) ? data.skills : [], // 🔑 CRITICAL
+        });
+        
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      }
+    };
+  
+    fetchProfile();
+  }, [isAuthenticated, access]);
+  
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    setIsEditingEducation(false);
-    // هنا يمكن إضافة منطق حفظ البيانات
+  const handleSave = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/accounts/me/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${access}`,
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      if (!res.ok) throw new Error("Update failed");
+  
+      setIsEditing(false);
+      setIsEditingEducation(false);
+      setIsEditingGender(false);
+      setShowGenderOptions(false);
+    } catch (err) {
+      console.error("Profile update error:", err);
+    }
   };
+  
 
   const handleCancel = () => {
     setIsEditing(false);
@@ -349,28 +417,25 @@ export default function PersonalInfo() {
             </div>
           </div>
         </div>
+{/* Skills */}
+<div className="mt-10">
+  <h3 className="text-xl font-semibold text-gray-800 mb-4">
+    المهارات
+  </h3>
 
-        {/* Skills Section */}
-        <div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">المهارات:</h3>
-          <div className="flex flex-wrap gap-3">
-            <span className="px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium border border-blue-200">
-              تطوير المواقع
-            </span>
-            <span className="px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium border border-purple-200">
-              التصميم
-            </span>
-            <span className="px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium border border-purple-200">
-              UI/UX
-            </span>
-            <span className="px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium border border-purple-200">
-              مطورة باك - إند
-            </span>
-            <span className="px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium border border-purple-200">
-              مطورة واجهات
-            </span>
-          </div>
-        </div>
+  <TagInput
+    tags={formData.skills}
+    onTagsChange={(tags) =>
+      setFormData((prev) => ({ ...prev, skills: tags }))
+    }
+    placeholder="اضغط Enter لإضافة مهارة"
+    inputProps={{
+      readOnly: !isEditing,
+      disabled: !isEditing,
+    }}
+  />
+</div>
+
       </div>
     </SidebarLayout>
   );

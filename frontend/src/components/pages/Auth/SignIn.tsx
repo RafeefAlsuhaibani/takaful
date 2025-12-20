@@ -7,7 +7,6 @@ import Input from '../../forms/Input';
 import Button from '../../ui/Button';
 import { API_BASE_URL } from '../../../config';
 
-
 export default function SignIn() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -23,12 +22,15 @@ export default function SignIn() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+
     if (!formData.email) newErrors.email = 'البريد الإلكتروني مطلوب';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       newErrors.email = 'يرجى إدخال بريد إلكتروني صحيح';
+
     if (!formData.password) newErrors.password = 'كلمة السر مطلوبة';
     else if (formData.password.length < 6)
       newErrors.password = 'كلمة السر يجب أن تكون 6 أحرف على الأقل';
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -36,23 +38,22 @@ export default function SignIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-  
+
     setIsSubmitting(true);
     setErrors((prev) => ({ ...prev, form: '' }));
-  
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login/`, {
 
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/accounts/auth/token/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: formData.email,
+          username: formData.email,   // IMPORTANT
           password: formData.password,
         }),
       });
-  
+      
+      
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const msg = (data as any).detail || 'فشل تسجيل الدخول، تأكد من البيانات';
@@ -60,17 +61,12 @@ export default function SignIn() {
         setIsSubmitting(false);
         return;
       }
-  
+
       const data = await res.json();
-  
-      // Use the same AuthContext shape as before
-      login({
-        name: data.name ?? formData.email.split('@')[0],
-        email: data.email ?? formData.email,
-        role: data.role ?? 'user',
-      });
-  
+
+      login(null, data.access, data.refresh); 
       navigate('/');
+      
     } catch (err) {
       console.error(err);
       setErrors((prev) => ({
@@ -81,7 +77,6 @@ export default function SignIn() {
       setIsSubmitting(false);
     }
   };
-  
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -89,7 +84,6 @@ export default function SignIn() {
   };
 
   return (
-    // ❌ removed min-h-screen to avoid forced tall page & big gap above footer
     <div className="bg-white">
       {/* Hero */}
       <header className="relative isolate text-white bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 pb-8 md:pb-10">
@@ -116,7 +110,6 @@ export default function SignIn() {
           </div>
         </div>
 
-        {/* الموجة */}
         <div className="absolute -bottom-px left-0 right-0 h-10" aria-hidden>
           <svg
             viewBox="0 0 1200 120"
@@ -142,11 +135,11 @@ export default function SignIn() {
         </div>
       </header>
 
-      {/* Sign In Form */}
-      {/* 👍 no negative margin; footer will now sit right after this content */}
       <main className="max-w-2xl mx-auto mt-10 md:mt-12 px-4 mb-12">
         <Card className="rounded-3xl shadow-soft p-6 md:p-8 border border-gray-100 relative animate-fadeIn motion-reduce:animate-none">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">تسجيل الدخول</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            تسجيل الدخول
+          </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <Input
@@ -169,7 +162,6 @@ export default function SignIn() {
               required
             />
 
-            {/* تذكرني */}
             <div className="flex w-full items-center">
               <label
                 htmlFor="rememberMe"
@@ -216,6 +208,7 @@ export default function SignIn() {
                 تسجيل جديد ←
               </Link>
             </p>
+
             <Link
               to="/admin/signin"
               className="font-medium hover:underline transition-colors"
@@ -223,6 +216,7 @@ export default function SignIn() {
             >
               هل أنت مشرف؟ سجّل دخولك من هنا
             </Link>
+
             <p className="text-xs text-gray-500 pt-2">
               تذكّر: لا تشارك كلمة السر مع أي جهة. نحن هنا لمساعدتك دائمًا 💛
             </p>

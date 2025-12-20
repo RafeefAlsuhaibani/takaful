@@ -1,15 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
 
 interface User {
   name: string;
   email: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (userData: User) => void;
+  access: string | null;
+  refresh: string | null;
+  login: (userData: User, access: string, refresh: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -18,8 +20,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -30,40 +32,54 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [access, setAccess] = useState<string | null>(null);
+  const [refresh, setRefresh] = useState<string | null>(null);
 
-  // Load user from localStorage on component mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('takaful_user');
+    const storedUser = localStorage.getItem("takaful_user");
+    const storedAccess = localStorage.getItem("accessToken");
+    const storedRefresh = localStorage.getItem("refreshToken");
+
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem('takaful_user');
+      } catch {
+        localStorage.removeItem("takaful_user");
       }
     }
+
+    if (storedAccess) setAccess(storedAccess);
+    if (storedRefresh) setRefresh(storedRefresh);
   }, []);
 
-  const login = (userData: User) => {
+  const login = (userData: User, accessToken: string, refreshToken: string) => {
     setUser(userData);
-    localStorage.setItem('takaful_user', JSON.stringify(userData));
+    setAccess(accessToken);
+    setRefresh(refreshToken);
+
+    localStorage.setItem("takaful_user", JSON.stringify(userData));
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('takaful_user');
+    setAccess(null);
+    setRefresh(null);
+
+    localStorage.removeItem("takaful_user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
   };
 
   const value: AuthContextType = {
     user,
+    access,
+    refresh,
     login,
     logout,
-    isAuthenticated: !!user,
+    isAuthenticated: !!access,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

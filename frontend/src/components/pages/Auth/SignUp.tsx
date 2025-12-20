@@ -107,27 +107,39 @@ const cleanPhone = (value: string) => digitsOnly(value).slice(0, 9);       // ma
   
     try {
       const payload = {
-        full_name: formData.fullName.trim(),
+        // USER
         email: formData.email.trim(),
-        phone: formData.phone.replace(/\D/g, ''),  
         password: formData.password,
+      
+        // PROFILE (must match RegisterSerializer EXACTLY)
+        name: formData.fullName,
+        gender: formData.gender,
+        age: Number(formData.age),
+        city: formData.city,
+        phone: formData.phone.replace(/\D/g, ""),
+        qualification: formData.educationLevel,
+        available_days: formData.availableDays,
+        skills: formData.skills,
       };
+      
   
-      const res = await fetch(`${API_BASE_URL}/api/auth/register/`, {
-
+      const res = await fetch(`${API_BASE_URL}/api/accounts/auth/register/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
+      
   
       const data = await res.json();
-  
+      console.log("REGISTER RESPONSE:", data);
+      
       if (!res.ok) {
-        throw new Error(data.detail || "فشل في إنشاء الحساب");
+        alert(JSON.stringify(data, null, 2));
+        return;
       }
-  
+      
       alert("تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.");
   
     } catch (err: any) {
