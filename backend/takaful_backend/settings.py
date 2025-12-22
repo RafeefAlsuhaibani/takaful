@@ -53,7 +53,9 @@ INSTALLED_APPS = [
     # Local apps
     "core",
     "takaful_app",
+    "accounts",
 ]
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
