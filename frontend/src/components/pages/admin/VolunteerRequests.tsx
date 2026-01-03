@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from "../../layout/AdminLayout";
 import { FiSearch } from "react-icons/fi";
-import { MapPin, Mail, Phone, Star, Check, X } from 'lucide-react';
+import { MapPin, Mail, Phone, Star } from 'lucide-react';
+import { useAuth } from "../../../contexts/AuthContext";
+import { API_BASE_URL } from "../../../config";
 
 interface VolunteerRequest {
-  id: string;
+  id: number;
   name: string;
   location: string;
   email: string;
@@ -13,78 +15,77 @@ interface VolunteerRequest {
   university: string;
   specialization: string;
   skills: string[];
-  volunteerHours: number;
+  volunteer_hours: number;
   rating: number;
-  avatar?: string;
 }
 
-const mockVolunteers: VolunteerRequest[] = [
-  {
-    id: '1',
-    name: 'احمد محمد علي',
-    location: 'الرياض',
-    email: 'ahmed@example.com',
-    phone: '+966501234567',
-    qualification: 'بكالوريوس في الأعلام',
-    university: 'جامعة الملك سعود',
-    specialization: 'الإعلام الرقمي وكتابة محتوى',
-    skills: ['التواصل والإقناع', 'كتابة محتوى'],
-    volunteerHours: 20,
-    rating: 4.8
-  },
-  {
-    id: '2',
-    name: 'فاطمة سالم',
-    location: 'القصيم',
-    email: 'fatima@example.com',
-    phone: '+966507654321',
-    qualification: 'بكالوريوس تقنية معلومات',
-    university: 'جامعة القصيم',
-    specialization: 'تصميم واجهات وتجربة مستخدم',
-    skills: ['تصميم UI/UX', 'Figma', 'Adobe Creative'],
-    volunteerHours: 14,
-    rating: 4.9
-  },
-  {
-    id: '3',
-    name: 'عمر خالد',
-    location: 'مكة',
-    email: 'omar@example.com',
-    phone: '+966501234567',
-    qualification: 'بكالوريوس إدارة الأعمال',
-    university: 'جامعة الإمام محمد بن سعود',
-    specialization: 'إدارة المشاريع',
-    skills: ['تحليل البيانات', 'ادارة المشاريع'],
-    volunteerHours: 15,
-    rating: 4.7
-  },
-  {
-    id: '4',
-    name: 'ساره أحمد',
-    location: 'القصيم',
-    email: 'sara@example.com',
-    phone: '+966507654321',
-    qualification: 'دبلوم برمجة وتطوير ويب',
-    university: 'جامعة القصيم',
-    specialization: 'تحليل نظم وتطوير مواقع',
-    skills: ['تطوير الويب', 'JavaScript', 'محللة نظم'],
-    volunteerHours: 6,
-    rating: 4.5
-  }
-];
-
 export default function VolunteerRequests() {
+  const { access } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [volunteers, setVolunteers] = useState<VolunteerRequest[]>(mockVolunteers);
+  const [volunteers, setVolunteers] = useState<VolunteerRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAccept = (id: string) => {
-    setVolunteers(prev => prev.filter(v => v.id !== id));
-    // هنا يمكن إضافة منطق قبول المتطوع
+  // Fetch volunteer requests on mount
+  useEffect(() => {
+    fetchVolunteerRequests();
+  }, []);
+
+  const fetchVolunteerRequests = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/volunteer-requests/`, {
+        headers: {
+          'Authorization': `Bearer ${access}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setVolunteers(data.results || []);
+      }
+    } catch (error) {
+      console.error('Error fetching volunteer requests:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (id: string) => {
-    setVolunteers(prev => prev.filter(v => v.id !== id));
-    // هنا يمكن إضافة منطق رفض المتطوع
+  const handleAccept = async (id: number) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/volunteer-requests/${id}/accept/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${access}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Remove from list immediately
+        setVolunteers(prev => prev.filter(v => v.id !== id));
+      }
+    } catch (error) {
+      console.error('Error accepting volunteer:', error);
+    }
+  };
+
+  const handleReject = async (id: number) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/volunteer-requests/${id}/reject/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${access}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Remove from list immediately
+        setVolunteers(prev => prev.filter(v => v.id !== id));
+      }
+    } catch (error) {
+      console.error('Error rejecting volunteer:', error);
+    }
   };
 
   const filteredVolunteers = volunteers.filter(volunteer =>
@@ -93,8 +94,18 @@ export default function VolunteerRequests() {
     volunteer.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (loading) {
     return (
-        <AdminLayout>
+      <AdminLayout>
+        <div className="flex justify-center items-center h-screen">
+          <p className="text-gray-500 font-[Cairo]">جاري التحميل...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
       <div className="h-full">
         {/* Search Bar */}
         <div dir="ltr" className="flex justify-start mb-6">
@@ -171,7 +182,7 @@ export default function VolunteerRequests() {
               <div className="mb-4">
                 <h4 className="text-sm font-semibold text-gray-800 mb-2">المهارات :</h4>
                 <div className="flex flex-wrap gap-2">
-                  {volunteer.skills.map((skill, index) => (
+                  {volunteer.skills && volunteer.skills.map((skill, index) => (
                     <span
                       key={index}
                       className="px-3 py-1 rounded-full bg-white/80 text-gray-700 text-xs font-medium border border-white/60 backdrop-blur-sm"
@@ -186,7 +197,7 @@ export default function VolunteerRequests() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-700">الساعات التطوعية</span>
-                  <span className="text-sm font-bold text-gray-900">{volunteer.volunteerHours}</span>
+                  <span className="text-sm font-bold text-gray-900">{volunteer.volunteer_hours}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Star size={16} className="text-yellow-500 fill-yellow-500" />
@@ -220,6 +231,6 @@ export default function VolunteerRequests() {
           </div>
         )}
       </div>
-        </AdminLayout>
-    );
+    </AdminLayout>
+  );
 }

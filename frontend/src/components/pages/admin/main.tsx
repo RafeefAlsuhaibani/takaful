@@ -1,24 +1,40 @@
 import AdminLayout from "../../layout/AdminLayout";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiSearch } from "react-icons/fi";
 import { Eye, EyeOff, ChevronLeft, Users, SquarePen, FolderOpen, FileText, HandCoins, ChevronDown, ChevronUp, CalendarDays, MapPin, User, Clock, AlertTriangle, X } from "lucide-react";
 import Modal from "../../ui/Modal";
+import { useAuth } from "../../../contexts/AuthContext";
+import { API_BASE_URL } from "../../../config";
 
 
 interface Project {
     id: number;
     title: string;
     description: string;
+    desc?: string;
     beneficiaries: number;
-    donations: number;
+    donations?: number;
+    donation_amount?: number;
     progress: number;
     supervisor?: string;
     tags?: string[];
+    date?: string;
+    start_date?: string;
+    organization?: string;
+    location?: string;
+    hours?: string;
+    estimated_hours?: number;
+    budget?: string;
+    status?: string;
+    is_hidden?: boolean;
+    category?: string;
+    target_audience?: string;
 }
 
 
 // Project Status Dropdown Component
+// Project Status Dropdown Component - FIXED VERSION
 function ProjectStatusDropdown({ currentStatus, onStatusChange }: { currentStatus: string; onStatusChange: (status: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -36,6 +52,7 @@ function ProjectStatusDropdown({ currentStatus, onStatusChange }: { currentStatu
                 className="flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border-2 border-[#6F1A28] rounded-[8px] sm:rounded-[8px] md:rounded-[20px] min-w-[140px] sm:min-w-[160px] md:min-w-[180px] shadow-sm hover:shadow-md transition-shadow"
                 aria-label="اختيار حالة المشروع"
             >
+                {/* ✅ FIXED: Changed from "حالة المشروع" to {currentStatus} */}
                 <span className="text-[#6F1A28] font-bold text-[11px] sm:text-[12px] md:text-[13px] font-[Cairo]">
                     {currentStatus}
                 </span>
@@ -94,7 +111,7 @@ function ProjectCard({ project, showProgress = false, isCompleted = false, onDet
 
                 {/* Description - Dark gray */}
                 <p className="text-gray-700 text-[12px] sm:text-[13px] md:text-[14px] mb-4 leading-relaxed font-[Cairo] text-right">
-                    {project.description}
+                    {project.description || project.desc}
                 </p>
 
                 {/* Progress Section */}
@@ -120,10 +137,10 @@ function ProjectCard({ project, showProgress = false, isCompleted = false, onDet
                 {/* Footer Metadata - 4 items with icons, arranged right to left */}
                 <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-1 justify-center">
                     {/* Calendar */}
-                    {project.date && (
+                    {(project.date || project.start_date) && (
                         <div className="flex items-center gap-1.5 sm:gap-2 text-gray-700 text-[11px] sm:text-[12px] md:text-[13px] font-[Cairo]">
                             <CalendarDays className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-600" />
-                            <span>{project.date}</span>
+                            <span>{project.date || project.start_date}</span>
                         </div>
                     )}
 
@@ -144,10 +161,10 @@ function ProjectCard({ project, showProgress = false, isCompleted = false, onDet
                     )}
 
                     {/* Hours/Clock */}
-                    {project.hours && (
+                    {(project.hours || project.estimated_hours) && (
                         <div className="flex items-center gap-1.5 sm:gap-2 text-gray-700 text-[11px] sm:text-[12px] md:text-[13px] font-[Cairo]">
                             <Clock className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-600" />
-                            <span>{project.hours}</span>
+                            <span>{project.hours || `${project.estimated_hours} ساعة`}</span>
                         </div>
                     )}
                 </div>
@@ -168,10 +185,10 @@ function ProjectCard({ project, showProgress = false, isCompleted = false, onDet
 
                     {/* Metadata with icons */}
                     <div className="flex flex-wrap items-center gap-4 sm:gap-5 text-gray-600 text-[11px] sm:text-[12px] md:text-[13px] font-[Cairo]">
-                        {project.date && (
+                        {(project.date || project.start_date) && (
                             <div className="flex items-center gap-1.5">
                                 <CalendarDays className="w-4 h-4 text-gray-500" />
-                                <span>{project.date}</span>
+                                <span>{project.date || project.start_date}</span>
                             </div>
                         )}
                         {project.supervisor && (
@@ -204,15 +221,15 @@ function ProjectCard({ project, showProgress = false, isCompleted = false, onDet
 
             {/* Description Section */}
             <p className="text-gray-700 text-[12px] sm:text-[13px] md:text-[14px] mb-4 leading-relaxed font-[Cairo] text-right">
-                {project.description}
+                {project.description || project.desc}
             </p>
 
             {/* Footer Section: Budget on right, Tags in middle, Details button on left */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
                 {/* Budget - Right side */}
-                {project.budget && (
+                {(project.budget || project.donation_amount) && (
                     <div className="text-[#6F1A28] font-semibold text-[13px] sm:text-[14px] md:text-[15px] font-[Cairo]">
-                        {project.budget} ريال
+                        {project.budget || `${project.donation_amount} ريال`}
                     </div>
                 )}
 
@@ -254,6 +271,7 @@ function ProjectCard({ project, showProgress = false, isCompleted = false, onDet
 }
 
 export default function AdminMain() {
+    const { access } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("افكار المشاريع");
@@ -267,246 +285,326 @@ export default function AdminMain() {
         "المشاريع المنتهية": 2
     });
 
-    const stats = [
+    // API States
+    const [stats, setStats] = useState({
+        total_donations: "0",
+        total_beneficiaries: "0",
+        active_projects: "0",
+        completed_projects: "0",
+        total_projects: "0"
+    });
+    const [projectIdeas, setProjectIdeas] = useState<Project[]>([]);
+    const [activeProjects, setActiveProjects] = useState<Project[]>([]);
+    const [completedProjects, setCompletedProjects] = useState<Project[]>([]);
+    const [participationRequests, setParticipationRequests] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Bottom Project Section States
+    const [activeProject, setActiveProject] = useState<Project | null>(null);
+    const [projectStatus, setProjectStatus] = useState("حالة المشروع");
+    const [isProjectHidden, setIsProjectHidden] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        projectName: '',
+        projectType: '',
+        projectDescription: '',
+        targetAudience: '',
+        beneficiaries: '',
+        donationAmount: '',
+        startDate: '',
+        endDate: '',
+    });
+
+    // Fetch all data on mount
+    useEffect(() => {
+        fetchStats();
+        fetchProjects();
+        fetchParticipationRequests();
+        fetchActiveProject();
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/stats/`, {
+                headers: { 'Authorization': `Bearer ${access}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setStats({
+                    total_donations: data.total_donations?.toLocaleString() || "0",
+                    total_beneficiaries: `+ ${data.total_beneficiaries || 0}`,
+                    active_projects: data.active_projects?.toString() || "0",
+                    completed_projects: data.completed_projects?.toString() || "0",
+                    total_projects: data.total_projects?.toString() || "0"
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
+    };
+
+    const fetchProjects = async () => {
+        setLoading(true);
+        try {
+            // Fetch pending projects (ideas)
+            const pendingResponse = await fetch(`${API_BASE_URL}/api/admin/projects/?status=pending`, {
+                headers: { 'Authorization': `Bearer ${access}` }
+            });
+            if (pendingResponse.ok) {
+                const pendingData = await pendingResponse.json();
+                setProjectIdeas(pendingData.results || pendingData);
+            }
+
+            // Fetch active projects
+            const activeResponse = await fetch(`${API_BASE_URL}/api/admin/projects/?status=active`, {
+                headers: { 'Authorization': `Bearer ${access}` }
+            });
+            if (activeResponse.ok) {
+                const activeData = await activeResponse.json();
+                setActiveProjects(activeData.results || activeData);
+            }
+
+            // Fetch completed projects
+            const completedResponse = await fetch(`${API_BASE_URL}/api/admin/projects/?status=completed`, {
+                headers: { 'Authorization': `Bearer ${access}` }
+            });
+            if (completedResponse.ok) {
+                const completedData = await completedResponse.json();
+                setCompletedProjects(completedData.results || completedData);
+            }
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchParticipationRequests = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/volunteer-requests/?limit=4`, {
+                headers: { 'Authorization': `Bearer ${access}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setParticipationRequests(data.results || []);
+            }
+        } catch (error) {
+            console.error('Error fetching participation requests:', error);
+        }
+    };
+
+    const fetchActiveProject = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/my-active-project/`, {
+                headers: { 'Authorization': `Bearer ${access}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data) {
+                    setActiveProject(data);
+                    setProjectStatus(data.status_display || "نشط");
+                    setIsProjectHidden(data.is_hidden || false);
+                    setEditFormData({
+                        projectName: data.title || '',
+                        projectType: data.category || 'أساسي',
+                        projectDescription: data.desc || data.description || '',
+                        targetAudience: data.target_audience || '',
+                        beneficiaries: data.beneficiaries?.toString() || '',
+                        donationAmount: data.donation_amount?.toString() || '',
+                        startDate: data.start_date || '',
+                        endDate: data.end_date || '',
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching active project:', error);
+        }
+    };
+
+    const handleApproveProject = async (projectId: number) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/projects/${projectId}/approve/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                setRemovedProjects(prev => new Set(prev).add(projectId));
+                fetchStats();
+                fetchProjects();
+            }
+        } catch (error) {
+            console.error('Error approving project:', error);
+        }
+    };
+
+    const handleRejectProject = async (project: any) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/projects/${project.id}/reject/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                setRemovedProjects(prev => new Set(prev).add(project.id));
+                setRejectConfirmProject(null);
+                fetchStats();
+                fetchProjects();
+            }
+        } catch (error) {
+            console.error('Error rejecting project:', error);
+        }
+    };
+
+    const handleStatusChange = async (newStatus: string) => {
+        if (!activeProject) return;
+    
+        try {
+            const statusMap: { [key: string]: string } = {
+                "نشط": "ACTIVE",
+                "متوقف": "PLANNED",
+                "مكتمل": "COMPLETED",
+                "ملغي": "CANCELLED"
+            };
+    
+            const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
+                method: 'PATCH',  // ✅ Changed to PATCH
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: statusMap[newStatus] || newStatus
+                })
+            });
+    
+            if (response.ok) {
+                setProjectStatus(newStatus);
+                fetchActiveProject();
+                fetchStats();
+                fetchProjects();
+            } else {
+                const error = await response.json();
+                console.error('Error updating status:', error);
+            }
+        } catch (error) {
+            console.error('Error updating project status:', error);
+        }
+    };
+    
+    const handleToggleProjectVisibility = async () => {
+        if (!activeProject) return;
+    
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
+                method: 'PATCH',  // ✅ Changed to PATCH
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    is_hidden: !isProjectHidden
+                })
+            });
+    
+            if (response.ok) {
+                setIsProjectHidden(!isProjectHidden);
+                fetchActiveProject();
+            } else {
+                const error = await response.json();
+                console.error('Error toggling visibility:', error);
+            }
+        } catch (error) {
+            console.error('Error toggling project visibility:', error);
+        }
+    };
+    const handleSaveEdit = async () => {
+        if (!activeProject) return;
+    
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
+                method: 'PATCH',  // ✅ Changed from PUT to PATCH
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: editFormData.projectName,
+                    category: editFormData.projectType,
+                    desc: editFormData.projectDescription,
+                    target_audience: editFormData.targetAudience,
+                    beneficiaries: parseInt(editFormData.beneficiaries) || 0,
+                    donation_amount: parseFloat(editFormData.donationAmount) || 0,
+                    start_date: editFormData.startDate,
+                    end_date: editFormData.endDate,
+                    // Include status if it was changed in the modal
+                    status: projectStatus !== "حالة المشروع" ? projectStatus : undefined
+                })
+            });
+    
+            if (response.ok) {
+                const updatedProject = await response.json();
+                alert('تم حفظ التعديلات بنجاح!');
+                setShowEditModal(false);
+                
+                // Refresh all data
+                fetchActiveProject();
+                fetchStats();
+                fetchProjects();
+            } else {
+                const errorData = await response.json();
+                console.error('Error saving project:', errorData);
+                alert('حدث خطأ أثناء حفظ التعديلات');
+            }
+        } catch (error) {
+            console.error('Error saving project edit:', error);
+            alert('حدث خطأ أثناء حفظ التعديلات');
+        }
+    };
+
+    const statsData = [
         {
-            value: "14,500",
+            value: stats.total_donations,
             label: "اجمالي التبرعات",
             icon: <HandCoins className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 text-yellow-400" />
         },
         {
-            value: "+ 250",
+            value: stats.total_beneficiaries,
             label: "اجمالي المستفيدين",
             icon: <img src="https://c.animaapp.com/u4OaXzk0/img/multiple-neutral-2-streamline-ultimate-regular@2x.png" alt="المستفيدين" className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12" />
         },
         {
-            value: "13",
+            value: stats.active_projects,
             label: "المشاريع النشطة",
             icon: <FolderOpen className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 text-yellow-400" />
         },
         {
-            value: "18",
+            value: stats.completed_projects,
             label: "المشاريع المكتملة",
             icon: <img src="https://c.animaapp.com/u4OaXzk0/img/time-clock-file-setting-streamline-ultimate-regular@2x.png" alt="المشاريع المكتملة" className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12" />
         },
         {
-            value: "31",
+            value: stats.total_projects,
             label: "اجمالي المشاريع",
             icon: <FileText className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 text-yellow-400" />
         },
     ];
 
-    const projectIdeas = [
-        {
-            id: 1,
-            title: "حملة التسويق الرقمي",
-            date: "2025/10/26",
-            supervisor: "صقر محمد",
-            organization: "جمعية تمكين",
-            location: "مقر الجمعية - الرياض",
-            description: "حملة تسويقية شاملة عبر منصات التواصل الاجتماعي والإعلانات المدفوعة لزيادة الوعي بالعلامة التجارية وتعزيز حضور الجمعية في الفضاء الرقمي. تشمل الحملة إدارة محتوى احترافي وإنشاء حملات إعلانية مستهدفة وقياس الأداء وتحليل النتائج.",
-            budget: "75,000",
-            tags: ["متوسطة", "تسويق"],
-            hours: "40 ساعة"
-        },
-        {
-            id: 2,
-            title: "تطوير تطبيق الهاتف المحمول",
-            date: "2024-01-15",
-            supervisor: "فاطمة علي",
-            organization: "جمعية تمكين",
-            location: "مقر الجمعية - الرياض",
-            description: "مشروع تطوير تطبيق محمول شامل لإدارة المهام والمشاريع مع واجهة مستخدم حديثة وميزات متقدمة. يتضمن التطبيق نظام إشعارات ذكي وتكامل مع الأنظمة الأخرى وإمكانية العمل بدون اتصال بالإنترنت.",
-            budget: "120,000",
-            tags: ["كبيرة", "تطوير"],
-            hours: "80 ساعة"
-        },
-        {
-            id: 7,
-            title: "مشروع رعاية المسنين",
-            date: "2025/11/10",
-            supervisor: "خالد العلي",
-            organization: "جمعية الخير",
-            location: "مراكز الرعاية - جدة",
-            description: "تقديم الرعاية الصحية والاجتماعية لكبار السن في المجتمع المحلي من خلال زيارات منزلية منتظمة وبرامج ترفيهية وأنشطة اجتماعية تعزز من جودة حياتهم.",
-            budget: "95,000",
-            tags: ["كبيرة", "صحي"],
-            hours: "60 ساعة"
-        },
-        {
-            id: 8,
-            title: "برنامج دعم التعليم",
-            date: "2025/09/20",
-            supervisor: "نورا السعيد",
-            organization: "جمعية التعليم",
-            location: "المراكز التعليمية - الدمام",
-            description: "برنامج تعليمي شامل لدعم الطلاب المتعثرين وتوفير المستلزمات المدرسية ودروس التقوية المجانية لتحسين الأداء الأكاديمي.",
-            budget: "65,000",
-            tags: ["متوسطة", "تعليم"],
-            hours: "35 ساعة"
-        }
-    ];
-
-    const activeProjects = [
-        {
-            id: 3,
-            title: "نظام متابعة المتطوعين",
-            date: "6 محرم",
-            supervisor: "محمد أحمد",
-            organization: "جمعية تمكين",
-            location: "مقر الجمعية - الرياض",
-            hours: "15 ساعة",
-            description: "إنشاء منصة رقمية متكاملة لمتابعة ساعات التطوع وتقييم الأداء وإدارة المتطوعين بشكل فعال. تشمل المنصة نظام تقارير متقدم وإشعارات تلقائية وإمكانية تتبع الإنجازات.",
-            tags: ["نشط", "تقني"],
-            progress: 65,
-            budget: "85,000"
-        },
-        {
-            id: 4,
-            title: "برنامج تدريب الموظفين",
-            date: "12 محرم",
-            supervisor: "سارة خالد",
-            organization: "جمعية تمكين",
-            location: "مقر الجمعية - الرياض",
-            hours: "20 ساعة",
-            description: "برنامج تدريبي شامل لتطوير مهارات الموظفين في مجالات مختلفة مثل الإدارة والقيادة والتواصل الفعال. يتضمن ورش عمل تفاعلية وجلسات تدريبية عملية.",
-            tags: ["نشط", "تدريب"],
-            progress: 45,
-            budget: "55,000"
-        },
-        {
-            id: 9,
-            title: "مشروع التوعية الصحية",
-            date: "15 محرم",
-            supervisor: "أحمد سالم",
-            organization: "جمعية الصحة",
-            location: "المراكز الصحية - مكة",
-            hours: "30 ساعة",
-            description: "نشر الثقافة الصحية في المجتمع عبر ورش العمل والندوات التوعوية حول الأمراض المزمنة والتغذية السليمة والوقاية من الأمراض.",
-            tags: ["نشط", "صحي"],
-            progress: 55,
-            budget: "70,000"
-        },
-        {
-            id: 10,
-            title: "مشروع تمكين المرأة",
-            date: "20 محرم",
-            supervisor: "ريم العتيبي",
-            organization: "جمعية النهضة",
-            location: "مراكز التدريب - جدة",
-            hours: "25 ساعة",
-            description: "تمكين المرأة اقتصادياً واجتماعياً عبر التدريب والتأهيل المهني وفرص العمل المناسبة. يشمل دورات تدريبية متخصصة وبرامج ريادة الأعمال.",
-            tags: ["نشط", "مجتمعي"],
-            progress: 70,
-            budget: "90,000"
-        }
-    ];
-
-    const completedProjects = [
-        {
-            id: 5,
-            title: "تطوير صفحة تعريفية لحملة الأيتام",
-            date: "6 محرم",
-            supervisor: "هاجر نبيل",
-            organization: "جمعية تمكين",
-            location: "مقر الجمعية - الرياض",
-            hours: "26 ساعة",
-            description: "إنشاء منصة رقمية متكاملة لتسجيل وتتبع المتطوعين في البرامج الصيفية. تضمنت المنصة نظام تسجيل إلكتروني وتتبع للمشاركات وتقييم الأداء وإصدار الشهادات التطوعية.",
-            tags: ["مكتمل", "مجتمعي"],
-            progress: 100,
-            budget: "45,000"
-        },
-        {
-            id: 6,
-            title: "حملة التوعية الصحية",
-            date: "10 محرم",
-            supervisor: "عمر حسن",
-            organization: "جمعية تمكين",
-            location: "مقر الجمعية - الرياض",
-            hours: "18 ساعة",
-            description: "حملة توعوية شاملة عن الصحة العامة والوقاية من الأمراض شملت ندوات وورش عمل وتوزيع مواد توعوية. استفاد منها أكثر من 500 شخص من مختلف الفئات العمرية.",
-            tags: ["مكتمل", "صحي"],
-            progress: 100,
-            budget: "35,000"
-        },
-        {
-            id: 11,
-            title: "مشروع دعم التعليم",
-            date: "25 ذو الحجة",
-            supervisor: "ليلى القحطاني",
-            organization: "جمعية التعليم",
-            location: "المراكز التعليمية - الخبر",
-            hours: "42 ساعة",
-            description: "برنامج تعليمي شامل لدعم الطلاب المتعثرين من الأسر محدودة الدخل. شمل توفير الكتب والقرطاسية ودروس التقوية المجانية وبرامج الدعم النفسي والاجتماعي.",
-            tags: ["مكتمل", "تعليم"],
-            progress: 100,
-            budget: "60,000"
-        },
-        {
-            id: 12,
-            title: "مشروع رعاية المواليد",
-            date: "15 ذو الحجة",
-            supervisor: "منى الزهراني",
-            organization: "جمعية الخير",
-            location: "المستشفيات والمنازل - الطائف",
-            hours: "38 ساعة",
-            description: "دعم الأسر الحديثة بمستلزمات المواليد والرعاية الصحية للأمهات الحوامل. شمل توزيع مستلزمات أساسية ورعاية صحية واستشارات تغذية ومتابعة صحية للمواليد.",
-            tags: ["مكتمل", "صحي"],
-            progress: 100,
-            budget: "75,000"
-        },
-        {
-            id: 13,
-            title: "مشروع حفر الآبار",
-            date: "5 ذو الحجة",
-            supervisor: "عبدالله المطيري",
-            organization: "جمعية الإغاثة",
-            location: "القرى النائية - نجران",
-            hours: "120 ساعة",
-            description: "توفير المياه النقية للمناطق النائية عبر حفر الآبار وتركيب مضخات مياه حديثة. تم حفر 5 آبار في قرى مختلفة وخدمة أكثر من 2000 شخص.",
-            tags: ["مكتمل", "أساسي"],
-            progress: 100,
-            budget: "250,000"
-        }
-    ];
-
-    const participationRequests = [
-        { id: 1, name: "في صالح", role: "محللة نظم ومطورة مواقع" },
-        { id: 2, name: "هاجر نبيل", role: "خبرة في إدارة المشاريع" },
-        { id: 3, name: "شهد المطيري", role: "خبرة في تصميم واجهات المستخدم" },
-        { id: 4, name: "عمر خالد", role: "خبرة كتابة المحتوى" }
-    ];
-
-    const [projectStatus, setProjectStatus] = useState("حالة المشروع");
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [editFormData, setEditFormData] = useState({
-        projectName: 'تطوير نظام متابعة المتطوعين',
-        projectType: 'أساسي',
-        projectDescription: 'يهدف المشروع إلى تطوير منصة رقمية متكاملة تمكن الجهات المنظمة للبرامج الصيفية من تسجيل المتطوعين، تتبع مشاركاتهم، قياس أدائهم، وتوثيق ساعاتهم التطوعية بشكل إلكتروني.',
-        targetAudience: 'الجمعيات الخيرية',
-        beneficiaries: '150',
-        donationAmount: '2850',
-        startDate: '2024-01-01',
-        endDate: '2024-12-31',
-    });
-
-    const projects = [
-        {
-            id: 0,
-            title: "تطوير نظام متابعة المتطوعين",
-            description: "يهدف المشروع إلى تطوير منصة رقمية متكاملة تمكّن الجهات المنظمة للبرامج الصيفية من تسجيل المتطوعين، تتبع مشاركاتهم، قياس أدائهم، وتوثيق ساعاتهم التطوعية بشكل إلكتروني سهل وشفاف.",
-            beneficiaries: 150,
-            donations: 2850,
-            progress: 40
-        },
-    ];
-
-    const [activeProject, setActiveProject] = useState<Project>(projects[0]);
-    const [isProjectHidden, setIsProjectHidden] = useState(false);
-
-    const handleSaveEdit = () => {
-        alert('تم حفظ التعديلات بنجاح!');
-        setShowEditModal(false);
-    };
+    if (loading) {
+        return (
+            <AdminLayout>
+                <div className="flex justify-center items-center h-screen">
+                    <p className="text-gray-500 font-[Cairo]">جاري التحميل...</p>
+                </div>
+            </AdminLayout>
+        );
+    }
 
     return (
         <AdminLayout>
@@ -542,7 +640,7 @@ export default function AdminMain() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-                        {stats.map((stat, index) => (
+                        {statsData.map((stat, index) => (
                             <div
                                 key={stat.label}
                                 className="flex flex-col items-center justify-center gap-2 sm:gap-2.5 md:gap-3 px-2 sm:px-3 py-2 relative"
@@ -560,7 +658,7 @@ export default function AdminMain() {
                                     </p>
                                 </div>
 
-                                {index !== stats.length - 1 && (
+                                {index !== statsData.length - 1 && (
                                     <div className="hidden lg:block absolute left-0 top-1/2 -translate-y-1/2 h-16 md:h-18 lg:h-20 w-px bg-[#d7b7ae]" />
                                 )}
                             </div>
@@ -601,9 +699,7 @@ export default function AdminMain() {
                                                 key={project.id}
                                                 project={project}
                                                 onDetailsClick={() => setSelectedProject(project)}
-                                                onApprove={() => {
-                                                    setRemovedProjects(prev => new Set(prev).add(project.id));
-                                                }}
+                                                onApprove={() => handleApproveProject(project.id)}
                                                 onReject={() => setRejectConfirmProject(project)}
                                             />
                                         ))}
@@ -630,7 +726,7 @@ export default function AdminMain() {
                                     {activeProjects.filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع النشطة"] && (
                                         <div className="flex justify-center -mb-6 sm:-mb-3">
                                             <button
-                                                onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "افكار المشاريع": prev["افكار المشاريع"] + 2 }))}
+                                                onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "المشاريع النشطة": prev["المشاريع النشطة"] + 2 }))}
                                                 className="py-2 text-sm text-gray-700 font-[Cairo] mt-2">
                                                 عرض المزيد
                                             </button>
@@ -650,7 +746,7 @@ export default function AdminMain() {
                                     {completedProjects.filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع المنتهية"] && (
                                         <div className="flex justify-center -mb-6 sm:-mb-3">
                                             <button
-                                                onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "افكار المشاريع": prev["افكار المشاريع"] + 2 }))}
+                                                onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "المشاريع المنتهية": prev["المشاريع المنتهية"] + 2 }))}
                                                 className="py-2 text-sm text-gray-700 font-[Cairo] mt-2">
                                                 عرض المزيد
                                             </button>
@@ -714,278 +810,283 @@ export default function AdminMain() {
 
 
                 {/* Bottom Project Section */}
-                <div className="bg-[#F3E3E3] rounded-[16px] sm:rounded-[18px] md:rounded-[20px] p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl border border-[#f0d8c2] w-full relative" dir="rtl">
-                    <div className="flex items-start justify-between gap-4 mb-4 sm:mb-8 flex-row-reverse">
+                {activeProject ? (
+                    <div className="bg-[#F3E3E3] rounded-[16px] sm:rounded-[18px] md:rounded-[20px] p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl border border-[#f0d8c2] w-full relative" dir="rtl">
+                        <div className="flex items-start justify-between gap-4 mb-4 sm:mb-8 flex-row-reverse">
 
-                        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                            <button
-                                onClick={() => setShowEditModal(true)}
-                                className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-                                aria-label="تعديل المشروع"
-                            >
-                                <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                            </button>
-
-                            <div className="relative group">
+                            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                 <button
-                                    onClick={() => setIsProjectHidden(!isProjectHidden)}
-                                    className="p-2 hover:bg-white/50 rounded-lg transition-colors relative"
-                                    aria-label={isProjectHidden ? "إظهار المشروع" : "إخفاء المشروع"}
+                                    onClick={() => setShowEditModal(true)}
+                                    className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                                    aria-label="تعديل المشروع"
                                 >
-                                    {isProjectHidden ? (
-                                        <EyeOff className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                                    ) : (
-                                        <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                                    )}
+                                    <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                                 </button>
 
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-white text-gray-700 text-xs rounded-lg shadow-lg border border-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                                    {isProjectHidden ? "إظهار المشروع" : "إخفاء المشروع"}
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 text-center">
-                            <h2 className="text-[#6F1A28] font-bold text-[19px] sm:text-[20px] md:text-[22px] lg:text-[24px] font-[Cairo] mb-6">
-                                {activeProject.title}
-                            </h2>
-
-                            <div className="w-full max-w-[600px] mx-auto h-[2px] bg-[#B98A91] mb-6" />
-
-                            <p className="text-gray-700 text-[13px] sm:text-[14px] md:text-[15px] leading-relaxed font-[Cairo] max-w-4xl mx-auto">
-                                {activeProject.description}
-                            </p>
-                        </div>
-
-                        <div className="flex justify-start flex-shrink-0">
-                            <ProjectStatusDropdown
-                                currentStatus={projectStatus}
-                                onStatusChange={setProjectStatus}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto_1fr] items-center pt-6" dir="rtl">
-
-                        <div className="flex flex-col items-center text-center">
-                            <p className="text-gray-600 text-[19px] font-medium mb-3 font-[Cairo]">
-                                عدد المستفيدين :
-                            </p>
-
-                            <div className="flex items-center gap-3">
-                                <span className="text-[#6F1A28] font-bold text-[20px] font-[Cairo]">
-                                    {activeProject.beneficiaries}
-                                </span>
-                                <Users className="w-6 h-6 text-yellow-400" />
-                            </div>
-                        </div>
-
-
-                        <div className="hidden sm:flex justify-center">
-                            <span className="w-[3px] h-24 bg-[#d9bdc1]" />
-                        </div>
-
-                        <div className="flex flex-col items-center text-center">
-                            <p className="text-gray-600 text-[19px] font-medium mb-3 font-[Cairo]">
-                                التبرعات للمشروع :
-                            </p>
-
-                            <div className="flex items-center gap-3">
-                                <span className="text-[#6F1A28] font-bold text-[20px] font-[Cairo]">
-                                    {activeProject.donations.toLocaleString()}
-                                </span>
-                                <HandCoins className="w-6 h-6 text-yellow-400" />
-                            </div>
-                        </div>
-
-                        <div className="hidden sm:flex justify-center">
-                            <span className="w-[3px] h-24 bg-[#d9bdc1]" />
-                        </div>
-
-                        <div className="flex flex-col items-center text-center">
-                            <p className="text-gray-600 text-[19px] font-medium mb-3 font-[Cairo]">
-                                نسبة اكتمال المشروع :
-                            </p>
-
-                            <span className="text-[#6F1A28] font-bold text-[20px] font-[Cairo] mb-2">
-                                %{activeProject.progress}
-                            </span>
-
-                            <div className="w-[200px] bg-gray-300 rounded-full h-3 overflow-hidden">
-                                <div className="bg-yellow-400 h-3 rounded-full" style={{ width: `${activeProject.progress}%`, marginLeft: 'auto', }} />
-                            </div>
-                        </div>
-                    </div>
-
-
-                    {/* Edit Project Modal */}
-                    {showEditModal && (
-                        <div
-                            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-                            onClick={() => setShowEditModal(false)}
-                        >
-                            <div
-                                className="bg-[#fdf8f9] rounded-[20px] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide"
-                                onClick={(e) => e.stopPropagation()}
-                                dir="rtl"
-                            >
-                                {/* Modal Header */}
-                                <div className="sticky top-0 bg-[#f3e3e3] rounded-t-[20px] px-6 py-4 border-b-2 border-[#e0cfd4] flex items-center justify-between">
-                                    <h2 className="text-[20px] sm:text-[22px] md:text-[24px] font-bold text-[#2e2b2c] font-[Cairo]">
-                                        تعديل بيانات المشروع
-                                    </h2>
+                                <div className="relative group">
                                     <button
-                                        onClick={() => setShowEditModal(false)}
-                                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#8d2e46] hover:bg-[#6b1e2a] text-white flex items-center justify-center transition-colors"
+                                        onClick={handleToggleProjectVisibility}
+                                        className="p-2 hover:bg-white/50 rounded-lg transition-colors relative"
+                                        aria-label={isProjectHidden ? "إظهار المشروع" : "إخفاء المشروع"}
                                     >
-                                        ✕
+                                        {isProjectHidden ? (
+                                            <EyeOff className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                                        ) : (
+                                            <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                                        )}
                                     </button>
+
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-white text-gray-700 text-xs rounded-lg shadow-lg border border-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                        {isProjectHidden ? "إظهار المشروع" : "إخفاء المشروع"}
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
+                                    </div>
                                 </div>
+                            </div>
 
-                                {/* Modal Body */}
-                                <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
-                                    <div className="bg-white/60 rounded-[18px] p-4 sm:p-5">
-                                        <h3 className="text-[16px] sm:text-[18px] font-bold text-[#2e2b2c] mb-3 sm:mb-4 font-[Cairo] flex items-center gap-2">
-                                            <span className="w-1 h-6 bg-[#8d2e46] rounded-full"></span>
-                                            المعلومات الأساسية
-                                        </h3>
+                            <div className="flex-1 text-center">
+                                <h2 className="text-[#6F1A28] font-bold text-[19px] sm:text-[20px] md:text-[22px] lg:text-[24px] font-[Cairo] mb-6">
+                                    {activeProject.title}
+                                </h2>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                                            {/* اسم المشروع */}
-                                            <div>
-                                                <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
-                                                    اسم المشروع
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={editFormData.projectName}
-                                                    onChange={(e) => setEditFormData({ ...editFormData, projectName: e.target.value })}
-                                                    className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
-                                                />
-                                            </div>
+                                <div className="w-full max-w-[600px] mx-auto h-[2px] bg-[#B98A91] mb-6" />
 
-                                            <div>
-                                                <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
-                                                    نوع المشروع
-                                                </label>
-                                                <select
-                                                    value={editFormData.projectType}
-                                                    onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })}
-                                                    className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
-                                                >
-                                                    <option value="أساسي">أساسي</option>
-                                                    <option value="مجتمعي">مجتمعي</option>
-                                                    <option value="مؤسسي">مؤسسي</option>
-                                                </select>
-                                            </div>
+                                <p className="text-gray-700 text-[13px] sm:text-[14px] md:text-[15px] leading-relaxed font-[Cairo] max-w-4xl mx-auto">
+                                    {activeProject.description || activeProject.desc}
+                                </p>
+                            </div>
 
-                                            <div className="md:col-span-2">
-                                                <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
-                                                    وصف المشروع
-                                                </label>
-                                                <textarea
-                                                    value={editFormData.projectDescription}
-                                                    onChange={(e) => setEditFormData({ ...editFormData, projectDescription: e.target.value })}
-                                                    rows={3}
-                                                    className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] resize-none font-[Cairo]"
-                                                />
-                                            </div>
-                                        </div>
+                            <div className="flex justify-start flex-shrink-0">
+                                <ProjectStatusDropdown
+                                    currentStatus={projectStatus}
+                                    onStatusChange={handleStatusChange}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto_1fr] items-center pt-6" dir="rtl">
+
+                            <div className="flex flex-col items-center text-center">
+                                <p className="text-gray-600 text-[19px] font-medium mb-3 font-[Cairo]">
+                                    عدد المستفيدين :
+                                </p>
+
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[#6F1A28] font-bold text-[20px] font-[Cairo]">
+                                        {activeProject.beneficiaries}
+                                    </span>
+                                    <Users className="w-6 h-6 text-yellow-400" />
+                                </div>
+                            </div>
+
+
+                            <div className="hidden sm:flex justify-center">
+                                <span className="w-[3px] h-24 bg-[#d9bdc1]" />
+                            </div>
+
+                            <div className="flex flex-col items-center text-center">
+                                <p className="text-gray-600 text-[19px] font-medium mb-3 font-[Cairo]">
+                                    التبرعات للمشروع :
+                                </p>
+
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[#6F1A28] font-bold text-[20px] font-[Cairo]">
+                                        {(activeProject.donations || activeProject.donation_amount || 0).toLocaleString()}
+                                    </span>
+                                    <HandCoins className="w-6 h-6 text-yellow-400" />
+                                </div>
+                            </div>
+
+                            <div className="hidden sm:flex justify-center">
+                                <span className="w-[3px] h-24 bg-[#d9bdc1]" />
+                            </div>
+
+                            <div className="flex flex-col items-center text-center">
+                                <p className="text-gray-600 text-[19px] font-medium mb-3 font-[Cairo]">
+                                    نسبة اكتمال المشروع :
+                                </p>
+
+                                <span className="text-[#6F1A28] font-bold text-[20px] font-[Cairo] mb-2">
+                                    %{activeProject.progress}
+                                </span>
+
+                                <div className="w-[200px] bg-gray-300 rounded-full h-3 overflow-hidden">
+                                    <div className="bg-yellow-400 h-3 rounded-full" style={{ width: `${activeProject.progress}%`, marginLeft: 'auto', }} />
+                                </div>
+                            </div>
+                        </div>
+
+
+                        {/* Edit Project Modal */}
+                        {showEditModal && (
+                            <div
+                                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                                onClick={() => setShowEditModal(false)}
+                            >
+                                <div
+                                    className="bg-[#fdf8f9] rounded-[20px] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide"
+                                    onClick={(e) => e.stopPropagation()}
+                                    dir="rtl"
+                                >
+                                    {/* Modal Header */}
+                                    <div className="sticky top-0 bg-[#f3e3e3] rounded-t-[20px] px-6 py-4 border-b-2 border-[#e0cfd4] flex items-center justify-between">
+                                        <h2 className="text-[20px] sm:text-[22px] md:text-[24px] font-bold text-[#2e2b2c] font-[Cairo]">
+                                            تعديل بيانات المشروع
+                                        </h2>
+                                        <button
+                                            onClick={() => setShowEditModal(false)}
+                                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#8d2e46] hover:bg-[#6b1e2a] text-white flex items-center justify-center transition-colors"
+                                        >
+                                            ✕
+                                        </button>
                                     </div>
 
-                                    <div className="bg-white/60 rounded-[18px] p-4 sm:p-5">
-                                        <h3 className="text-[16px] sm:text-[18px] font-bold text-[#2e2b2c] mb-3 sm:mb-4 font-[Cairo] flex items-center gap-2">
-                                            <span className="w-1 h-6 bg-[#8d2e46] rounded-full"></span>
-                                            تفاصيل التخطيط
-                                        </h3>
+                                    {/* Modal Body */}
+                                    <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+                                        <div className="bg-white/60 rounded-[18px] p-4 sm:p-5">
+                                            <h3 className="text-[16px] sm:text-[18px] font-bold text-[#2e2b2c] mb-3 sm:mb-4 font-[Cairo] flex items-center gap-2">
+                                                <span className="w-1 h-6 bg-[#8d2e46] rounded-full"></span>
+                                                المعلومات الأساسية
+                                            </h3>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                                            <div>
-                                                <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
-                                                    الفئة المستهدفة
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={editFormData.targetAudience}
-                                                    onChange={(e) => setEditFormData({ ...editFormData, targetAudience: e.target.value })}
-                                                    className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
-                                                    عدد المستفيدين
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    value={editFormData.beneficiaries}
-                                                    onChange={(e) => setEditFormData({ ...editFormData, beneficiaries: e.target.value })}
-                                                    className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
-                                                    مبلغ التبرع للمشروع
-                                                </label>
-                                                <div className="flex items-center gap-2">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                                                {/* اسم المشروع */}
+                                                <div>
+                                                    <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
+                                                        اسم المشروع
+                                                    </label>
                                                     <input
-                                                        type="number"
-                                                        value={editFormData.donationAmount}
-                                                        onChange={(e) => setEditFormData({ ...editFormData, donationAmount: e.target.value })}
-                                                        className="flex-1 bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
+                                                        type="text"
+                                                        value={editFormData.projectName}
+                                                        onChange={(e) => setEditFormData({ ...editFormData, projectName: e.target.value })}
+                                                        className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
                                                     />
-                                                    <span className="text-[12px] sm:text-[13px] text-gray-700 font-medium font-[Cairo]">ريال</span>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
+                                                        نوع المشروع
+                                                    </label>
+                                                    <select
+                                                        value={editFormData.projectType}
+                                                        onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })}
+                                                        className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
+                                                    >
+                                                        <option value="أساسي">أساسي</option>
+                                                        <option value="مجتمعي">مجتمعي</option>
+                                                        <option value="مؤسسي">مؤسسي</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
+                                                        وصف المشروع
+                                                    </label>
+                                                    <textarea
+                                                        value={editFormData.projectDescription}
+                                                        onChange={(e) => setEditFormData({ ...editFormData, projectDescription: e.target.value })}
+                                                        rows={3}
+                                                        className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] resize-none font-[Cairo]"
+                                                    />
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <div>
-                                                <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
-                                                    حالة المشروع
-                                                </label>
-                                                <select
-                                                    value={projectStatus}
-                                                    onChange={(e) => setProjectStatus(e.target.value)}
-                                                    className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
-                                                >
-                                                    <option value="نشط">نشط</option>
-                                                    <option value="متوقف">متوقف</option>
-                                                    <option value="مكتمل">مكتمل</option>
-                                                    <option value="ملغي">ملغي</option>
-                                                </select>
+                                        <div className="bg-white/60 rounded-[18px] p-4 sm:p-5">
+                                            <h3 className="text-[16px] sm:text-[18px] font-bold text-[#2e2b2c] mb-3 sm:mb-4 font-[Cairo] flex items-center gap-2">
+                                                <span className="w-1 h-6 bg-[#8d2e46] rounded-full"></span>
+                                                تفاصيل التخطيط
+                                            </h3>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                                                <div>
+                                                    <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
+                                                        الفئة المستهدفة
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={editFormData.targetAudience}
+                                                        onChange={(e) => setEditFormData({ ...editFormData, targetAudience: e.target.value })}
+                                                        className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
+                                                        عدد المستفيدين
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={editFormData.beneficiaries}
+                                                        onChange={(e) => setEditFormData({ ...editFormData, beneficiaries: e.target.value })}
+                                                        className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
+                                                        مبلغ التبرع للمشروع
+                                                    </label>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            value={editFormData.donationAmount}
+                                                            onChange={(e) => setEditFormData({ ...editFormData, donationAmount: e.target.value })}
+                                                            className="flex-1 bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
+                                                        />
+                                                        <span className="text-[12px] sm:text-[13px] text-gray-700 font-medium font-[Cairo]">ريال</span>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[12px] sm:text-[13px] font-semibold text-gray-800 mb-1.5 sm:mb-2 font-[Cairo]">
+                                                        حالة المشروع
+                                                    </label>
+                                                    <select
+                                                        value={projectStatus}
+                                                        onChange={(e) => setProjectStatus(e.target.value)}
+                                                        className="w-full bg-white rounded-xl border border-[#8d2e46] px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] md:text-[14px] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8d2e46] font-[Cairo]"
+                                                    >
+                                                        <option value="نشط">نشط</option>
+                                                        <option value="متوقف">متوقف</option>
+                                                        <option value="مكتمل">مكتمل</option>
+                                                        <option value="ملغي">ملغي</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Modal Footer */}
-                                <div className="sticky bottom-0 bg-[#f3e3e3] rounded-b-[20px] px-6 py-4 border-t-2 border-[#e0cfd4] flex flex-col sm:flex-row items-center justify-center gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setShowEditModal(false);
-                                        }}
-                                        className="w-full sm:w-auto bg-[#8d2e46] hover:bg-[#6b1e2a] text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-[13px] md:text-[14px] font-bold transition-colors font-[Cairo] flex items-center justify-center gap-2"
-                                    >
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        حفظ التعديلات
-                                    </button>
-                                    <button
-                                        onClick={() => setShowEditModal(false)}
-                                        className="w-full sm:w-auto bg-white hover:bg-gray-50 text-[#8d2e46] border-2 border-[#8d2e46] px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-[13px] md:text-[14px] font-bold transition-colors font-[Cairo] flex items-center justify-center gap-2"
-                                    >
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        إلغاء
-                                    </button>
+                                    {/* Modal Footer */}
+                                    <div className="sticky bottom-0 bg-[#f3e3e3] rounded-b-[20px] px-6 py-4 border-t-2 border-[#e0cfd4] flex flex-col sm:flex-row items-center justify-center gap-3">
+                                        <button
+                                            onClick={handleSaveEdit}
+                                            className="w-full sm:w-auto bg-[#8d2e46] hover:bg-[#6b1e2a] text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-[13px] md:text-[14px] font-bold transition-colors font-[Cairo] flex items-center justify-center gap-2"
+                                        >
+                                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            حفظ التعديلات
+                                        </button>
+                                        <button
+                                            onClick={() => setShowEditModal(false)}
+                                            className="w-full sm:w-auto bg-white hover:bg-gray-50 text-[#8d2e46] border-2 border-[#8d2e46] px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[12px] sm:text-[13px] md:text-[14px] font-bold transition-colors font-[Cairo] flex items-center justify-center gap-2"
+                                        >
+                                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            إلغاء
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>)}
-                </div>
+                            </div>)}
+                    </div>
+                ) : (
+                    <div className="bg-[#F3E3E3] rounded-[20px] p-10 shadow-lg border border-[#f0d8c2] text-center" dir="rtl">
+                        <p className="text-gray-600 text-xl font-[Cairo]">لا يوجد مشروع نشط</p>
+                    </div>
+                )}
             </div>
+
             {/* Project Details Dialog */}
             {selectedProject && (
                 <Modal
@@ -1000,12 +1101,12 @@ export default function AdminMain() {
                                 <h2 id="project-dialog-title" className="text-2xl font-bold text-[#6F1A28] font-[Cairo] mb-2">
                                     {selectedProject.title}
                                 </h2>
-                                {(selectedProject.date || selectedProject.supervisor) && (
+                                {(selectedProject.date || selectedProject.start_date || selectedProject.supervisor) && (
                                     <div className="flex flex-wrap items-center gap-4 text-gray-600 text-sm font-[Cairo]">
-                                        {selectedProject.date && (
+                                        {(selectedProject.date || selectedProject.start_date) && (
                                             <div className="flex items-center gap-1.5">
                                                 <CalendarDays className="w-4 h-4 text-gray-500" />
-                                                <span>{selectedProject.date}</span>
+                                                <span>{selectedProject.date || selectedProject.start_date}</span>
                                             </div>
                                         )}
                                         {selectedProject.supervisor && (
@@ -1035,21 +1136,21 @@ export default function AdminMain() {
                         {/* Body */}
                         <div className="overflow-y-auto px-6 py-6 bg-white">
                             {/* Description */}
-                            {selectedProject.description && (
+                            {(selectedProject.description || selectedProject.desc) && (
                                 <div className="mb-6">
                                     <h3 className="text-lg font-bold text-[#6F1A28] mb-3 font-[Cairo]">الوصف</h3>
                                     <p className="text-gray-700 leading-relaxed font-[Cairo]">
-                                        {selectedProject.description}
+                                        {selectedProject.description || selectedProject.desc}
                                     </p>
                                 </div>
                             )}
 
                             {/* Budget */}
-                            {selectedProject.budget && (
+                            {(selectedProject.budget || selectedProject.donation_amount) && (
                                 <div className="mb-6">
                                     <h3 className="text-lg font-bold text-[#6F1A28] mb-3 font-[Cairo]">الميزانية</h3>
                                     <p className="text-[#6F1A28] font-semibold text-xl font-[Cairo]">
-                                        {selectedProject.budget} ريال
+                                        {selectedProject.budget || `${selectedProject.donation_amount} ريال`}
                                     </p>
                                 </div>
                             )}
@@ -1108,12 +1209,12 @@ export default function AdminMain() {
                                 </div>
                             )}
 
-                            {selectedProject.hours && (
+                            {(selectedProject.hours || selectedProject.estimated_hours) && (
                                 <div className="mb-6">
                                     <h3 className="text-lg font-bold text-[#6F1A28] mb-2 font-[Cairo]">عدد الساعات</h3>
                                     <div className="flex items-center gap-2 text-gray-700 font-[Cairo]">
                                         <Clock className="w-4 h-4 text-gray-500" />
-                                        <span>{selectedProject.hours}</span>
+                                        <span>{selectedProject.hours || `${selectedProject.estimated_hours} ساعة`}</span>
                                     </div>
                                 </div>
                             )}
@@ -1141,12 +1242,7 @@ export default function AdminMain() {
                                 إلغاء
                             </button>
                             <button
-                                onClick={() => {
-                                    if (rejectConfirmProject) {
-                                        setRemovedProjects(prev => new Set(prev).add(rejectConfirmProject.id));
-                                    }
-                                    setRejectConfirmProject(null);
-                                }}
+                                onClick={() => handleRejectProject(rejectConfirmProject)}
                                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition font-[Cairo]"
                             >
                                 رفض المشروع

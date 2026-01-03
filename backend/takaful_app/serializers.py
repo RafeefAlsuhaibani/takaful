@@ -1,34 +1,325 @@
 from rest_framework import serializers
-from .models import Project, Service, ServiceRequest, Volunteer, Suggestion
+from .models import (
+    Project, Service, ServiceRequest, Volunteer, Suggestion, 
+    ProjectAssignment, Task, Subtask
+)
+from django.contrib.auth.models import User
 
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = "__all__"
+        fields = [
+            'id',
+            'title',
+            'desc',
+            'category',
+            'target_audience',
+            'beneficiaries',
+            'location',
+            'donation_amount',
+            'start_date',
+            'end_date',
+            'implementation_requirements',
+            'project_goals',
+            'estimated_hours',
+            'supervisor',
+            'duration',
+            'tags',
+            'progress',
+            'organization',
+            'hours',
+            'status',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = "__all__"
+        fields = ['id', 'title', 'desc', 'status', 'is_active', 'created_at']
+        read_only_fields = ['created_at']
 
 
 class ServiceRequestSerializer(serializers.ModelSerializer):
-    service_name = serializers.ReadOnlyField(source="service.name")
-
+    service_title = serializers.CharField(source='service.title', read_only=True)
+    
     class Meta:
         model = ServiceRequest
-        fields = "__all__"
+        fields = [
+            'id',
+            'service',
+            'service_title',
+            'beneficiary_name',
+            'beneficiary_contact',
+            'details',
+            'status',
+            'created_at',
+        ]
+        read_only_fields = ['created_at']
 
 
-class VolunteerSerializer(serializers.ModelSerializer):
+class VolunteerDetailSerializer(serializers.ModelSerializer):
+    """
+    Detailed volunteer information for VolunteerManagement page
+    """
+    # Basic fields
+    id = serializers.IntegerField(source='pk', read_only=True)
+    email = serializers.EmailField(read_only=True)
+    
+    # Profile fields - ALL must use source='profile.xxx'
+    name = serializers.CharField(source='profile.name', read_only=True)
+    phone = serializers.CharField(source='profile.phone', read_only=True)  # ✅ FIX
+    location = serializers.CharField(source='profile.city', read_only=True)
+    skills = serializers.ListField(source='profile.skills', read_only=True)
+    qualification = serializers.CharField(source='profile.qualification', read_only=True)
+    university = serializers.CharField(source='profile.university', read_only=True)
+    specialization = serializers.CharField(source='profile.specialization', read_only=True)
+    rating = serializers.FloatField(source='profile.rating', read_only=True)
+    volunteer_hours = serializers.IntegerField(source='profile.total_volunteer_hours', read_only=True)
+    
+    # Date field
+    join_date = serializers.SerializerMethodField()
+    
+    # Computed fields
+    completed_tasks = serializers.SerializerMethodField()
+    current_tasks = serializers.SerializerMethodField()
+    current_projects = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    
     class Meta:
-        model = Volunteer
-        fields = "__all__"
-
+        model = User
+        fields = [
+            'id',
+            'email',
+            'name',
+            'phone',
+            'location',
+            'status',
+            'skills',
+            'qualification',
+            'university',
+            'specialization',
+            'completed_tasks',
+            'current_tasks',
+            'rating',
+            'join_date',  # ✅ ADDED
+            'volunteer_hours',
+            'current_projects',
+        ]
+    
+    def get_join_date(self, obj):
+        """Format join date as YYYY-MM-DD"""
+        return obj.date_joined.strftime('%Y-%m-%d')
+    
+    def get_completed_tasks(self, obj):
+        """Count of completed tasks"""
+        return obj.assigned_tasks.filter(status='مكتملة').count()
+    
+    def get_current_tasks(self, obj):
+        """Count of current (non-completed) tasks"""
+        return obj.assigned_tasks.exclude(status='مكتملة').count()
+    
+    def get_current_projects(self, obj):
+        """List of current project names"""
+        tasks = obj.assigned_tasks.exclude(status='مكتملة')
+        projects = list(set([task.project.title for task in tasks if task.project]))
+        return projects
+    
+    def get_status(self, obj):
+        """Determine volunteer status based on task count"""
+        current_tasks_count = obj.assigned_tasks.exclude(status='مكتملة').count()
+        if current_tasks_count == 0:
+            return "غير نشط"
+        elif current_tasks_count >= 5:
+            return "مشغول"
+        else:
+            return "نشط"
 
 class SuggestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Suggestion
-        fields = "__all__"
+        fields = ['id', 'title', 'description', 'submitted_by', 'created_at', 'is_reviewed']
+        read_only_fields = ['created_at']
+
+
+class ProjectAssignmentSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    user_name = serializers.CharField(source='user.profile.name', read_only=True)
+    project_title = serializers.CharField(source='project.title', read_only=True)
+    
+    class Meta:
+        model = ProjectAssignment
+        fields = [
+            'id',
+            'project',
+            'user',
+            'user_email',
+            'user_name',
+            'project_title',
+            'status',
+            'assigned_at',
+            'completed_at',
+            'hours_contributed',
+            'progress',
+            'notes',
+        ]
+        read_only_fields = ['assigned_at']
+
+
+# ============================================================================
+# NEW SERIALIZERS FOR VOLUNTEER MANAGEMENT
+# ============================================================================
+
+class SubtaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subtask
+        fields = ['id', 'title', 'completed', 'order', 'created_at']
+        read_only_fields = ['created_at']
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    volunteer_name = serializers.SerializerMethodField()
+    volunteer_id = serializers.IntegerField(source='volunteer.id', read_only=True, allow_null=True)
+    project_name = serializers.CharField(source='project.title', read_only=True)
+    subtasks = SubtaskSerializer(many=True, required=False)
+    
+    class Meta:
+        model = Task
+        fields = [
+            'id',
+            'title',
+            'description',
+            'project',
+            'project_name',
+            'volunteer',
+            'volunteer_id',
+            'volunteer_name',
+            'status',
+            'priority',
+            'due_date',
+            'hours',
+            'progress',
+            'subtasks',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'progress']
+    
+    def get_volunteer_name(self, obj):
+        if obj.volunteer and hasattr(obj.volunteer, 'profile'):
+            return obj.volunteer.profile.name
+        return None
+    
+    def update(self, instance, validated_data):
+        subtasks_data = validated_data.pop('subtasks', None)
+        
+        # Update task fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Update subtasks if provided
+        if subtasks_data is not None:
+            # Delete existing subtasks and create new ones
+            instance.subtasks.all().delete()
+            for subtask_data in subtasks_data:
+                Subtask.objects.create(task=instance, **subtask_data)
+        
+        # Recalculate progress based on subtasks
+        instance.progress = instance.calculate_progress()
+        instance.save()
+        
+        return instance
+
+
+class VolunteerDetailSerializer(serializers.ModelSerializer):
+    """
+    Detailed volunteer information for VolunteerManagement page
+    """
+    name = serializers.CharField(source='profile.name', read_only=True)
+    location = serializers.CharField(source='profile.city', read_only=True)
+    skills = serializers.JSONField(source='profile.skills', read_only=True)
+    qualification = serializers.CharField(source='profile.qualification', read_only=True)
+    university = serializers.CharField(source='profile.university', read_only=True)
+    specialization = serializers.CharField(source='profile.specialization', read_only=True)
+    rating = serializers.DecimalField(source='profile.rating', max_digits=3, decimal_places=1, read_only=True)
+    volunteer_hours = serializers.IntegerField(source='profile.total_volunteer_hours', read_only=True)
+    completed_tasks = serializers.IntegerField(source='profile.completed_tasks_count', read_only=True)
+    
+    # Current tasks count
+    current_tasks = serializers.SerializerMethodField()
+    current_projects = serializers.SerializerMethodField()
+    
+    # Status based on task load
+    status = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'email',
+            'name',
+            'phone',
+            'location',
+            'status',
+            'skills',
+            'qualification',
+            'university',
+            'specialization',
+            'completed_tasks',
+            'current_tasks',
+            'rating',
+            'volunteer_hours',
+            'current_projects',
+        ]
+    
+    def get_current_tasks(self, obj):
+        return obj.assigned_tasks.exclude(status='مكتملة').count()
+    
+    def get_current_projects(self, obj):
+        # Get unique project titles from current task assignments
+        tasks = obj.assigned_tasks.exclude(status='مكتملة')
+        return list(set([task.project.title for task in tasks]))
+    
+    def get_status(self, obj):
+        current_tasks_count = self.get_current_tasks(obj)
+        if current_tasks_count == 0:
+            return "غير نشط"
+        elif current_tasks_count >= 5:
+            return "مشغول"
+        else:
+            return "نشط"
+
+
+class VolunteerRequestSerializer(serializers.ModelSerializer):
+    """
+    For pending volunteer approval requests
+    Uses Profile model fields
+    """
+    name = serializers.CharField(source='profile.name')
+    location = serializers.CharField(source='profile.city')
+    skills = serializers.JSONField(source='profile.skills')
+    qualification = serializers.CharField(source='profile.qualification')
+    university = serializers.CharField(source='profile.university')
+    specialization = serializers.CharField(source='profile.specialization')
+    rating = serializers.DecimalField(source='profile.rating', max_digits=3, decimal_places=1)
+    volunteer_hours = serializers.IntegerField(source='profile.total_volunteer_hours')
+    phone = serializers.CharField(source='profile.phone')
+    
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'name',
+            'location',
+            'email',
+            'phone',
+            'qualification',
+            'university',
+            'specialization',
+            'skills',
+            'volunteer_hours',
+            'rating',
+        ]

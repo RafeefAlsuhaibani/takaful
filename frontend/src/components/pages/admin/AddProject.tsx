@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AdminLayout from "../../layout/AdminLayout";
 import { FiSearch } from "react-icons/fi";
 import { FileText, Calendar, Save, X } from 'lucide-react';
@@ -6,6 +6,8 @@ import Button from '../../ui/Button';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useAuth } from "../../../contexts/AuthContext";
+import { API_BASE_URL } from "../../../config";
 
 // إصلاح أيقونة Marker الافتراضية
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -26,6 +28,7 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
 }
 
 export default function AddProject() {
+  const { access } = useAuth();
   const [formData, setFormData] = useState({
     projectName: '',
     projectType: '',
@@ -45,6 +48,7 @@ export default function AddProject() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mapPosition, setMapPosition] = useState<[number, number]>([24.7136, 46.6753]); // الرياض كموقع افتراضي
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const projectTypeOptions = [
     { value: 'أساسي', label: 'أساسي' },
@@ -112,28 +116,96 @@ export default function AddProject() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      // هنا يمكن إضافة منطق إرسال البيانات
-      console.log('Project Data:', formData);
-      alert('تم إضافة المشروع بنجاح!');
-      // إعادة تعيين النموذج
-      setFormData({
-        projectName: '',
-        projectType: '',
-        projectDocument: null,
-        projectDescription: '',
-        targetAudience: '',
-        beneficiaries: '',
-        executionLocation: '',
-        donationAmount: '',
-        startDate: '',
-        endDate: '',
-        implementationRequirements: '',
-        projectGoals: '',
-      });
+    
+    if (!validateForm()) {
+      return;
     }
+
+    setIsSubmitting(true);
+
+    try {
+      // Create FormData for file upload
+      const apiFormData = new FormData();
+      
+      // Map frontend fields to backend fields
+      apiFormData.append('title', formData.projectName);
+      apiFormData.append('category', formData.projectType);
+      apiFormData.append('desc', formData.projectDescription);
+      apiFormData.append('target_audience', formData.targetAudience);
+      apiFormData.append('beneficiaries', formData.beneficiaries);
+      apiFormData.append('location', formData.executionLocation);
+      apiFormData.append('donation_amount', formData.donationAmount);
+      apiFormData.append('start_date', formData.startDate);
+      apiFormData.append('end_date', formData.endDate);
+      apiFormData.append('implementation_requirements', formData.implementationRequirements);
+      apiFormData.append('project_goals', formData.projectGoals);
+      
+      // Add file if exists
+      if (formData.projectDocument) {
+        apiFormData.append('document', formData.projectDocument);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/projects/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${access}`
+          // Don't set Content-Type - browser will set it with boundary for FormData
+        },
+        body: apiFormData
+      });
+
+      if (response.ok) {
+        alert('تم إضافة المشروع بنجاح!');
+        
+        // إعادة تعيين النموذج
+        setFormData({
+          projectName: '',
+          projectType: '',
+          projectDocument: null,
+          projectDescription: '',
+          targetAudience: '',
+          beneficiaries: '',
+          executionLocation: '',
+          donationAmount: '',
+          startDate: '',
+          endDate: '',
+          implementationRequirements: '',
+          projectGoals: '',
+        });
+        setSelectedLocation(null);
+        setErrors({});
+      } else {
+        const errorData = await response.json();
+        console.error('Error creating project:', errorData);
+        alert('حدث خطأ أثناء إضافة المشروع. يرجى المحاولة مرة أخرى.');
+      }
+    } catch (error) {
+      console.error('Error submitting project:', error);
+      alert('حدث خطأ أثناء إضافة المشروع. يرجى المحاولة مرة أخرى.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReset = () => {
+    setFormData({
+      projectName: '',
+      projectType: '',
+      projectDocument: null,
+      projectDescription: '',
+      targetAudience: '',
+      beneficiaries: '',
+      executionLocation: '',
+      donationAmount: '',
+      startDate: '',
+      endDate: '',
+      implementationRequirements: '',
+      projectGoals: '',
+    });
+    setSelectedLocation(null);
+    setErrors({});
   };
 
   return (
@@ -434,33 +506,19 @@ export default function AddProject() {
               type="submit"
               variant="primary"
               size="lg"
-              className="bg-[#8D2E46] hover:bg-[#6B1E2A] text-white px-8 py-3 rounded-xl flex items-center gap-2"
+              disabled={isSubmitting}
+              className="bg-[#8D2E46] hover:bg-[#6B1E2A] text-white px-8 py-3 rounded-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={20} />
-              حفظ المشروع
+              {isSubmitting ? 'جاري الحفظ...' : 'حفظ المشروع'}
             </Button>
             <Button
               type="button"
               variant="outline"
               size="lg"
-              onClick={() => {
-                setFormData({
-                  projectName: '',
-                  projectType: '',
-                  projectDocument: null,
-                  projectDescription: '',
-                  targetAudience: '',
-                  beneficiaries: '',
-                  executionLocation: '',
-                  donationAmount: '',
-                  startDate: '',
-                  endDate: '',
-                  implementationRequirements: '',
-                  projectGoals: '',
-                });
-                setErrors({});
-              }}
-              className="bg-[#fdf8f9] hover:bg-gray-50 text-[#8D2E46] border border-[#e0cfd4] px-8 py-3 rounded-[999px] flex items-center gap-2 font-[Cairo]"
+              onClick={handleReset}
+              disabled={isSubmitting}
+              className="bg-[#fdf8f9] hover:bg-gray-50 text-[#8D2E46] border border-[#e0cfd4] px-8 py-3 rounded-[999px] flex items-center gap-2 font-[Cairo] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X size={20} />
               الغاء

@@ -38,23 +38,23 @@ export default function AdminSignIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-
+  
     setIsSubmitting(true);
     setErrors((prev) => ({ ...prev, form: '' }));
-
+  
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login/`, {
-
+      // Step 1: Get JWT tokens
+      const res = await fetch(`${API_BASE_URL}/api/accounts/auth/token/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
+          username: formData.email,
           password: formData.password,
         }),
       });
-
+  
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const msg = (data as any).detail || 'فشل تسجيل الدخول، تأكد من البيانات';
@@ -62,17 +62,43 @@ export default function AdminSignIn() {
         setIsSubmitting(false);
         return;
       }
-
-      const data = await res.json();
-
-      // Force role = 'admin' for this page
-      login({
-        name: data.name ?? formData.email.split('@')[0],
-        email: data.email ?? formData.email,
-        role: 'admin',
+  
+      const tokenData = await res.json();
+  
+      // Step 2: Get user profile to check role
+      const userRes = await fetch(`${API_BASE_URL}/api/accounts/me/`, {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access}`,
+        },
       });
-
-      navigate('/admin/dashboard');
+  
+      if (!userRes.ok) {
+        setErrors((prev) => ({ ...prev, form: 'فشل في جلب بيانات المستخدم' }));
+        setIsSubmitting(false);
+        return;
+      }
+  
+      const userData = await userRes.json();
+  
+      // Step 3: Check if user is admin
+      if (userData.profile?.role !== 'admin') {
+        setErrors((prev) => ({ ...prev, form: 'غير مصرح لك بالدخول كمشرف' }));
+        setIsSubmitting(false);
+        return;
+      }
+  
+      // Step 4: Store tokens and user data
+      login(
+        {
+          name: userData.profile?.name || userData.email,
+          email: userData.email,
+          role: 'admin',
+        },
+        tokenData.access,
+        tokenData.refresh
+      );
+  
+      navigate('/admin/main');
     } catch (err) {
       console.error(err);
       setErrors((prev) => ({
@@ -83,7 +109,6 @@ export default function AdminSignIn() {
       setIsSubmitting(false);
     }
   };
-
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

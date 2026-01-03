@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminLayout from "../../layout/AdminLayout";
 import { FiSearch } from "react-icons/fi";
 import {
@@ -14,6 +14,8 @@ import {
     Save,
     User,
 } from "lucide-react";
+import { useAuth } from "../../../contexts/AuthContext";  // ✅ ADD THIS LINE
+import { API_BASE_URL } from "../../../config";  // ✅ ADD THIS LINE TOO
 
 //
 // أنواع البيانات
@@ -27,18 +29,19 @@ interface StatItem {
 }
 
 interface Volunteer {
+    id: number;  // ✅ ADD
     name: string;
     email: string;
     phone: string;
     status: string;
     skills: string[];
-    completedTasks: number;
-    currentTasks: number;
+    completed_tasks: number;  // CHANGE from completedTasks
+    current_tasks: number;  //  CHANGE from currentTasks
     rating: number;
-    joinDate: string;
-    currentProjects: string[];
+    join_date: string;  //  CHANGE from joinDate
+    current_projects: string[];  //  CHANGE from currentProjects
     location: string;
-    volunteerHours: number;
+    volunteer_hours: number;  //  CHANGE from volunteerHours
 }
 
 interface Subtask {
@@ -48,18 +51,20 @@ interface Subtask {
 }
 
 interface Task {
-    id: string;
-    title: string;
-    project: string;
-    volunteerName: string;
-    status: string; // "قيد التنفيذ" | "في الانتظار" | "مكتملة" | "معلقة"
-    priority: string;
-    dueDate: string;
-    hours: number;
-    progress: number;
-    description?: string;
-    subtasks?: Subtask[];
-}
+    
+        id: number;  //  CHANGE from string
+        title: string;
+        project_name: string;  //  CHANGE from project
+        volunteer_name: string | null;  //  CHANGE from volunteerName
+        volunteer_id: number | null;  // ADD
+        status: string;
+        priority: string;
+        due_date: string;  //  CHANGE from dueDate
+        hours: number;
+        progress: number;
+        description?: string;
+        subtasks?: Subtask[];
+    }
 
 //
 // هيلبرز
@@ -89,171 +94,38 @@ const getProgressBarColor = () => "#c87981";
 //
 // بيانات ابتدائية
 //
-const initialTasks: Task[] = [
-    {
-        id: "task-1",
-        title: "تصميم واجهة المستخدم الرئيسية",
-        project: "منصة المتطوعين",
-        volunteerName: "فاطمة سالم",
-        status: "قيد التنفيذ",
-        priority: "عالية",
-        dueDate: "2024-02-15",
-        hours: 10,
-        progress: 65,
-        description:
-            "تصميم واجهة رئيسية متجاوبة للمنصة تتضمن صفحة لوحة التحكم وصفحة تسجيل الدخول مع الالتزام بدليل الهوية البصرية للجمعية.",
-        subtasks: [
-            { id: "t1-1", title: "تحليل احتياج الصفحات والعناصر", completed: true },
-            { id: "t1-2", title: "تصميم الـ Wireframes", completed: true },
-            { id: "t1-3", title: "تصميم الواجهة عالية الدقة (UI)", completed: false },
-            { id: "t1-4", title: "مراجعة التصميم مع فريق الجمعية", completed: false },
-        ],
-    },
-    {
-        id: "task-2",
-        title: "تطوير صفحة تسجيل الدخول",
-        project: "موقع الجمعية",
-        volunteerName: "احمد محمد علي",
-        status: "مكتملة",
-        priority: "متوسطة",
-        dueDate: "2024-02-10",
-        hours: 8,
-        progress: 100,
-        description:
-            "بناء صفحة تسجيل دخول للمتطوعين مع التحقق من البيانات والتكامل مع واجهة الـ API.",
-        subtasks: [
-            { id: "t2-1", title: "إنشاء نموذج تسجيل الدخول", completed: true },
-            { id: "t2-2", title: "ربط الـ API والتحقق من البيانات", completed: true },
-            { id: "t2-3", title: "إضافة رسائل الخطأ والحالات", completed: true },
-        ],
-    },
-    {
-        id: "task-3",
-        title: "كتابة محتوى الحملة الإعلانية",
-        project: "حملة التوعية",
-        volunteerName: "سارة أحمد",
-        status: "قيد التنفيذ",
-        priority: "منخفضة",
-        dueDate: "2024-02-20",
-        hours: 6,
-        progress: 30,
-        description:
-            "كتابة نصوص الحملة الإعلانية على منصات التواصل الاجتماعي للتعريف ببرامج التطوع.",
-        subtasks: [
-            { id: "t3-1", title: "تجميع المعلومات عن البرامج", completed: true },
-            { id: "t3-2", title: "صياغة نصوص أولية", completed: false },
-            { id: "t3-3", title: "مراجعة الصياغة مع فريق التسويق", completed: false },
-        ],
-    },
-    {
-        id: "task-4",
-        title: "تحليل بيانات المستخدمين",
-        project: "تطوير التطبيق",
-        volunteerName: "عمر خالد",
-        status: "في الانتظار",
-        priority: "متوسطة",
-        dueDate: "2024-02-25",
-        hours: 12,
-        progress: 0,
-        description:
-            "تحليل بيانات تفاعل المستخدمين داخل التطبيق لاستخراج مؤشرات تساعد على تحسين التجربة.",
-        subtasks: [
-            { id: "t4-1", title: "إعداد لوحة تتبع للبيانات الأساسية", completed: false },
-            { id: "t4-2", title: "تحليل سلوك الدخول والخروج", completed: false },
-            { id: "t4-3", title: "كتابة تقرير بالتوصيات النهائية", completed: false },
-        ],
-    },
-];
 
-const initialVolunteers: Volunteer[] = [
-    {
-        name: "احمد محمد علي",
-        email: "ahmed@example.com",
-        phone: "+966501234567",
-        status: "نشط",
-        skills: ["مطور ويب", "React", "Javascript"],
-        completedTasks: 12,
-        currentTasks: 3,
-        rating: 4.8,
-        joinDate: "2024-01-01",
-        currentProjects: ["موقع الجمعية", "تنسيق الفعاليات"],
-        location: "الرياض - حي النرجس",
-        volunteerHours: 15,
-    },
-    {
-        name: "فاطمة سالم",
-        email: "fatima@example.com",
-        phone: "+9660554321",
-        status: "نشط",
-        skills: ["UI/UX تصميم", "Figma", "Adobe Creative"],
-        completedTasks: 8,
-        currentTasks: 2,
-        rating: 4.9,
-        joinDate: "2024-01-05",
-        currentProjects: ["حملة التوعية", "تجديد الهوية البصرية"],
-        location: "جدة - حي السلامة",
-        volunteerHours: 20,
-    },
-    {
-        name: "عمر خالد",
-        email: "omar@example.com",
-        phone: "+966501234567",
-        status: "مشغول",
-        skills: ["تحليل البيانات", "ادارة المشاريع"],
-        completedTasks: 15,
-        currentTasks: 5,
-        rating: 4.7,
-        joinDate: "2023-12-20",
-        currentProjects: ["تطوير التطبيق", "بحث السوق"],
-        location: "القصيم",
-        volunteerHours: 27,
-    },
-    {
-        name: "سارة أحمد",
-        email: "sara@example.com",
-        phone: "+966507654321",
-        status: "غير نشط",
-        skills: ["كتابة محتوى", "التسويق الرقمي"],
-        completedTasks: 5,
-        currentTasks: 0,
-        rating: 4.5,
-        joinDate: "2024-01-10",
-        currentProjects: ["حملة التسويق"],
-        location: "الدمام",
-        volunteerHours: 8,
-    },
-];
 
 //
 // كارد الإحصائيات
 //
-const ProjectOverviewSection: React.FC = () => {
-    const stats: StatItem[] = [
+const ProjectOverviewSection: React.FC<{ stats: any }> = ({ stats }) => {
+    const statsData: StatItem[] = [
         {
             id: "total-volunteers",
             label: "اجمالي المتطوعين",
-            value: "4",
+            value: stats.total_volunteers?.toString() || "0",
             icon: "https://c.animaapp.com/u4OaXzk0/img/multiple-neutral-2-streamline-ultimate-regular@2x.png",
             iconAlt: "People",
         },
         {
             id: "active-volunteers",
             label: "المتطوعين النشطين",
-            value: "2",
+            value: stats.active_volunteers?.toString() || "0",
             icon: "https://c.animaapp.com/u4OaXzk0/img/famicons-star-outline.svg",
             iconAlt: "Star",
         },
         {
             id: "total-hours",
             label: "اجمالي الساعات",
-            value: "26",
+            value: stats.total_hours?.toString() || "0",
             icon: "https://c.animaapp.com/u4OaXzk0/img/time-clock-file-setting-streamline-ultimate-regular@2x.png",
             iconAlt: "Clock",
         },
         {
             id: "completed-tasks",
             label: "المهام المكتملة",
-            value: "1",
+            value: stats.completed_tasks?.toString() || "0",
             icon: "https://c.animaapp.com/u4OaXzk0/img/list-to-do-streamline-ultimate-regular@2x.png",
             iconAlt: "Checkmark",
         },
@@ -277,7 +149,7 @@ const ProjectOverviewSection: React.FC = () => {
             <div className="w-[80%] mx-auto h-[2px] bg-[#e0cfd4] opacity-80" />
 
             <div className="mt-4 flex flex-col md:flex-row items-stretch justify-between gap-8">
-                {stats.map((stat, index) => (
+                {statsData.map((stat, index) => (  // ✅ CHANGED from stats.map to statsData.map
                     <div
                         key={stat.id}
                         className="flex-1 flex flex-col items-center gap-3 relative"
@@ -305,7 +177,6 @@ const ProjectOverviewSection: React.FC = () => {
         </section>
     );
 };
-
 //
 // تبويب المهام والمتطوعين
 //
@@ -313,6 +184,7 @@ interface TasksVolunteersTabsProps {
     tasks: Task[];
     setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
     volunteers: Volunteer[];
+    onTaskUpdate: () => void;
 }
 
 const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
@@ -1644,10 +1516,82 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
 //
 const VolunteerManagement: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState("");
-    const [tasks, setTasks] = useState<Task[]>(initialTasks);
-    const [volunteers] = useState<Volunteer[]>(initialVolunteers);
-
+    const { access } = useAuth();  //  ADD
+    
+    // ADD API State
+    const [stats, setStats] = useState({
+        total_volunteers: 0,
+        active_volunteers: 0,
+        total_hours: 0,
+        completed_tasks: 0
+    });
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+    const [loading, setLoading] = useState(true);
     const term = searchTerm.trim().toLowerCase();
+
+
+
+    // Fetch data on mount
+useEffect(() => {
+    fetchStats();
+    fetchVolunteers();
+    fetchTasks();
+}, []);
+
+const fetchStats = async () => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/volunteer-stats/`, {
+            headers: { 'Authorization': `Bearer ${access}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Volunteers data:', data);
+            console.log('Results:', data.results);
+            setStats(data);
+        }
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+    }
+};
+
+const fetchVolunteers = async () => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/volunteers/`, {
+            headers: { 'Authorization': `Bearer ${access}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            setVolunteers(data.results || []);
+        }
+    } catch (error) {
+        console.error('Error fetching volunteers:', error);
+    }
+};
+
+const fetchTasks = async () => {
+    setLoading(true);
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/tasks/`, {
+            headers: { 'Authorization': `Bearer ${access}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            setTasks(data.results || data);
+        }
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
+    } finally {
+        setLoading(false);
+    }
+};
+
+const handleTaskUpdate = () => {
+    fetchStats();
+    fetchTasks();
+    fetchVolunteers();
+};
+
 
     const filteredVolunteers = volunteers.filter((v) => {
         if (!term) return true;
@@ -1681,6 +1625,16 @@ const VolunteerManagement: React.FC = () => {
         return haystack.includes(term);
     });
 
+    if (loading) {
+        return (
+            <AdminLayout>
+                <div className="flex justify-center items-center h-screen">
+                    <p className="text-gray-500 font-[Cairo]">جاري التحميل...</p>
+                </div>
+            </AdminLayout>
+        );
+    }
+
     return (
         <AdminLayout>
             <section dir="rtl" className="space-y-8">
@@ -1703,11 +1657,12 @@ const VolunteerManagement: React.FC = () => {
                     </div>
                 </div>
 
-                <ProjectOverviewSection />
+                <ProjectOverviewSection stats={stats} />
                 <TasksVolunteersTabs
                     tasks={filteredTasks}
                     setTasks={setTasks}
                     volunteers={filteredVolunteers}
+                    onTaskUpdate={handleTaskUpdate}
                 />
                 <PerformanceReportsSection
                     tasks={filteredTasks}
