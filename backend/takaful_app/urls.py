@@ -12,27 +12,51 @@ router.register(r'assignments', views.ProjectAssignmentViewSet, basename='assign
 router.register(r'tasks', views.TaskViewSet, basename='task')  # NEW: Task management
 
 urlpatterns = [
+    # Public endpoints (no auth required) - MUST come before router
+    path('public-projects/', views.public_projects, name='public-projects'),
+
     # Include router URLs
     path('', include(router.urls)),
-    
+
     # Statistics endpoints
     path('stats/', views.admin_stats, name='admin-stats'),
     path('volunteer-stats/', views.volunteer_stats, name='volunteer-stats'),  # NEW
     path('my-active-project/', views.get_my_active_project, name='my-active-project'),  # 🔥 ADD THIS LINE
-    
+
     # Volunteer management (NEW)
     path('volunteers/', views.list_volunteers, name='list-volunteers'),
-    
+
     # Volunteer requests (NEW - for VolunteerRequests.tsx)
     path('volunteer-requests/', views.volunteer_requests_list, name='volunteer-requests-list'),
     path('volunteer-requests/<int:volunteer_id>/accept/', views.accept_volunteer_request, name='accept-volunteer'),
     path('volunteer-requests/<int:volunteer_id>/reject/', views.reject_volunteer_request, name='reject-volunteer'),
-    
+
+    # Volunteer Applications (NEW - separate application system)
+    path('admin/applications/', views.list_volunteer_applications, name='list-applications'),
+    path('admin/applications/<int:application_id>/accept/', views.accept_volunteer_application, name='accept-application'),
+    path('admin/applications/<int:application_id>/reject/', views.reject_volunteer_application, name='reject-application'),
+
     # Performance reports (NEW)
     path('reports/projects-progress/', views.projects_progress_report, name='projects-progress'),
     path('reports/volunteers-performance/', views.volunteers_performance_report, name='volunteers-performance'),
     path('reports/volunteer-tasks/', views.volunteer_tasks_report, name='volunteer-tasks'),
-    
+
     # Users list
     path('users/', views.list_users, name='list-users'),
+
+    # Reports endpoints
+    path('reports/generate/', views.generate_report, name='generate-report'),
+    path('reports/', views.list_reports, name='list-reports'),
+    path('reports/<int:report_id>/', views.get_report_detail, name='report-detail'),
+    path('reports/<int:report_id>/delete/', views.delete_report, name='delete-report'),
+
+    # ============================================================================
+    # VOLUNTEER-SPECIFIC ENDPOINTS (for /user/* pages)
+    # ============================================================================
+    path('user/my-stats/', views.my_volunteer_stats, name='my-volunteer-stats'),
+    path('user/my-tasks/', views.my_tasks, name='my-tasks'),
+    path('user/opportunities/', views.available_opportunities, name='available-opportunities'),
+    path('user/opportunities/<int:project_id>/apply/', views.apply_to_opportunity, name='apply-to-opportunity'),
+    path('user/tasks/<int:task_id>/withdraw/', views.withdraw_from_task, name='withdraw-from-task'),
+    path('user/tasks/<int:task_id>/update-progress/', views.update_task_progress, name='update-task-progress'),
 ]

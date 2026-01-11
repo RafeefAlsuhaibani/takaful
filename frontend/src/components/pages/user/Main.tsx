@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SidebarLayout from '../../ui/Sidebar';
 import {
   MapPin,
@@ -13,6 +13,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Toast from '../../feedback/Toast';
 import type { ToastProps } from '../../feedback/Toast';
+import { useAuth } from '../../../contexts/AuthContext';
+import { API_BASE_URL } from '../../../config';
 
 type TaskStatus = 'جديدة' | 'قيد التنفيذ' | 'معلقة';
 
@@ -372,6 +374,55 @@ function HadithCard() {
 }
 
 function StatsSection() {
+  const { access } = useAuth();
+  const [stats, setStats] = useState({
+    volunteer_hours: 0,
+    rating: 0,
+    completed_tasks: 0,
+    points: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/user/my-stats/`, {
+          headers: {
+            'Authorization': `Bearer ${access}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching volunteer stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (access) {
+      fetchStats();
+    }
+  }, [access]);
+
+  if (loading) {
+    return (
+      <section
+        className="relative max-w-[540px] w-full rounded-[25px] py-3 px-4 text-[#4e4a4b]
+                   bg-[linear-gradient(0deg,rgba(250,246,247,0.8)_0%,rgba(250,246,247,0.8)_100%),linear-gradient(177deg,rgba(152,66,88,1)_0%,rgba(165,86,78,1)_33%,rgba(228,180,32,1)_100%)]
+                   shadow-[-1px_5px_11px_#00000008,-3px_20px_20px_#00000008,-7px_45px_28px_#00000005,-12px_81px_33px_transparent,-18px_126px_36px_transparent]
+                   select-none cursor-default"
+        dir="rtl"
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8d2e46]"></div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       className="relative max-w-[540px] w-full rounded-[25px] py-3 px-4 text-[#4e4a4b]
@@ -400,7 +451,7 @@ function StatsSection() {
             alt="clock"
             src="https://c.animaapp.com/2u79Z8fE/img/mdi-light-clock.svg"
           />
-          <p className="font-bold text-[#8d2e46] text-3xl md:text-4xl">150</p>
+          <p className="font-bold text-[#8d2e46] text-3xl md:text-4xl">{stats.volunteer_hours}</p>
           <p className="mt-1 font-medium text-[#4e4a4b] text-[14px] md:text-[15px]">
             ساعة تطوعية
           </p>
@@ -414,7 +465,7 @@ function StatsSection() {
             alt="rating"
             src="https://c.animaapp.com/2u79Z8fE/img/solar-star-outline.svg"
           />
-          <p className="font-bold text-[#8d2e46] text-3xl md:text-4xl">4.5</p>
+          <p className="font-bold text-[#8d2e46] text-3xl md:text-4xl">{stats.rating.toFixed(1)}</p>
           <p className="mt-1 font-medium text-[#4e4a4b] text-[14px] md:text-[15px]">
             التقييم
           </p>
@@ -428,7 +479,7 @@ function StatsSection() {
             alt="done"
             src="https://c.animaapp.com/2u79Z8fE/img/lets-icons-done-ring-round.svg"
           />
-          <p className="font-bold text-[#8d2e46] text-3xl md:text-4xl">10</p>
+          <p className="font-bold text-[#8d2e46] text-3xl md:text-4xl">{stats.completed_tasks}</p>
           <p className="mt-1 font-medium text-[#4e4a4b] text-[14px] md:text-[15px]">
             مهام منجزة
           </p>
@@ -441,7 +492,7 @@ function StatsSection() {
         </span>
         <div className="w-[90px] h-[30px] rounded-[8px] bg-[linear-gradient(90deg,rgba(141,46,70,0.9)_0%,rgba(228,177,6,0.9)_100%)] flex items-center justify-center">
           <span className="font-semibold text-[#8d2e46] text-[16px] md:text-[18px]">
-            25 نقطة
+            {stats.points} نقطة
           </span>
         </div>
       </div>
@@ -468,10 +519,13 @@ function SearchBox() {
 
 function OpportunitiesSection() {
   const navigate = useNavigate();
+  const { access } = useAuth();
 
   const [showApplyPopup, setShowApplyPopup] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [toasts, setToasts] = useState<ToastProps[]>([]);
 
@@ -488,6 +542,45 @@ function OpportunitiesSection() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  useEffect(() => {
+    const fetchOpportunities = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/user/opportunities/`, {
+          headers: {
+            'Authorization': `Bearer ${access}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Map backend data to frontend format
+          const mappedOpportunities = (data.results || []).map((project: any) => ({
+            id: project.id,
+            title: project.title || project.desc || 'فرصة تطوعية',
+            org: project.organization || 'منظمة تكافل',
+            category: project.category || 'تطوير',
+            location: project.location || 'غير محدد',
+            urgency: 'عادية' as OpportunityUrgency,
+            duration: `${project.estimated_hours || 20} ساعة`,
+            people: `${project.beneficiaries || 1} شخص`,
+            logoUrl: 'https://c.animaapp.com/2u79Z8fE/img/image-15@2x.png'
+          }));
+          setOpportunities(mappedOpportunities);
+        }
+      } catch (error) {
+        console.error('Error fetching opportunities:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (access) {
+      fetchOpportunities();
+    } else {
+      setLoading(false);
+    }
+  }, [access]);
+
   const handleMoreClick = () => {
     navigate('/');
   };
@@ -497,17 +590,50 @@ function OpportunitiesSection() {
     setShowApplyPopup(true);
   };
 
-  const handleConfirmApply = () => {
-    setShowApplyPopup(false);
+  const handleConfirmApply = async () => {
+    if (!selectedOpportunity) return;
 
-    addToast({
-      type: 'success',
-      title: 'تم تقديم طلبك بنجاح',
-      description: selectedOpportunity
-        ? `تم استلام طلبك في: ${selectedOpportunity.title}`
-        : 'تم استلام طلبك، شكرًا لمبادرتك بالتطوع.',
-      duration: 4500,
-    });
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/user/opportunities/${selectedOpportunity.id}/apply/`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${access}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setShowApplyPopup(false);
+        addToast({
+          type: 'success',
+          title: 'تم تقديم طلبك بنجاح',
+          description: `تم استلام طلبك في: ${selectedOpportunity.title}`,
+          duration: 4500,
+        });
+      } else {
+        setShowApplyPopup(false);
+        addToast({
+          type: 'error',
+          title: 'خطأ',
+          description: data.message || 'حدث خطأ أثناء تقديم الطلب',
+          duration: 4500,
+        });
+      }
+    } catch (error) {
+      console.error('Error applying to opportunity:', error);
+      setShowApplyPopup(false);
+      addToast({
+        type: 'error',
+        title: 'خطأ',
+        description: 'حدث خطأ أثناء تقديم الطلب',
+        duration: 4500,
+      });
+    }
 
     setSelectedOpportunity(null);
   };
@@ -554,13 +680,23 @@ function OpportunitiesSection() {
         </header>
 
         <div className="space-y-3">
-          {opportunities.map((op) => (
-            <OpportunityCard
-              key={op.id}
-              opportunity={op}
-              onApply={() => handleApplyClick(op)}
-            />
-          ))}
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8d2e46]"></div>
+            </div>
+          ) : opportunities.length > 0 ? (
+            opportunities.map((op) => (
+              <OpportunityCard
+                key={op.id}
+                opportunity={op}
+                onApply={() => handleApplyClick(op)}
+              />
+            ))
+          ) : (
+            <div className="text-center text-[#4e4a4b] py-8">
+              لا توجد فرص تطوعية متاحة حاليًا
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex justify-center">
@@ -627,12 +763,66 @@ type TasksSectionProps = {
 
 function TasksSection({ onMoreClick }: TasksSectionProps) {
   const navigate = useNavigate();
+  const { access } = useAuth();
 
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [toasts, setToasts] = useState<ToastProps[]>([]);
   const [showWithdrawPopup, setShowWithdrawPopup] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/user/my-tasks/`, {
+          headers: {
+            'Authorization': `Bearer ${access}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Map backend data to frontend format
+          const mappedTasks = (data.results || [])
+            .filter((task: any) => task.status !== 'مكتملة')  // Exclude completed for main page
+            .map((task: any) => {
+              // Map backend status to frontend status
+              let status: TaskStatus = 'قيد التنفيذ';
+              if (task.status === 'في الانتظار') status = 'جديدة';
+              else if (task.status === 'معلقة') status = 'معلقة';
+              else if (task.status === 'قيد التنفيذ') status = 'قيد التنفيذ';
+
+              // Format date
+              const createdDate = new Date(task.created_at);
+              const hijriDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+                day: 'numeric',
+                month: 'long'
+              }).format(createdDate);
+
+              return {
+                id: task.id,
+                status: status,
+                title: task.title,
+                org: task.project_name || 'منظمة تكافل',
+                description: task.description || 'لا يوجد وصف',
+                date: hijriDate,
+                duration: `${task.hours || 20} ساعة`,
+                location: 'مقر الجمعية'
+              };
+            });
+          setTasks(mappedTasks);
+        }
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (access) {
+      fetchTasks();
+    }
+  }, [access]);
 
   const addToast = (toast: Omit<ToastProps, 'id' | 'onClose'>) => {
     const id =
@@ -652,21 +842,52 @@ function TasksSection({ onMoreClick }: TasksSectionProps) {
     setShowWithdrawPopup(true);
   };
 
-  const handleConfirmWithdraw = () => {
-    if (selectedTask) {
-      setTasks((prev) => prev.filter((t) => t.id !== selectedTask.id));
+  const handleConfirmWithdraw = async () => {
+    if (!selectedTask) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/user/tasks/${selectedTask.id}/withdraw/`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${access}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setTasks((prev) => prev.filter((t) => t.id !== selectedTask.id));
+        setShowWithdrawPopup(false);
+
+        addToast({
+          type: 'success',
+          title: 'تم الانسحاب بنجاح',
+          description: `تم انسحابك من المهمة: ${selectedTask.title}`,
+          duration: 4500,
+        });
+      } else {
+        setShowWithdrawPopup(false);
+        addToast({
+          type: 'error',
+          title: 'خطأ',
+          description: data.error || 'حدث خطأ أثناء الانسحاب من المهمة',
+          duration: 4500,
+        });
+      }
+    } catch (error) {
+      console.error('Error withdrawing from task:', error);
+      setShowWithdrawPopup(false);
+      addToast({
+        type: 'error',
+        title: 'خطأ',
+        description: 'حدث خطأ أثناء الانسحاب من المهمة',
+        duration: 4500,
+      });
     }
-
-    setShowWithdrawPopup(false);
-
-    addToast({
-      type: 'success',
-      title: 'تم الانسحاب بنجاح',
-      description: selectedTask
-        ? `تم انسحابك من المهمة: ${selectedTask.title}`
-        : 'تم الانسحاب من المهمة بنجاح.',
-      duration: 4500,
-    });
 
     setSelectedTask(null);
   };
@@ -720,16 +941,20 @@ function TasksSection({ onMoreClick }: TasksSectionProps) {
         </header>
 
         <div className="space-y-3">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onWithdraw={handleWithdrawClick}
-              onOpen={handleOpenTask}
-            />
-          ))}
-
-          {tasks.length === 0 && (
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8d2e46]"></div>
+            </div>
+          ) : tasks.length > 0 ? (
+            tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onWithdraw={handleWithdrawClick}
+                onOpen={handleOpenTask}
+              />
+            ))
+          ) : (
             <div className="mt-2 rounded-2xl bg-white/70 border border-[#e2c9d3] px-4 py-5 text-center text-sm text-[#7c7570] flex flex-col gap-2">
               <p className="font-semibold text-[#4e4a4b]">
                 لا توجد مهام مُسندة لك حاليًا 🌿

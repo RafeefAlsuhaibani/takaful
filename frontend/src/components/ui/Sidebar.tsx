@@ -26,33 +26,33 @@ const menuItems = [
 
 export default function ArabicSidebar({ children }: SidebarLayoutProps) {
 
-    const { user, logout } = useAuth();
+    const { user, access, logout } = useAuth();
     const navigate = useNavigate();
     const [volunteerData, setVolunteerData] = useState<ProfileData | null>(null);
 
     // Fetch volunteer data from backend
     useEffect(() => {
         const fetchProfile = async () => {
-            if (!user?.access) return;
-      
+            if (!access) return;
+
             try {
                 const res = await fetch(`${API_BASE_URL}/api/accounts/me/`, {
                     headers: {
-                        Authorization: `Bearer ${user.access}`,
+                        Authorization: `Bearer ${access}`,
                     },
                 });
-      
+
                 if (!res.ok) throw new Error("Failed to fetch profile");
-      
+
                 const data = await res.json();
                 setVolunteerData(data);
             } catch (err) {
                 console.error("Sidebar profile error:", err);
             }
         };
-      
+
         fetchProfile();
-      }, [user?.access]);
+      }, [access]);
       
 
     const handleLogout = () => {
@@ -64,7 +64,7 @@ export default function ArabicSidebar({ children }: SidebarLayoutProps) {
         navigate('/user/settings');
     };
 
-    const displayName = volunteerData?.name || 'المستخدم';
+    const displayName = volunteerData?.name || user?.name || 'المستخدم';
 
     const skills = volunteerData?.skills ?? [];
     return (

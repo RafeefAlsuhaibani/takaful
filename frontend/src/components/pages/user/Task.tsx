@@ -2,6 +2,8 @@ import SidebarLayout from '../../ui/Sidebar';
 import { useMemo, useState, useEffect } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { API_BASE_URL } from '../../../config';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 
 /* ---------------- Types ---------------- */
 interface Task {
@@ -255,6 +257,8 @@ function jsWeekdayToFigmaIndex(js: number) {
 
 /* ---------------- Component ---------------- */
 export default function Tasks() {
+    const { access } = useAuth();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState("قيد التنفيذ");
     const [showPopup, setShowPopup] = useState(false);
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
@@ -275,38 +279,159 @@ export default function Tasks() {
         return copy;
     });
 
+    // Store all task due dates from backend
+    const [taskDueDates, setTaskDueDates] = useState<Date[]>([]);
+
     useEffect(() => {
-        const fetchProjects = async () => {
+        const fetchTasks = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const res = await fetch(`${API_BASE_URL}/api/admin/projects/`);
-                if (!res.ok) throw new Error('فشل في تحميل المشاريع');
-                const backendProjects: BackendProject[] = await res.json();
-                const organizedData = organizeProjectsByStatus(backendProjects);
-                const copy: DataType = {};
-                for (const tab in organizedData) {
-                    copy[tab] = organizedData[tab].map((p) => ({
-                        ...p,
-                        tasks: p.tasks.map((t) => ({ ...t })),
-                    }));
-                }
-                setTasksState(copy);
+                const res = await fetch(`${API_BASE_URL}/api/user/my-tasks/`, {
+                    headers: {
+                        'Authorization': `Bearer ${access}`
+                    }
+                });
+                if (!res.ok) throw new Error('فشل في تحميل المهام');
+                const response = await res.json();
+                const backendTasks = response.results || [];
+
+                // Organize tasks by status
+                const organized: DataType = {
+                    "قيد التنفيذ": [],
+                    "جديدة": [],
+                    "معلقة": [],
+                    "ملغية": [],
+                    "مكتملة": [],
+                };
+
+                // Extract all due dates for calendar
+                const dueDates: Date[] = [];
+
+                backendTasks.forEach((task: any) => {
+                    // Collect due dates
+                    if (task.due_date) {
+                        dueDates.push(new Date(task.due_date));
+                    }
+
+                    // Map backend task to frontend Project format
+                    const frontendProject: Project = {
+                        id: task.id,
+                        title: task.title,
+                        association: task.project_name || "منظمة تكافل",
+                        description: task.description || "لا يوجد وصف",
+                        progress: task.progress || 0,
+                        tasks: (task.subtasks || []).map((st: any) => ({
+                            text: st.title,
+                            done: st.completed
+                        })),
+                        startDate: new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+                            day: 'numeric',
+                            month: 'long'
+                        }).format(new Date(task.created_at)),
+                        supervisor: task.volunteer_name || "مشرف المشروع",
+                        location: "مقر الجمعية",
+                        duration: `${task.hours || 20} ساعة`,
+                    };
+
+                    // Map backend status to frontend tab
+                    const statusMap: Record<string, string> = {
+                        "في الانتظار": "جديدة",
+                        "قيد التنفيذ": "قيد التنفيذ",
+                        "معلقة": "معلقة",
+                        "ملغاة": "ملغية",
+                        "مكتملة": "مكتملة",
+                    };
+
+                    const tab = statusMap[task.status] || "جديدة";
+                    organized[tab].push(frontendProject);
+                });
+
+                setTasksState(organized);
+                setTaskDueDates(dueDates);
             } catch (err) {
-                console.error('Error fetching projects:', err);
-                setError('حدث خطأ أثناء تحميل المشاريع. جاري استخدام البيانات المحلية.');
+                console.error('Error fetching tasks:', err);
+                setError('حدث خطأ أثناء تحميل المهام. جاري استخدام البيانات المحلية.');
             } finally {
                 setLoading(false);
             }
         };
-        fetchProjects();
-    }, []);
+
+        if (access) {
+            fetchTasks();
+        }
+    }, [access]);
+
+    // Auto-open task update popup if navigated from Main page
+    useEffect(() => {
+        if (!loading && location.state?.selectedTaskId) {
+            const taskId = location.state.selectedTaskId;
+
+            // Find the task and its tab
+            for (const [tab, projects] of Object.entries(tasksState)) {
+                const project = projects.find(p => p.id === taskId);
+                if (project) {
+                    setActiveTab(tab);
+                    setSelectedProjectId(taskId);
+                    setShowPopup(true);
+                    break;
+                }
+            }
+
+            // Clear the state to prevent reopening on re-render
+            window.history.replaceState({}, document.title);
+        }
+    }, [loading, location.state, tasksState]);
 
     const today = new Date();
     const todayHijri = getHijriParts(today);
     const [currentHijriMonth, setCurrentHijriMonth] = useState(todayHijri.hm);
     const [currentHijriYear, setCurrentHijriYear] = useState(todayHijri.hy);
-    const deadlines = [5, 12, 30];
+
+    // Calculate deadlines from actual task due dates for current Hijri month
+    const deadlines = useMemo(() => {
+        const daysWithDeadlines: number[] = [];
+
+        taskDueDates.forEach(dueDate => {
+            const hijriParts = getHijriParts(dueDate);
+            // Check if this due date is in the currently displayed month
+            if (hijriParts.hy === currentHijriYear && hijriParts.hm === currentHijriMonth) {
+                if (!daysWithDeadlines.includes(hijriParts.hd)) {
+                    daysWithDeadlines.push(hijriParts.hd);
+                }
+            }
+        });
+
+        return daysWithDeadlines;
+    }, [taskDueDates, currentHijriMonth, currentHijriYear]);
+
+    // Calculate closest deadline
+    const closestDeadline = useMemo(() => {
+        if (taskDueDates.length === 0) return "لا توجد مواعيد";
+
+        const now = new Date();
+        const futureDates = taskDueDates.filter(date => date >= now);
+
+        if (futureDates.length === 0) return "لا توجد مواعيد قادمة";
+
+        const closest = futureDates.reduce((prev, curr) =>
+            curr < prev ? curr : prev
+        );
+
+        const hijriParts = getHijriParts(closest);
+        const monthNamesHijri = [
+            "محرم", "صفر", "ربيع الأول", "ربيع الثاني",
+            "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
+            "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
+        ];
+
+        return `${hijriParts.hd} ${monthNamesHijri[hijriParts.hm - 1]}`;
+    }, [taskDueDates]);
+
+    // Calculate total completed tasks
+    const completedTasksCount = useMemo(() => {
+        return tasksState["مكتملة"]?.length || 0;
+    }, [tasksState]);
 
     const monthNamesHijri = [
         "محرم", "صفر", "ربيع الأول", "ربيع الثاني",
@@ -357,28 +482,91 @@ export default function Tasks() {
 
     const handleConfirmWithdraw = async () => {
         if (!withdrawProjectId || !withdrawProjectTab) return;
-        setTasksState((prev) => {
-            const newState: DataType = {};
-            for (const key in prev) {
-                newState[key] = prev[key].map((p) => ({
-                    ...p,
-                    tasks: p.tasks.map((t) => ({ ...t })),
-                }));
-            }
-            newState[withdrawProjectTab] = newState[withdrawProjectTab].filter(
-                (p) => p.id !== withdrawProjectId
-            );
-            return newState;
-        });
+
         try {
-            const res = await fetch(`${API_BASE_URL}/api/admin/projects/${withdrawProjectId}/`, {
-                method: 'DELETE',
+            const res = await fetch(`${API_BASE_URL}/api/user/tasks/${withdrawProjectId}/withdraw/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                }
             });
-            if (!res.ok && res.status !== 404) throw new Error('فشل في حذف المشروع');
+
+            if (res.ok) {
+                // Refetch tasks to show the task in cancelled tab
+                const tasksRes = await fetch(`${API_BASE_URL}/api/user/my-tasks/`, {
+                    headers: {
+                        'Authorization': `Bearer ${access}`
+                    }
+                });
+
+                if (tasksRes.ok) {
+                    const response = await tasksRes.json();
+                    const backendTasks = response.results || [];
+
+                    // Extract all due dates for calendar
+                    const dueDates: Date[] = [];
+
+                    // Organize tasks by status
+                    const organized: DataType = {
+                        "قيد التنفيذ": [],
+                        "جديدة": [],
+                        "معلقة": [],
+                        "ملغية": [],
+                        "مكتملة": [],
+                    };
+
+                    backendTasks.forEach((task: any) => {
+                        if (task.due_date) {
+                            dueDates.push(new Date(task.due_date));
+                        }
+
+                        const frontendProject: Project = {
+                            id: task.id,
+                            title: task.title,
+                            association: task.project_name || "منظمة تكافل",
+                            description: task.description || "لا يوجد وصف",
+                            progress: task.progress || 0,
+                            tasks: (task.subtasks || []).map((st: any) => ({
+                                text: st.title,
+                                done: st.completed
+                            })),
+                            startDate: new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+                                day: 'numeric',
+                                month: 'long'
+                            }).format(new Date(task.created_at)),
+                            supervisor: task.volunteer_name || "مشرف المشروع",
+                            location: "مقر الجمعية",
+                            duration: `${task.hours || 20} ساعة`,
+                        };
+
+                        const statusMap: Record<string, string> = {
+                            "في الانتظار": "جديدة",
+                            "قيد التنفيذ": "قيد التنفيذ",
+                            "معلقة": "معلقة",
+                            "ملغاة": "ملغية",
+                            "مكتملة": "مكتملة",
+                        };
+
+                        const tab = statusMap[task.status] || "جديدة";
+                        organized[tab].push(frontendProject);
+                    });
+
+                    setTasksState(organized);
+                    setTaskDueDates(dueDates);
+
+                    // Auto-switch to cancelled tab to show the withdrawn task
+                    setActiveTab("ملغية");
+                }
+            } else {
+                const errorData = await res.json();
+                setError(errorData.error || 'فشل في الانسحاب من المهمة');
+            }
         } catch (err) {
-            console.error('Error deleting project:', err);
-            setError('حدث خطأ أثناء حذف المشروع');
+            console.error('Error withdrawing from task:', err);
+            setError('حدث خطأ أثناء الانسحاب من المهمة');
         }
+
         setShowWithdrawPopup(false);
         setWithdrawProjectId(null);
         setWithdrawProjectTab(null);
@@ -415,51 +603,66 @@ export default function Tasks() {
         if (!selectedProjectId) return;
         const project = tasksState[activeTab]?.find((p) => p.id === selectedProjectId);
         if (!project) return;
-        setTasksState((prev) => {
-            const newState: DataType = {};
-            for (const key in prev) {
-                newState[key] = prev[key].map((p) => ({
-                    ...p,
-                    tasks: p.tasks.map((t) => ({ ...t })),
-                }));
-            }
-            const list = newState[activeTab];
-            const index = list.findIndex((p) => p.id === selectedProjectId);
-            if (index === -1) return newState;
-            const updatedProject = list[index];
-            if (updatedProject.progress === 100) {
-                newState[activeTab] = newState[activeTab].filter(
-                    (p) => p.id !== updatedProject.id
-                );
-                newState["مكتملة"].push(updatedProject);
-            }
-            if (updatedProject.progress < 100 && activeTab === "مكتملة") {
-                newState["مكتملة"] = newState["مكتملة"].filter(
-                    (p) => p.id !== updatedProject.id
-                );
-                newState["قيد التنفيذ"].push(updatedProject);
-            }
-            return newState;
-        });
+
         try {
-            const statusMap: Record<string, string> = {
-                "قيد التنفيذ": "ACTIVE",
-                "جديدة": "PLANNED",
-                "معلقة": "PLANNED",
-                "ملغية": "PLANNED",
-                "مكتملة": "COMPLETED",
-            };
-            const newStatus = project.progress === 100 ? "COMPLETED" : statusMap[activeTab] || "ACTIVE";
-            const res = await fetch(`${API_BASE_URL}/api/admin/projects/${selectedProjectId}/`, {
+            // Prepare subtasks data
+            const subtasks = project.tasks.map((task) => ({
+                text: task.text,
+                done: task.done
+            }));
+
+            const res = await fetch(`${API_BASE_URL}/api/user/tasks/${selectedProjectId}/update-progress/`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus }),
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    progress: project.progress,
+                    subtasks: subtasks
+                }),
             });
-            if (!res.ok) throw new Error('فشل في تحديث المشروع');
+
+            if (res.ok) {
+                // Update local state on success
+                setTasksState((prev) => {
+                    const newState: DataType = {};
+                    for (const key in prev) {
+                        newState[key] = prev[key].map((p) => ({
+                            ...p,
+                            tasks: p.tasks.map((t) => ({ ...t })),
+                        }));
+                    }
+                    const list = newState[activeTab];
+                    const index = list.findIndex((p) => p.id === selectedProjectId);
+                    if (index === -1) return newState;
+                    const updatedProject = list[index];
+
+                    // Move to completed if progress is 100%
+                    if (updatedProject.progress === 100) {
+                        newState[activeTab] = newState[activeTab].filter(
+                            (p) => p.id !== updatedProject.id
+                        );
+                        newState["مكتملة"].push(updatedProject);
+                    }
+                    // Move back to in-progress if progress dropped below 100
+                    if (updatedProject.progress < 100 && activeTab === "مكتملة") {
+                        newState["مكتملة"] = newState["مكتملة"].filter(
+                            (p) => p.id !== updatedProject.id
+                        );
+                        newState["قيد التنفيذ"].push(updatedProject);
+                    }
+                    return newState;
+                });
+            } else {
+                const errorData = await res.json();
+                setError(errorData.error || 'فشل في تحديث المهمة');
+            }
         } catch (err) {
-            console.error('Error updating project:', err);
-            setError('حدث خطأ أثناء تحديث المشروع');
+            console.error('Error updating task:', err);
+            setError('حدث خطأ أثناء تحديث المهمة');
         }
+
         setShowPopup(false);
     };
 
@@ -500,12 +703,19 @@ export default function Tasks() {
                             <h2 className="text-xl sm:text-2xl font-bold text-[#8D2E46] mb-4">تحديث التقدم</h2>
                             <h3 className="text-base sm:text-lg font-semibold text-[#6F1A28] mb-6">{selectedProject.title}</h3>
                             <div className="space-y-3 mb-6">
-                                {selectedProject.tasks.map((task, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 p-3 bg-gradient-to-br from-[#e3d1d8] to-[#fef3c7] rounded-xl cursor-pointer hover:shadow-md transition-shadow">
-                                        <input type="checkbox" checked={task.done} onChange={() => handleToggleTask(idx)} className="w-5 h-5 accent-[#8D2E46] cursor-pointer" />
-                                        <span className={`text-sm ${task.done ? "line-through text-gray-400" : "text-[#6F1A28]"}`}>{task.text}</span>
+                                {selectedProject.tasks.length > 0 ? (
+                                    selectedProject.tasks.map((task, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 p-3 bg-gradient-to-br from-[#e3d1d8] to-[#fef3c7] rounded-xl cursor-pointer hover:shadow-md transition-shadow">
+                                            <input type="checkbox" checked={task.done} onChange={() => handleToggleTask(idx)} className="w-5 h-5 accent-[#8D2E46] cursor-pointer" />
+                                            <span className={`text-sm ${task.done ? "line-through text-gray-400" : "text-[#6F1A28]"}`}>{task.text}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center text-[#6F1A28] py-4 bg-[#fef3c7] rounded-xl">
+                                        <p className="text-sm mb-2">لا توجد مهام فرعية لهذه المهمة حاليًا</p>
+                                        <p className="text-xs text-gray-600">يمكنك المتابعة مع المشرف لإضافة تفاصيل المهمة</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                             <div className="bg-white rounded-full h-4 overflow-hidden mb-3">
                                 <div style={{ width: `${selectedProject.progress}%`, backgroundColor: "#E8C150" }} className="h-4 rounded-full transition-all duration-300" />
@@ -536,12 +746,12 @@ export default function Tasks() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 px-4" style={{ direction: "rtl" }}>
                         <div className="w-full max-w-[600px] bg-white border-4 border-[#C49FA3] rounded-3xl p-6 shadow-md flex justify-between mt-4 items-center order-2 lg:order-1">
                             <div className="flex flex-col items-center flex-1">
-                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#8D2E46]">22 ربيع الآخرة</div>
+                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#8D2E46]">{closestDeadline}</div>
                                 <div className="text-xs sm:text-sm text-gray-600">أقرب موعد نهائي</div>
                             </div>
                             <div className="w-px h-12 bg-[#C49FA3]" />
                             <div className="flex flex-col items-center flex-1">
-                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#8D2E46]">7</div>
+                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#8D2E46]">{completedTasksCount}</div>
                                 <div className="text-xs sm:text-sm text-gray-600">إجمالي المهام المنجزة</div>
                             </div>
                         </div>

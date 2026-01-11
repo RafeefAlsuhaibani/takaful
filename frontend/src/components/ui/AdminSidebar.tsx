@@ -1,21 +1,17 @@
 import type { JSX } from "react";
-import { Bell, Home, ClipboardList, ExternalLink, Users, Plus } from "lucide-react";
+import { Bell, Home, ClipboardList, ExternalLink, Users, Plus, FileText, UserCheck } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
-function useAuth() {
-    return {
-        user: { email: "", name: "المستخدم" },
-        logout: () => { },
-    };
-}
-
-type MenuKey = "home" | "add-project" | "volunteer-requests" | "volunteer-management";
+type MenuKey = "home" | "add-project" | "volunteer-requests" | "volunteer-applications" | "volunteer-management" | "reports";
 
 const menuItems = [
     { key: "home" as MenuKey, label: "الرئيسية", icon: Home, to: "/Admin", exact: true },
     { key: "add-project" as MenuKey, label: "اضافة مشروع", icon: Plus, to: "/Admin/tasks" },
     { key: "volunteer-requests" as MenuKey, label: "طلبات التطوع", icon: Users, to: "/Admin/requests" },
+    { key: "volunteer-applications" as MenuKey, label: "طلبات الانضمام", icon: UserCheck, to: "/Admin/applications" },
     { key: "volunteer-management" as MenuKey, label: "ادارة المتطوعين", icon: ClipboardList, to: "/Admin/management" },
+    { key: "reports" as MenuKey, label: "التقارير", icon: FileText, to: "/Admin/reports" },
 ];
 
 export default function AdminSidebar(): JSX.Element {

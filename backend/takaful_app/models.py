@@ -7,42 +7,44 @@ class Project(models.Model):
         ("PLANNED", "Planned"),
         ("ACTIVE", "Active"),
         ("COMPLETED", "Completed"),
+        ("CANCELLED", "Cancelled"),
     ]
 
     # Basic Information
     title = models.CharField(max_length=200)
     desc = models.TextField(blank=True)
     category = models.CharField(max_length=50, blank=True)  # أساسي, مجتمعي, مؤسسي
-    
+
     # Target & Impact
     target_audience = models.CharField(max_length=200, blank=True)  # الفئة المستهدفة
     beneficiaries = models.IntegerField(default=0)
-    
+
     # Location
     location = models.CharField(max_length=200, blank=True)
-    
+
     # Financial
     donation_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # مبلغ التبرع
-    
+
     # Timeline
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
-    
+
     # Planning Details
     implementation_requirements = models.TextField(blank=True)  # متطلبات التنفيذ
     project_goals = models.TextField(blank=True)  # أهداف المشروع
-    
+
     # Volunteer Management
     estimated_hours = models.IntegerField(default=0)
     supervisor = models.CharField(max_length=200, blank=True)
     duration = models.CharField(max_length=100, blank=True)
-    
+
     # NEW FIELDS FOR ADMIN DASHBOARD
     tags = models.JSONField(default=list, blank=True)  # ["متوسطة", "تسويق"]
     progress = models.IntegerField(default=0)  # 0-100 percentage
     organization = models.CharField(max_length=200, blank=True)  # "جمعية تمكين"
     hours = models.CharField(max_length=50, blank=True)  # "40 ساعة"
-    
+    is_hidden = models.BooleanField(default=False)  # Hide/show project in public views
+
     # Status & Tracking
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PLANNED")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -154,6 +156,7 @@ class Task(models.Model):
         ("في الانتظار", "Waiting"),
         ("مكتملة", "Completed"),
         ("معلقة", "On Hold"),
+        ("ملغاة", "Cancelled"),
     ]
     
     PRIORITY_CHOICES = [
@@ -202,11 +205,78 @@ class Subtask(models.Model):
     title = models.CharField(max_length=200)
     completed = models.BooleanField(default=False)
     order = models.IntegerField(default=0)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ['order', 'created_at']
-    
+
     def __str__(self):
         return f"{self.task.title} - {self.title}"
+
+
+class AdminReport(models.Model):
+    """
+    Generated reports for admin dashboard
+    Stores comprehensive platform statistics and data snapshots
+    """
+    # Who generated this report
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name="generated_reports")
+
+    # Report metadata
+    title = models.CharField(max_length=200)  # e.g., "تقرير شامل - 2026-01-10"
+
+    # Date range filters (optional)
+    date_from = models.DateField(null=True, blank=True)
+    date_to = models.DateField(null=True, blank=True)
+
+    # Complete report data stored as JSON
+    report_data = models.JSONField(default=dict)
+
+    # Quick stats for listing (duplicated for performance)
+    total_projects = models.IntegerField(default=0)
+    total_volunteers = models.IntegerField(default=0)
+    total_tasks = models.IntegerField(default=0)
+    total_beneficiaries = models.IntegerField(default=0)
+    total_donations = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # Timestamps
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-generated_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.generated_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class VolunteerApplication(models.Model):
+    """
+    Volunteer applications to projects
+    When volunteers apply to join a project, an application is created
+    Admin reviews and accepts/rejects applications
+    Upon acceptance, a Task is created for the volunteer
+    """
+    STATUS_CHOICES = [
+        ("قيد المراجعة", "Under Review"),  # Pending
+        ("مقبول", "Accepted"),
+        ("مرفوض", "Rejected"),
+    ]
+
+    volunteer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="volunteer_applications")
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="applications")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="قيد المراجعة")
+    message = models.TextField(blank=True)  # Optional message from volunteer
+    admin_notes = models.TextField(blank=True)  # Notes from admin during review
+
+    applied_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="reviewed_applications")
+
+    class Meta:
+        unique_together = ['volunteer', 'project']  # One application per volunteer per project
+        ordering = ['-applied_at']
+
+    def __str__(self):
+        return f"{self.volunteer.email} -> {self.project.title} ({self.status})"

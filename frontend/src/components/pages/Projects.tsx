@@ -101,22 +101,24 @@ function Projects() {
       try {
         setLoading(true);
         setError(null);
-  
-        const res = await fetch(`${API_BASE_URL}/api/admin/projects/`);
+
+        // Use public endpoint - no authentication required
+        const res = await fetch(`${API_BASE_URL}/api/public-projects/`);
         if (!res.ok) {
           throw new Error('فشل في تحميل المشاريع');
         }
-  
+
         const data: Project[] = await res.json();
+        console.log('Public projects fetched:', data.length);
         setProjectsData(data);
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching public projects:', err);
         setError('حدث خطأ أثناء تحميل المشاريع');
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchProjects();
   }, []);
   

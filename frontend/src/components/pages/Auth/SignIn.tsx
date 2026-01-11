@@ -40,40 +40,66 @@ export default function SignIn() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    setErrors((prev) => ({ ...prev, form: '' }));
+    setErrors({});
 
     try {
+      // Step 1: Get JWT tokens
       const res = await fetch(`${API_BASE_URL}/api/accounts/auth/token/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: formData.email,   // IMPORTANT
+          username: formData.email,
           password: formData.password,
         }),
       });
-      
-      
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        const msg = (data as any).detail || 'فشل تسجيل الدخول، تأكد من البيانات';
-        setErrors((prev) => ({ ...prev, form: msg }));
+        const msg = (data as any).detail || 'البريد الإلكتروني أو كلمة السر غير صحيحة';
+        setErrors({ form: msg });
         setIsSubmitting(false);
         return;
       }
 
-      const data = await res.json();
+      const tokenData = await res.json();
 
-      login(null, data.access, data.refresh); 
-      navigate('/');
-      
+      // Step 2: Fetch user profile data
+      const profileRes = await fetch(`${API_BASE_URL}/api/accounts/me/`, {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access}`
+        }
+      });
+
+      if (!profileRes.ok) {
+        setErrors({ form: 'فشل في تحميل بيانات المستخدم' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const userData = await profileRes.json();
+
+      // Step 3: Create user object for AuthContext
+      const user = {
+        name: userData.profile?.name || userData.username,
+        email: userData.email,
+        role: userData.profile?.role || 'user'
+      };
+
+      // Step 4: Save to AuthContext
+      login(user, tokenData.access, tokenData.refresh);
+
+      // Step 5: Redirect based on role
+      if (user.role === 'admin') {
+        navigate('/Admin');
+      } else {
+        navigate('/');
+      }
+
     } catch (err) {
       console.error(err);
-      setErrors((prev) => ({
-        ...prev,
+      setErrors({
         form: 'حدث خطأ غير متوقع، حاول مرة أخرى.',
-      }));
-    } finally {
+      });
       setIsSubmitting(false);
     }
   };
@@ -187,6 +213,12 @@ export default function SignIn() {
                 تذكرني
               </label>
             </div>
+
+            {errors.form && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {errors.form}
+              </div>
+            )}
 
             <Button
               type="submit"

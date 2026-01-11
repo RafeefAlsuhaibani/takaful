@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus2, CalendarDays, ShieldCheck } from 'lucide-react';
 import Card from '../../ui/Card';
 import Input from '../../forms/Input';
@@ -16,6 +16,7 @@ import {
 import { API_BASE_URL } from '../../../config';
 
 export default function SignUp() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     nationalId: '',
@@ -134,18 +135,23 @@ const cleanPhone = (value: string) => digitsOnly(value).slice(0, 9);       // ma
   
       const data = await res.json();
       console.log("REGISTER RESPONSE:", data);
-      
+
       if (!res.ok) {
         alert(JSON.stringify(data, null, 2));
+        setIsSubmitting(false);
         return;
       }
-      
-      alert("تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.");
-  
+
+      alert("تم إنشاء الحساب بنجاح! سيتم توجيهك لتسجيل الدخول.");
+
+      // Redirect to signin page after successful registration
+      setTimeout(() => {
+        navigate('/signin');
+      }, 1000);
+
     } catch (err: any) {
       console.error("Registration error:", err);
       alert(err.message || "حدث خطأ أثناء إنشاء الحساب");
-    } finally {
       setIsSubmitting(false);
     }
   };

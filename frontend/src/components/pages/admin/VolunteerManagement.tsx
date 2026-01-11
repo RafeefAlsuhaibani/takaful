@@ -191,6 +191,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
     tasks,
     setTasks,
     volunteers,
+    onTaskUpdate,
 }) => {
     const [activeTab, setActiveTab] = useState<"tasks" | "volunteers">(
         "volunteers"
@@ -213,6 +214,20 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
     const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
 
+    // ✅ ADD: State for creating new task
+    const [isCreatingTask, setIsCreatingTask] = useState(false);
+    const [newTaskTitle, setNewTaskTitle] = useState("");
+    const [newTaskDescription, setNewTaskDescription] = useState("");
+    const [newTaskProject, setNewTaskProject] = useState<number | null>(null);
+    const [newTaskPriority, setNewTaskPriority] = useState("متوسطة");
+    const [newTaskDueDate, setNewTaskDueDate] = useState("");
+    const [newTaskHours, setNewTaskHours] = useState(0);
+    const [projects, setProjects] = useState<Array<{ id: number; name: string }>>([]);
+    const [isProjectSelectOpen, setIsProjectSelectOpen] = useState(false);
+    const [isPrioritySelectOpen, setIsPrioritySelectOpen] = useState(false);
+
+    const { access } = useAuth();  // ✅ ADD: Get access token
+
     const adminInfo = {
         name: "إدارة الجمعية",
         email: "admin@example.com",
@@ -228,11 +243,123 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
         { value: "مكتملة", label: "مكتملة" },
     ];
 
+    const priorityOptions = [
+        { value: "عالية", label: "عالية" },
+        { value: "متوسطة", label: "متوسطة" },
+        { value: "منخفضة", label: "منخفضة" },
+    ];
+
+    // ✅ FETCH PROJECTS for create task dialog
+    React.useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/projects/`, {
+                    headers: { 'Authorization': `Bearer ${access}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const projectList = (data.results || data).map((p: any) => ({
+                        id: p.id,
+                        name: p.title || p.name  // ✅ Use title field from backend
+                    }));
+                    console.log('✅ Projects loaded:', projectList.length, 'projects');
+                    console.log('Projects:', projectList);
+                    setProjects(projectList);
+                } else {
+                    console.error('❌ Failed to fetch projects:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ Error fetching projects:', error);
+            }
+        };
+        if (access) {
+            fetchProjects();
+        }
+    }, [access]);
+
+    // ✅ CREATE TASK
+    const handleCreateTask = async () => {
+        if (!newTaskTitle.trim() || !newTaskProject) {
+            alert("يجب إدخال عنوان المهمة واختيار المشروع");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/tasks/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: newTaskTitle,
+                    description: newTaskDescription,
+                    project: newTaskProject,
+                    priority: newTaskPriority,
+                    due_date: newTaskDueDate || null,
+                    hours: newTaskHours,
+                    status: "في الانتظار"
+                })
+            });
+
+            if (response.ok) {
+                const newTask = await response.json();
+                // Add to local state
+                setTasks((prev) => [newTask, ...prev]);
+                // Reset form
+                setIsCreatingTask(false);
+                setNewTaskTitle("");
+                setNewTaskDescription("");
+                setNewTaskProject(null);
+                setNewTaskPriority("متوسطة");
+                setNewTaskDueDate("");
+                setNewTaskHours(0);
+                // Refresh data
+                onTaskUpdate();
+            } else {
+                const error = await response.json();
+                console.error('Error creating task:', error);
+                alert("حدث خطأ أثناء إنشاء المهمة");
+            }
+        } catch (error) {
+            console.error('Error creating task:', error);
+            alert("حدث خطأ أثناء إنشاء المهمة");
+        }
+    };
+
+    // ✅ DELETE TASK
+    const handleDeleteTask = async (taskId: number) => {
+        if (!confirm("هل أنت متأكد من حذف هذه المهمة؟")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/tasks/${taskId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${access}`
+                }
+            });
+
+            if (response.ok || response.status === 204) {
+                // Remove from local state
+                setTasks((prev) => prev.filter((t) => t.id !== taskId));
+                // Refresh data
+                onTaskUpdate();
+            } else {
+                alert("حدث خطأ أثناء حذف المهمة");
+            }
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            alert("حدث خطأ أثناء حذف المهمة");
+        }
+    };
+
     // فتح دايلوق تحديث المهمة
     const handleOpenEditTask = (task: Task) => {
         setEditingTask(task);
         setEditStatus(task.status);
-        setEditDueDate(task.dueDate);
+        setEditDueDate(task.due_date);  // ✅ FIXED: use due_date not dueDate
         setEditHours(task.hours);
         setEditSubtasks(task.subtasks ? [...task.subtasks] : []);
         setIsStatusOpen(false);
@@ -277,7 +404,8 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
         }
     };
 
-    const handleSaveTaskChanges = () => {
+    // ✅ UPDATED: Save task changes to backend
+    const handleSaveTaskChanges = async () => {
         if (!editingTask) return;
 
         let newProgress = editingTask.progress;
@@ -286,37 +414,108 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
             newProgress = Math.round((completedCount / editSubtasks.length) * 100);
         }
 
-        const updated: Task = {
-            ...editingTask,
-            status: editStatus || editingTask.status,
-            dueDate: editDueDate,
-            hours: editHours,
-            subtasks: editSubtasks,
-            progress: newProgress,
-        };
+        try {
+            // Prepare subtasks data for backend
+            const subtasksData = editSubtasks.map((st, index) => ({
+                title: st.title,
+                completed: st.completed,
+                order: index
+            }));
 
-        setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-        setEditingTask(null);
-        setIsStatusOpen(false);
-        setEditingSubtaskId(null);
+            const response = await fetch(`${API_BASE_URL}/api/admin/tasks/${editingTask.id}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: editStatus || editingTask.status,
+                    due_date: editDueDate || null,
+                    hours: editHours,
+                    progress: newProgress,
+                    subtasks: subtasksData
+                })
+            });
+
+            if (response.ok) {
+                const updatedTask = await response.json();
+                // Update local state with backend response
+                setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+                setEditingTask(null);
+                setIsStatusOpen(false);
+                setEditingSubtaskId(null);
+                // Refresh data
+                onTaskUpdate();
+            } else {
+                const error = await response.json();
+                console.error('Error updating task:', error);
+                alert("حدث خطأ أثناء تحديث المهمة");
+            }
+        } catch (error) {
+            console.error('Error updating task:', error);
+            alert("حدث خطأ أثناء تحديث المهمة");
+        }
     };
 
-    // تعيين مهمة للمتطوع في بوب اب "تعيين مهمة"
-    const handleAssignTaskToCurrentVolunteer = (taskId: string) => {
+    // ✅ UPDATED: Assign task to volunteer via backend
+    const handleAssignTaskToCurrentVolunteer = async (taskId: number) => {
         if (!assignVolunteer) return;
 
-        setTasks((prev) =>
-            prev.map((t) =>
-                t.id === taskId
-                    ? {
-                        ...t,
-                        volunteerName: assignVolunteer.name,
-                    }
-                    : t
-            )
-        );
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/tasks/${taskId}/assign/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${access}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    volunteer_id: assignVolunteer.id
+                })
+            });
 
-        setAssignVolunteer(null);
+            console.log('Assignment response status:', response.status);
+            console.log('Assignment response ok:', response.ok);
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Assignment successful!', result);
+                console.log('✅ Updated task:', result.task);
+                console.log('✅ Volunteer name in response:', result.task.volunteer_name);
+
+                // Update local state with the updated task
+                setTasks((prev) => {
+                    const updatedTasks = prev.map((t) => {
+                        if (t.id === result.task.id) {
+                            console.log('Updating task ID', t.id, 'from:', t, 'to:', result.task);
+                            return result.task;
+                        }
+                        return t;
+                    });
+                    return updatedTasks;
+                });
+
+                // Close dialog
+                setAssignVolunteer(null);
+
+                // Show success message
+                console.log('✅ Showing success alert');
+                alert(`✅ تم تعيين المهمة بنجاح لـ ${assignVolunteer.name}`);
+
+                // Refresh data to get latest state from server
+                console.log('Refreshing data...');
+                onTaskUpdate();
+                console.log('✅ Data refresh complete');
+            } else {
+                // Not OK response
+                const errorText = await response.text();
+                console.error('❌ Assignment failed with status:', response.status);
+                console.error('❌ Error response:', errorText);
+                alert(`❌ حدث خطأ أثناء تعيين المهمة (${response.status})`);
+            }
+        } catch (error) {
+            console.error('❌ Network or parsing error:', error);
+            alert("❌ حدث خطأ في الاتصال أثناء تعيين المهمة");
+        }
     };
 
     return (
@@ -355,7 +554,19 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
             {/* المحتوى */}
             <div className="w-full bg-[#fdf8f9] rounded-[16px] shadow-[0px_3px_15px_#8d2e4626] px-5 py-4 min-h-[160px]">
                 {activeTab === "tasks" ? (
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <>
+                        {/* ✅ ADD: Create task button */}
+                        <div className="flex justify-end mb-3">
+                            <button
+                                type="button"
+                                onClick={() => setIsCreatingTask(true)}
+                                className="px-4 py-2 rounded-[999px] text-[12px] bg-[#8d2e46] text-white font-[Cairo] flex items-center gap-2"
+                            >
+                                <span>+ إضافة مهمة</span>
+                            </button>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
                         {tasks.slice(0, 4).map((t) => {
                             const isCompleted = t.status === "مكتملة";
 
@@ -390,7 +601,9 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                     <div className="space-y-1 text-[12px] text-[#4e4a4b] font-[Cairo]">
                                         <div className="flex justify-between">
                                             <span>المكلف :</span>
-                                            <span>{t.volunteerName}</span>
+                                            <span className={!t.volunteer_name ? "text-gray-400 italic" : ""}>
+                                                {t.volunteer_name || "غير محدد"}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>الأولوية :</span>
@@ -398,7 +611,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                         </div>
                                         <div className="flex justify-between">
                                             <span>تاريخ الاستحقاق :</span>
-                                            <span>{t.dueDate}</span>
+                                            <span>{t.due_date || "غير محدد"}</span>
                                         </div>
                                     </div>
 
@@ -436,16 +649,26 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                         >
                                             تحديث المهمة
                                         </button>
+                                        {/* ✅ ADD: Delete button */}
+                                        <button
+                                            type="button"
+                                            className="px-3 py-[6px] rounded-[999px] text-[11px] bg-[#fdf8f9] text-red-600 border border-red-300 font-[Cairo] flex items-center gap-1"
+                                            onClick={() => handleDeleteTask(t.id)}
+                                        >
+                                            <Trash2 size={12} />
+                                            <span>حذف</span>
+                                        </button>
                                     </div>
                                 </div>
                             );
                         })}
-                    </div>
+                        </div>
+                    </>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2">
                         {volunteers.map((v) => {
-                            const completedCount = v.completedTasks;
-                            const currentCount = v.currentTasks;
+                            const completedCount = v.completed_tasks;
+                            const currentCount = v.current_tasks;
 
                             return (
                                 <div
@@ -511,7 +734,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                                 تاريخ الانضمام
                                             </span>
                                             <span className="text-[13px] font-semibold text-[#2e2b2c]">
-                                                {v.joinDate}
+                                                {v.join_date}
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-center text-center">
@@ -546,7 +769,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                                 المشاريع الحالية :
                                             </div>
                                             <div className="flex flex-wrap gap-2 justify-start text-[11px] text-[#6b6567] font-[Cairo]">
-                                                {v.currentProjects.map((p) => (
+                                                {v.current_projects.map((p) => (
                                                     <span
                                                         key={p}
                                                         className="px-3 py-[4px] rounded-full bg-[#e9d5da] text-[#4e2a35]"
@@ -635,7 +858,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                             <div className="flex flex-col items-center text-center">
                                 <span className="text-[11px] text-[#6b6567]">تاريخ الانضمام</span>
                                 <span className="text-[13px] font-semibold text-[#2e2b2c]">
-                                    {selectedVolunteer.joinDate}
+                                    {selectedVolunteer.join_date}
                                 </span>
                             </div>
                             <div className="flex flex-col items-center text-center">
@@ -648,13 +871,13 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                             <div className="flex flex-col items-center text-center">
                                 <span className="text-[11px] text-[#6b6567]">الساعات التطوعية</span>
                                 <span className="text-[13px] font-semibold text-[#2e2b2c]">
-                                    {selectedVolunteer.volunteerHours}
+                                    {selectedVolunteer.volunteer_hours}
                                 </span>
                             </div>
                             <div className="flex flex-col items-center text-center">
                                 <span className="text-[11px] text-[#6b6567]">المهام المكتملة</span>
                                 <span className="text-[13px] font-semibold text-[#2e2b2c]">
-                                    {selectedVolunteer.completedTasks}
+                                    {selectedVolunteer.completed_tasks}
                                 </span>
                             </div>
                         </div>
@@ -680,7 +903,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                 المشاريع الحالية :
                             </div>
                             <div className="flex flex-wrap gap-2 justify-start text-[11px] text-[#6b6567] font-[Cairo]">
-                                {selectedVolunteer.currentProjects.map((p) => (
+                                {selectedVolunteer.current_projects.map((p) => (
                                     <span
                                         key={p}
                                         className="px-3 py-[4px] rounded-full bg-[#e9d5da] text-[#4e2a35]"
@@ -755,7 +978,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                                     {t.title}
                                                 </div>
                                                 <div className="text-[11px] font-[Cairo] text-[#6b6567] mt-1 text-right">
-                                                    المشروع: {t.project}
+                                                    المشروع: {t.project_name}
                                                 </div>
                                             </div>
                                             <span
@@ -770,9 +993,14 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
 
                                         <div className="flex flex-wrap gap-4 text-[11px] text-[#4e4a4b] font-[Cairo]">
                                             <span>الأولوية: {t.priority}</span>
-                                            <span>تاريخ الاستحقاق: {t.dueDate}</span>
+                                            <span>تاريخ الاستحقاق: {t.due_date || "غير محدد"}</span>
                                             <span>الساعات التقديرية: {t.hours}</span>
                                         </div>
+                                        {t.volunteer_name && (
+                                            <div className="text-[11px] text-[#8d2e46] font-[Cairo] mt-1">
+                                                ⚠️ مكلف حاليًا: {t.volunteer_name} (سيتم إعادة التعيين)
+                                            </div>
+                                        )}
 
                                         <div className="mt-2 space-y-1">
                                             <div className="flex items-center justify-between text-[11px] text-[#4e4a4b] font-[Cairo]">
@@ -838,7 +1066,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                     {selectedTask.title}
                                 </h3>
                                 <div className="text-[12px] text-[#6b6567] font-[Cairo]">
-                                    المشروع: {selectedTask.project}
+                                    المشروع: {selectedTask.project_name}
                                 </div>
                             </div>
                             <span
@@ -863,7 +1091,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                             <div className="flex flex-col items-center gap-[2px] text-center">
                                 <span className="text-[11px] text-[#6b6567]">المكلّف</span>
                                 <span className="text-[13px] font-semibold text-[#2e2b2c]">
-                                    {selectedTask.volunteerName}
+                                    {selectedTask.volunteer_name}
                                 </span>
                             </div>
                             <div className="flex flex-col items-center gap-[2px] text-center">
@@ -877,7 +1105,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                     تاريخ الاستحقاق
                                 </span>
                                 <span className="text-[13px] font-semibold text-[#2e2b2c]">
-                                    {selectedTask.dueDate}
+                                    {selectedTask.due_date}
                                 </span>
                             </div>
                             <div className="flex flex-col items-center gap-[2px] text-center">
@@ -973,7 +1201,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                     تحديث المهمة
                                 </h3>
                                 <div className="text-[12px] text-[#6b6567] font-[Cairo]">
-                                    {editingTask.title} – {editingTask.project}
+                                    {editingTask.title} – {editingTask.project_name}
                                 </div>
                             </div>
                             <span
@@ -1006,12 +1234,13 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                                     </button>
 
                                     {isStatusOpen && (
-                                        <div className="absolute z-10 mt-1 w-full rounded-[12px] bg-white shadow-[0px_8px_20px_#00000026] border border-[#e0cfd4] overflow-hidden text-[13px]">
+                                        <div className="absolute z-[100] mt-1 w-full rounded-[12px] bg-white shadow-[0px_8px_20px_#00000080] border-2 border-[#8d2e46] overflow-hidden text-[13px]">
                                             {statusOptions.map((opt) => (
                                                 <button
                                                     key={opt.value}
                                                     type="button"
-                                                    onClick={() => {
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
                                                         setEditStatus(opt.value);
                                                         setIsStatusOpen(false);
                                                     }}
@@ -1198,6 +1427,196 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* ✅ CREATE TASK DIALOG */}
+            {isCreatingTask && (
+                <div
+                    dir="rtl"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+                    onClick={() => setIsCreatingTask(false)}
+                >
+                    <div
+                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-[95%] max-w-[720px] px-6 py-5 space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* الهيدر */}
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex-1 text-right space-y-1">
+                                <h3 className="text-[20px] md:text-[22px] font-bold text-[#2e2b2c] font-[Cairo]">
+                                    إضافة مهمة جديدة
+                                </h3>
+                                <div className="text-[12px] text-[#6b6567] font-[Cairo]">
+                                    قم بملء البيانات لإنشاء مهمة جديدة
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* الحقول */}
+                        <div className="grid grid-cols-1 gap-y-3 font-[Cairo] text-right">
+                            {/* عنوان المهمة */}
+                            <div className="flex flex-col gap-[4px]">
+                                <label className="text-[11px] text-[#6b6567]">
+                                    عنوان المهمة *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newTaskTitle}
+                                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                                    placeholder="أدخل عنوان المهمة"
+                                    className="w-full border border-[#e0cfd4] rounded-[12px] px-3 py-2 text-[12px] bg-white focus:outline-none focus:ring-1 focus:ring-[#c87981]"
+                                />
+                            </div>
+
+                            {/* الوصف */}
+                            <div className="flex flex-col gap-[4px]">
+                                <label className="text-[11px] text-[#6b6567]">
+                                    الوصف
+                                </label>
+                                <textarea
+                                    value={newTaskDescription}
+                                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                                    placeholder="وصف تفصيلي للمهمة"
+                                    rows={3}
+                                    className="w-full border border-[#e0cfd4] rounded-[12px] px-3 py-2 text-[12px] bg-white focus:outline-none focus:ring-1 focus:ring-[#c87981]"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
+                                {/* المشروع */}
+                                <div className="flex flex-col gap-[4px]">
+                                    <label className="text-[11px] text-[#6b6567]">
+                                        المشروع *
+                                    </label>
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsProjectSelectOpen((prev) => !prev)}
+                                            className="w-full h-[40px] rounded-[12px] border border-[#e0cfd4] bg-white px-3 flex items-center justify-between text-[13px] text-[#2e2b2c]"
+                                        >
+                                            <span className="flex-1 text-right">
+                                                {newTaskProject
+                                                    ? projects.find(p => p.id === newTaskProject)?.name
+                                                    : `اختر المشروع${projects.length > 0 ? ` (${projects.length})` : ''}`}
+                                            </span>
+                                            <ChevronDown className={`w-4 h-4 text-[#8d2e46] transition-transform ${isProjectSelectOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {isProjectSelectOpen && (
+                                            <div className="absolute z-[100] mt-1 w-full rounded-[12px] bg-white shadow-[0px_8px_20px_#00000080] border-2 border-[#8d2e46] overflow-hidden text-[13px] max-h-[180px] overflow-y-auto">
+                                                {projects.length === 0 ? (
+                                                    <div className="px-4 py-3 text-center text-[#6b6567]">
+                                                        لا توجد مشاريع متاحة
+                                                    </div>
+                                                ) : (
+                                                    projects.map((proj) => (
+                                                        <button
+                                                            key={proj.id}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setNewTaskProject(proj.id);
+                                                                setIsProjectSelectOpen(false);
+                                                            }}
+                                                            className={`w-full text-right px-4 py-2 hover:bg-[#fdf1f4] ${
+                                                                newTaskProject === proj.id ? "bg-[#f3e3e8]" : ""
+                                                            }`}
+                                                        >
+                                                            {proj.name}
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* الأولوية */}
+                                <div className="flex flex-col gap-[4px]">
+                                    <label className="text-[11px] text-[#6b6567]">
+                                        الأولوية
+                                    </label>
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPrioritySelectOpen((prev) => !prev)}
+                                            className="w-full h-[40px] rounded-[12px] border border-[#e0cfd4] bg-white px-3 flex items-center justify-between text-[13px] text-[#2e2b2c]"
+                                        >
+                                            <span className="flex-1 text-right">{newTaskPriority}</span>
+                                            <ChevronDown className="w-4 h-4 text-[#8d2e46]" />
+                                        </button>
+
+                                        {isPrioritySelectOpen && (
+                                            <div className="absolute z-[100] mt-1 w-full rounded-[12px] bg-white shadow-[0px_8px_20px_#00000080] border-2 border-[#8d2e46] overflow-hidden text-[13px]">
+                                                {priorityOptions.map((opt) => (
+                                                    <button
+                                                        key={opt.value}
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setNewTaskPriority(opt.value);
+                                                            setIsPrioritySelectOpen(false);
+                                                        }}
+                                                        className={`w-full text-right px-4 py-2 hover:bg-[#fdf1f4] ${
+                                                            newTaskPriority === opt.value ? "bg-[#f3e3e8]" : ""
+                                                        }`}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* تاريخ الاستحقاق */}
+                                <div className="flex flex-col gap-[4px]">
+                                    <label className="text-[11px] text-[#6b6567]">
+                                        تاريخ الاستحقاق
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={newTaskDueDate}
+                                        onChange={(e) => setNewTaskDueDate(e.target.value)}
+                                        className="w-full border border-[#e0cfd4] rounded-[12px] px-3 py-2 text-[12px] bg-white focus:outline-none focus:ring-1 focus:ring-[#c87981]"
+                                    />
+                                </div>
+
+                                {/* الساعات التقديرية */}
+                                <div className="flex flex-col gap-[4px]">
+                                    <label className="text-[11px] text-[#6b6567]">
+                                        الساعات التقديرية
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={newTaskHours}
+                                        onChange={(e) => setNewTaskHours(e.target.value ? Number(e.target.value) : 0)}
+                                        className="w-full border border-[#e0cfd4] rounded-[12px] px-3 py-2 text-[12px] bg-white focus:outline-none focus:ring-1 focus:ring-[#c87981]"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* الأزرار */}
+                        <div className="flex items-center justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsCreatingTask(false)}
+                                className="px-4 py-2 rounded-[999px] text-[12px] bg-[#f3e3e3] text-[#2e2b2c] font-[Cairo] border border-[#e0cfd4]"
+                            >
+                                إلغاء
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleCreateTask}
+                                className="px-4 py-2 rounded-[999px] text-[12px] bg-[#8d2e46] text-white font-[Cairo]"
+                            >
+                                إضافة المهمة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 };
@@ -1229,9 +1648,9 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
     // أرقام الأداء من بيانات المتطوع مباشرة
     const volunteersPerformance = volunteers.map((v) => ({
         name: v.name,
-        completed: v.completedTasks,
-        current: v.currentTasks,
-        joinDate: v.joinDate,
+        completed: v.completed_tasks,
+        current: v.current_tasks,
+        joinDate: v.join_date,
     }));
 
     const selectedVolunteerObj = selectedVolunteer
@@ -1240,8 +1659,8 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
 
     const selectedVolunteerTasks = selectedVolunteerObj
         ? tasks
-            .filter((t) => t.volunteerName === selectedVolunteerObj.name)
-            .sort((a, b) => (a.dueDate < b.dueDate ? 1 : -1))
+            .filter((t) => t.volunteer_name === selectedVolunteerObj.name)
+            .sort((a, b) => (a.due_date < b.due_date ? 1 : -1))
         : [];
 
     const selectedPerfRow = selectedVolunteer
@@ -1395,23 +1814,30 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
                                 </button>
 
                                 {isVolunteerSelectOpen && (
-                                    <div className="absolute z-10 mt-1 w-[220px] rounded-[12px] bg-white shadow-[0px_8px_20px_#00000026] border border-[#e0cfd4] overflow-hidden text-[13px] max-h-[220px] overflow-y-auto custom-scrollbar">
-                                        {volunteersPerformance.map((v) => (
-                                            <button
-                                                key={v.name}
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedVolunteer(v.name);
-                                                    setIsVolunteerSelectOpen(false);
-                                                }}
-                                                className={`w-full text-right px-4 py-2 hover:bg-[#fdf1f4] ${selectedVolunteer === v.name
-                                                        ? "bg-[#f3e3e8]"
-                                                        : ""
-                                                    }`}
-                                            >
-                                                {v.name}
-                                            </button>
-                                        ))}
+                                    <div className="absolute z-[100] mt-1 w-[220px] rounded-[12px] bg-white shadow-[0px_8px_20px_#00000080] border-2 border-[#8d2e46] overflow-hidden text-[13px] max-h-[220px] overflow-y-auto custom-scrollbar">
+                                        {volunteersPerformance.length === 0 ? (
+                                            <div className="px-4 py-3 text-center text-[#6b6567]">
+                                                لا يوجد متطوعون
+                                            </div>
+                                        ) : (
+                                            volunteersPerformance.map((v) => (
+                                                <button
+                                                    key={v.name}
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedVolunteer(v.name);
+                                                        setIsVolunteerSelectOpen(false);
+                                                    }}
+                                                    className={`w-full text-right px-4 py-2 hover:bg-[#fdf1f4] ${selectedVolunteer === v.name
+                                                            ? "bg-[#f3e3e8]"
+                                                            : ""
+                                                        }`}
+                                                >
+                                                    {v.name}
+                                                </button>
+                                            ))
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1475,7 +1901,7 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
                                                             className="flex items-center justify-between gap-3"
                                                         >
                                                             <span className="text-[#6b6567] min-w-[80px] text-right">
-                                                                {t.dueDate}
+                                                                {t.due_date}
                                                             </span>
                                                             <div className="flex-1 text-right text-[#2e2b2c]">
                                                                 {t.title}
@@ -1614,9 +2040,9 @@ const handleTaskUpdate = () => {
         const haystack = (
             t.title +
             " " +
-            t.project +
+            t.project_name +
             " " +
-            t.volunteerName +
+            t.volunteer_name +
             " " +
             t.status +
             " " +

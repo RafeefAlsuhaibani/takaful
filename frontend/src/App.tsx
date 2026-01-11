@@ -27,8 +27,10 @@ import PersonalInfo from './components/pages/user/PersonalInfo';
 // Admin Pages
 import AdminMain from './components/pages/admin/main';
 import VolunteerRequests from './components/pages/admin/VolunteerRequests';
+import VolunteerApplications from './components/pages/admin/VolunteerApplications';
 import VolunteerManagement from './components/pages/admin/VolunteerManagement';
 import AddProjectPage from './components/pages/admin/AddProject';
+import Reports from './components/pages/admin/Reports';
 
 
 // هذا الكومبوننت هو اللي يقدر يستخدم useLocation
@@ -68,8 +70,10 @@ function AppContent() {
           {/* صفحات الأدمن */}
           <Route path="/Admin" element={<AdminMain />} />
           <Route path="/Admin/requests" element={<VolunteerRequests />} />
+          <Route path="/Admin/applications" element={<VolunteerApplications />} />
           <Route path="/Admin/management" element={<VolunteerManagement />} />
           <Route path="/Admin/tasks" element={<AddProjectPage />} />
+          <Route path="/Admin/reports" element={<Reports />} />
           {/* تبين نضيف المزيد؟ حاضرة */}
         </Routes>
       </main>

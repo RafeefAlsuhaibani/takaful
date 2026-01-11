@@ -423,6 +423,7 @@ export default function AdminMain() {
 
     const handleApproveProject = async (projectId: number) => {
         try {
+            console.log('✅ Approving project:', projectId);
             const response = await fetch(`${API_BASE_URL}/api/admin/projects/${projectId}/approve/`, {
                 method: 'POST',
                 headers: {
@@ -432,12 +433,22 @@ export default function AdminMain() {
             });
 
             if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Project approved successfully:', data);
+                console.log('   New status:', data.project?.status, '→', data.project?.status_display);
+
+                // Remove from current view (افكار المشاريع)
                 setRemovedProjects(prev => new Set(prev).add(projectId));
+
+                // Refresh data - project will now appear in المشاريع النشطة
                 fetchStats();
                 fetchProjects();
+            } else {
+                const errorData = await response.json();
+                console.error('❌ Error approving project:', errorData);
             }
         } catch (error) {
-            console.error('Error approving project:', error);
+            console.error('❌ Exception approving project:', error);
         }
     };
 
@@ -462,9 +473,10 @@ export default function AdminMain() {
         }
     };
 
+    // ⚠️ IMPORTANT: This dropdown FILTERS which project to display (does NOT edit the project)
+    // It fetches a project with the selected status from the backend
+    // To EDIT a project's status, use the Edit Modal (edit icon button)
     const handleStatusChange = async (newStatus: string) => {
-        if (!activeProject) return;
-    
         try {
             const statusMap: { [key: string]: string } = {
                 "نشط": "ACTIVE",
@@ -472,38 +484,60 @@ export default function AdminMain() {
                 "مكتمل": "COMPLETED",
                 "ملغي": "CANCELLED"
             };
-    
-            const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
-                method: 'PATCH',  // ✅ Changed to PATCH
-                headers: {
-                    'Authorization': `Bearer ${access}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    status: statusMap[newStatus] || newStatus
-                })
-            });
-    
+
+            const englishStatus = statusMap[newStatus] || newStatus;
+            console.log('🔍 Filtering projects by status:', newStatus, '→', englishStatus);
+
+            // Fetch a project with the selected status (FILTER, not EDIT)
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/my-active-project/?status=${englishStatus}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${access}`
+                    }
+                }
+            );
+
             if (response.ok) {
-                setProjectStatus(newStatus);
-                fetchActiveProject();
-                fetchStats();
-                fetchProjects();
+                const data = await response.json();
+                console.log('📦 Received project:', data);
+
+                if (data) {
+                    // Display the fetched project in bottom section
+                    setActiveProject(data);
+                    setProjectStatus(data.status_display || newStatus);
+                    setIsProjectHidden(data.is_hidden || false);
+                    setEditFormData({
+                        projectName: data.title || '',
+                        projectType: data.category || 'أساسي',
+                        projectDescription: data.desc || data.description || '',
+                        targetAudience: data.target_audience || '',
+                        beneficiaries: data.beneficiaries?.toString() || '',
+                        donationAmount: data.donation_amount?.toString() || '',
+                        startDate: data.start_date || '',
+                        endDate: data.end_date || '',
+                    });
+                    console.log('✅ Project displayed successfully');
+                } else {
+                    // No project found with this status
+                    console.log('⚠️ No project found with status:', newStatus);
+                    setActiveProject(null);
+                    setProjectStatus(newStatus);
+                }
             } else {
-                const error = await response.json();
-                console.error('Error updating status:', error);
+                console.error('❌ Error fetching project by status:', response.status);
             }
         } catch (error) {
-            console.error('Error updating project status:', error);
+            console.error('❌ Error filtering project by status:', error);
         }
     };
     
     const handleToggleProjectVisibility = async () => {
         if (!activeProject) return;
-    
+
         try {
             const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
-                method: 'PATCH',  // ✅ Changed to PATCH
+                method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${access}`,
                     'Content-Type': 'application/json'
@@ -512,10 +546,12 @@ export default function AdminMain() {
                     is_hidden: !isProjectHidden
                 })
             });
-    
+
             if (response.ok) {
-                setIsProjectHidden(!isProjectHidden);
-                fetchActiveProject();
+                const updatedProject = await response.json();
+                // Update state with the response (keep same project visible)
+                setIsProjectHidden(updatedProject.is_hidden);
+                setActiveProject(updatedProject);
             } else {
                 const error = await response.json();
                 console.error('Error toggling visibility:', error);
@@ -524,46 +560,80 @@ export default function AdminMain() {
             console.error('Error toggling project visibility:', error);
         }
     };
+    // ✅ EDIT MODAL: This function properly EDITS the project (including status changes)
     const handleSaveEdit = async () => {
         if (!activeProject) return;
-    
+
         try {
+            // Map Arabic status to English for backend
+            const statusMap: { [key: string]: string } = {
+                "نشط": "ACTIVE",
+                "متوقف": "PLANNED",
+                "مكتمل": "COMPLETED",
+                "ملغي": "CANCELLED"
+            };
+
+            // Build payload - only include status if it's been set to a valid value
+            const payload: any = {
+                title: editFormData.projectName,
+                category: editFormData.projectType,
+                desc: editFormData.projectDescription,
+                target_audience: editFormData.targetAudience,
+                beneficiaries: parseInt(editFormData.beneficiaries) || 0,
+                donation_amount: parseFloat(editFormData.donationAmount) || 0,
+            };
+
+            // Only include dates if they have valid values
+            if (editFormData.startDate) {
+                payload.start_date = editFormData.startDate;
+            }
+            if (editFormData.endDate) {
+                payload.end_date = editFormData.endDate;
+            }
+
+            // Only include status if it's a valid status (not default)
+            if (projectStatus && projectStatus !== "حالة المشروع") {
+                const statusToSend = statusMap[projectStatus] || projectStatus;
+                payload.status = statusToSend;
+                console.log('💾 Saving project with status change:', projectStatus, '→', statusToSend);
+            } else {
+                console.log('💾 Saving project edits (no status change)');
+            }
+
+            console.log('📤 Sending payload:', payload);
+
             const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
-                method: 'PATCH',  // ✅ Changed from PUT to PATCH
+                method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${access}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    title: editFormData.projectName,
-                    category: editFormData.projectType,
-                    desc: editFormData.projectDescription,
-                    target_audience: editFormData.targetAudience,
-                    beneficiaries: parseInt(editFormData.beneficiaries) || 0,
-                    donation_amount: parseFloat(editFormData.donationAmount) || 0,
-                    start_date: editFormData.startDate,
-                    end_date: editFormData.endDate,
-                    // Include status if it was changed in the modal
-                    status: projectStatus !== "حالة المشروع" ? projectStatus : undefined
-                })
+                body: JSON.stringify(payload)
             });
     
             if (response.ok) {
                 const updatedProject = await response.json();
+                console.log('✅ Project saved successfully:', updatedProject);
                 alert('تم حفظ التعديلات بنجاح!');
                 setShowEditModal(false);
-                
-                // Refresh all data
-                fetchActiveProject();
+
+                // Update the displayed project with the edited data (keep same project visible)
+                setActiveProject(updatedProject);
+                setProjectStatus(updatedProject.status_display || projectStatus);
+                setIsProjectHidden(updatedProject.is_hidden || false);
+
+                // Refresh stats and project lists in top section
                 fetchStats();
                 fetchProjects();
             } else {
                 const errorData = await response.json();
-                console.error('Error saving project:', errorData);
-                alert('حدث خطأ أثناء حفظ التعديلات');
+                console.error('❌ Error saving project:', errorData);
+                console.error('❌ Response status:', response.status);
+                console.error('❌ Full error details:', JSON.stringify(errorData, null, 2));
+                alert(`حدث خطأ أثناء حفظ التعديلات:\n${JSON.stringify(errorData, null, 2)}`);
             }
         } catch (error) {
-            console.error('Error saving project edit:', error);
+            console.error('❌ Exception saving project edit:', error);
             alert('حدث خطأ أثناء حفظ التعديلات');
         }
     };

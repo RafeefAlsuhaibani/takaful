@@ -6,6 +6,8 @@ import type { Project } from '../../types';
 import Modal from './Modal';
 import Badge from './Badge';
 import Tag from './Tag';
+import { API_BASE_URL } from '../../config';
+import { useState } from 'react';
 
 interface ProjectDialogProps {
   project: Project | null;
@@ -14,14 +16,15 @@ interface ProjectDialogProps {
 }
 
 export default function ProjectDialog({ project, open, onClose }: ProjectDialogProps) {
-  const { success, info } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { success, info, error } = useToast();
+  const { isAuthenticated, access } = useAuth();
   const navigate = useNavigate();
+  const [isApplying, setIsApplying] = useState(false);
 
   if (!project) return null;
 
   const details = project.details;
-  const handleJoinProject = () => {
+  const handleJoinProject = async () => {
     // التحقق من تسجيل الدخول
     if (!isAuthenticated) {
       // إغلاق الدايلوج
@@ -39,15 +42,39 @@ export default function ProjectDialog({ project, open, onClose }: ProjectDialogP
       return;
     }
 
-    // إذا كان المستخدم مسجل دخول
-    // إغلاق الدايلوج
-    onClose && onClose();
-    // عرض رسالة النجاح
-    success({
-      title: 'تم إرسال مشاركتك بنجاح',
-      description: 'سيتم التواصل معك عبر البريد الإلكتروني في حال القبول.',
-      duration: 2000
-    });
+    // إذا كان المستخدم مسجل دخول، أرسل الطلب للباك إند
+    setIsApplying(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/user/opportunities/${project.id}/apply/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${access}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'فشل في إرسال الطلب');
+      }
+
+      // إغلاق الدايلوج
+      onClose && onClose();
+      // عرض رسالة النجاح
+      success({
+        title: 'تم إرسال مشاركتك بنجاح',
+        description: 'سيتم مراجعة طلبك من قبل المشرف وسيتم التواصل معك قريباً.',
+        duration: 3000
+      });
+    } catch (err: any) {
+      error({
+        title: 'خطأ',
+        description: err.message || 'حدث خطأ أثناء إرسال الطلب',
+        duration: 3000
+      });
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   return (
@@ -140,19 +167,23 @@ export default function ProjectDialog({ project, open, onClose }: ProjectDialogP
               {/* زر شارك في المشروع (مع لمعة وأنيميشن مثل اعرف أكثر) */}
               <button
                 onClick={handleJoinProject}
+                disabled={isApplying}
                 className="
                   group relative overflow-hidden w-full rounded-xl bg-[#711F2C] text-white font-semibold py-3
                   transition-all duration-300 focus-visible:ring-2 ring-[#711F2C] ring-offset-2
                   flex items-center justify-center gap-2
                   hover:bg-[#5a1823] hover:-translate-y-0.5 hover:shadow-lg
+                  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0
                 "
               >
-                شارك في المشروع
-                <ArrowLeft
-                  size={16}
-                  className="transition-all duration-300 group-hover:-translate-x-1 group-hover:scale-[1.15] group-hover:stroke-[2.5]"
-                  strokeWidth={2} 
-                />
+                {isApplying ? 'جاري الإرسال...' : 'شارك في المشروع'}
+                {!isApplying && (
+                  <ArrowLeft
+                    size={16}
+                    className="transition-all duration-300 group-hover:-translate-x-1 group-hover:scale-[1.15] group-hover:stroke-[2.5]"
+                    strokeWidth={2}
+                  />
+                )}
                 <span
                   aria-hidden
                   className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent
