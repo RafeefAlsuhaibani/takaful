@@ -10,8 +10,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Get credentials from environment variables or use defaults
         username = os.environ.get('ADMIN_USERNAME', 'admin')
-        email = os.environ.get('ADMIN_EMAIL', 'admin@takaful.sa')
-        password = os.environ.get('ADMIN_PASSWORD', 'Admin@123456')
+        email = os.environ.get('ADMIN_EMAIL', 'admin@takaful.com')
+        password = os.environ.get('ADMIN_PASSWORD', 'admin123')
 
         # Check if admin user already exists
         if User.objects.filter(username=username).exists():
