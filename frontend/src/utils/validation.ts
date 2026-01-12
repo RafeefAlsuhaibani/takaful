@@ -1,7 +1,5 @@
-import validator from 'validator';
-
 /**
- * Validates email address using validator.js
+ * Validates email address
  * @param email - Email to validate
  * @returns True if email is valid
  */
@@ -9,9 +7,10 @@ export const isValidEmail = (email: string): boolean => {
   if (!email || typeof email !== 'string') {
     return false;
   }
-  
-  // FIX: Use validator.js for comprehensive email validation
-  return validator.isEmail(email.trim());
+
+  // Simple email validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
 };
 
 /**
