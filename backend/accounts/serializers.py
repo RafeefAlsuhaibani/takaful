@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import Profile
@@ -104,5 +105,33 @@ class RegisterSerializer(serializers.Serializer):
         for key, value in profile_data.items():
             setattr(profile, key, value)
         profile.save()
-        
+
         return user
+
+
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Custom token serializer that allows login with email instead of username
+    Frontend sends email as 'username' field, this serializer handles the conversion
+    """
+    username_field = User.USERNAME_FIELD
+
+    def validate(self, attrs):
+        # Get the credentials (frontend sends email as 'username')
+        credentials = {
+            'username': attrs.get('username'),
+            'password': attrs.get('password')
+        }
+
+        # Try to find user by email
+        username_or_email = credentials.get('username')
+        if username_or_email and '@' in username_or_email:
+            try:
+                user = User.objects.get(email=username_or_email)
+                # Replace email with actual username
+                credentials['username'] = user.username
+                attrs['username'] = user.username
+            except User.DoesNotExist:
+                pass
+
+        return super().validate(attrs)
