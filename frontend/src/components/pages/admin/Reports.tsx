@@ -406,11 +406,11 @@ export default function Reports() {
                             <p className="text-gray-600 mt-2">تم الإنشاء: {formatDate(viewingReport.generated_at)}</p>
                         </div>
                         <div className="flex gap-3">
-                            {/* Export to PDF */}
+                            {/* Export to PDF - Disabled for Arabic */}
                             <button
-                                onClick={() => exportToPDF(viewingReport)}
-                                className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 flex items-center gap-2 transition-colors"
-                                title="تصدير كـ PDF"
+                                disabled
+                                className="px-4 py-2 bg-gray-300 text-gray-500 rounded-xl cursor-not-allowed flex items-center gap-2 opacity-60"
+                                title="التصدير بصيغة PDF غير مدعوم للنصوص العربية - استخدم Excel"
                             >
                                 <FileText className="w-4 h-4" />
                                 <span>PDF</span>
@@ -712,9 +712,9 @@ export default function Reports() {
                                                 <Eye className="w-5 h-5" />
                                             </button>
                                             <button
-                                                onClick={() => exportToPDF(report)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                                                title="تصدير PDF"
+                                                disabled
+                                                className="p-2 text-gray-400 cursor-not-allowed rounded-lg opacity-50"
+                                                title="التصدير بصيغة PDF غير مدعوم للنصوص العربية - استخدم Excel"
                                             >
                                                 <FileText className="w-5 h-5" />
                                             </button>
