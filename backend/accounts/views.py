@@ -41,14 +41,19 @@ def register(request):
         "refresh": "jwt_refresh_token"
     }
     """
+    # Debug: Log received data
+    print(f"DEBUG - Registration age received: {request.data.get('age')}, type: {type(request.data.get('age'))}")
+
     serializer = RegisterSerializer(data=request.data)
-    
+
     if serializer.is_valid():
+        print(f"DEBUG - After validation, age: {serializer.validated_data.get('age')}")
         user = serializer.save()
-        
+        print(f"DEBUG - After save, profile age: {user.profile.age}")
+
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
-        
+
         # Return user data + tokens
         user_serializer = UserSerializer(user)
         
