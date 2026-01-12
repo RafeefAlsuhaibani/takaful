@@ -12,8 +12,8 @@ interface ModalProps {
 export default function Modal({ open, onClose, children, labelledById, lockTargetSelector }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
-  const wheelListenerRef = useRef<(e: WheelEvent) => void>();
-  const touchMoveListenerRef = useRef<(e: TouchEvent) => void>();
+  const wheelListenerRef = useRef<((e: WheelEvent) => void) | null>(null);
+  const touchMoveListenerRef = useRef<((e: TouchEvent) => void) | null>(null);
 
   const ensureNoScrollStyle = () => {
     if (typeof document === 'undefined') return;
