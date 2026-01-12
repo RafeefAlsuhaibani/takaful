@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, memo } from 'react';
-import { projects } from '../../data/projects';
 import type { Project } from '../../types';
 import Icon from '../ui/Icon';
 import Card from '../ui/Card';
@@ -92,8 +91,8 @@ function Projects() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
 
   // Backend data state
-  const [projectsData, setProjectsData] = useState<Project[]>(projects); // start with mock as fallback
-  const [loading, setLoading] = useState(false);
+  const [projectsData, setProjectsData] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
