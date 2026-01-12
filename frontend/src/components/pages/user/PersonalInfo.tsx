@@ -185,14 +185,14 @@ export default function PersonalInfo() {
 
   return (
     <SidebarLayout>
-      <div className="h-full">
+      <div className="h-full px-2 sm:px-4 md:px-0">
         {/* Search Bar and Quote - Side by Side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {/* Motivational Quote */}
-          <div className="bg-gradient-to-r from-[#f5e6d3] to-[#e3d1d8] rounded-2xl p-6 flex items-center gap-4 border border-[#e3d1d8]">
-            <div className="text-4xl">🌱</div>
-            <div className="flex-1">
-              <p className="text-gray-800 leading-relaxed text-sm">
+          <div className="bg-gradient-to-r from-[#f5e6d3] to-[#e3d1d8] rounded-2xl p-4 sm:p-6 flex items-center gap-3 sm:gap-4 border border-[#e3d1d8]">
+            <div className="text-2xl sm:text-4xl flex-shrink-0">🌱</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-gray-800 leading-relaxed text-xs sm:text-sm break-words">
                 قال النبي ﷺ : " إِنْ قَامَتِ السَّاعَةُ وَفِي يَدِ أَحَدِكُمْ فَسِيلَةً، فَإِنِ اسْتَطَاعَ أَنْ لَا تَقُومَ حَتَّى يَغْرِسَهَا فَلْيَغْرِسَهَا " .
               </p>
             </div>
@@ -200,22 +200,22 @@ export default function PersonalInfo() {
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <input
               type="text"
               placeholder="البحث ..."
-              className="w-full bg-[#f5e6d3] rounded-full px-12 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full bg-[#f5e6d3] rounded-full px-10 sm:px-12 py-2 sm:py-3 text-sm sm:text-base text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
         </div>
 
         {/* Personal Information Section */}
-        <div className="mb-8">
-          <div className="bg-gradient-to-r from-[#f5e6d3] to-[#e3d1d8] rounded-2xl p-6 border border-[#e3d1d8]">
+        <div className="mb-6 sm:mb-8">
+          <div className="bg-gradient-to-r from-[#f5e6d3] to-[#e3d1d8] rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-[#e3d1d8]">
             {/* Header */}
-            <div className="text-center mb-6 relative">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <h2 className="text-2xl font-bold text-gray-900">المعلومات الشخصية</h2>
+            <div className="text-center mb-4 sm:mb-6 relative">
+              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">المعلومات الشخصية</h2>
                 {!isEditing ? (
                   <button 
                     onClick={() => setIsEditing(true)}
@@ -244,25 +244,25 @@ export default function PersonalInfo() {
             </div>
 
             {/* Content */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               {/* الاسم */}
-              <div className="bg-white/60 rounded-2xl px-6 py-4 backdrop-blur-sm">
+              <div className="bg-white/60 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 backdrop-blur-sm">
                 {isEditing ? (
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="w-full bg-transparent text-gray-700 text-base focus:outline-none"
+                    className="w-full bg-transparent text-gray-700 text-sm sm:text-base focus:outline-none"
                   />
                 ) : (
-                  <p className="text-gray-700 text-base">
+                  <p className="text-gray-700 text-sm sm:text-base break-words">
                     <span className="font-semibold">الاسم :</span> {formData.name || 'غير محدد'}
                   </p>
                 )}
               </div>
 
               {/* الجنس */}
-              <div className="bg-white/60 rounded-2xl px-6 py-4 relative backdrop-blur-sm">
+              <div className="bg-white/60 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 relative backdrop-blur-sm">
                 {isEditing ? (
                   <>
                     <button
