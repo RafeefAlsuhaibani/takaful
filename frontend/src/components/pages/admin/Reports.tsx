@@ -8,8 +8,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../../../config';
 
 interface Report {
     id: number;
