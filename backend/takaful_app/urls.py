@@ -14,6 +14,8 @@ router.register(r'tasks', views.TaskViewSet, basename='task')  # NEW: Task manag
 urlpatterns = [
     # Public endpoints (no auth required) - MUST come before router
     path('public-projects/', views.public_projects, name='public-projects'),
+    path('public-volunteers-stats/', views.public_volunteers_stats, name='public-volunteers-stats'),
+    path('public-suggestions/', views.public_submit_suggestion, name='public-suggestions'),
 
     # Include router URLs
     path('', include(router.urls)),

@@ -38,21 +38,21 @@ export default function Suggest() {
       }
     
       try {
-        // Build payload for existing Suggestion API
+        // Build payload for public Suggestion API
         const payload = {
           title: sanitizedSuggestion.slice(0, 80),   // short title from suggestion
           description: sanitizedSuggestion,
           submitted_by: sanitizedEmail
         };
-    
-        const res = await fetch(`${API_BASE_URL}/api/admin/suggestions/`, {
+
+        const res = await fetch(`${API_BASE_URL}/api/public-suggestions/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
           body: JSON.stringify(payload)
         });
-    
+
         if (!res.ok) {
           throw new Error("Failed to submit suggestion");
         }

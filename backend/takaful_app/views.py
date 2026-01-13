@@ -1325,3 +1325,73 @@ def reject_volunteer_application(request, application_id):
             {'error': 'الطلب غير موجود'},
             status=status.HTTP_404_NOT_FOUND
         )
+
+# ============================================================================
+# PUBLIC ENDPOINTS (No Authentication Required)
+# ============================================================================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_volunteers_stats(request):
+    """
+    GET /api/public-volunteers-stats/
+    Returns volunteer statistics for the public volunteers page
+    No authentication required
+    """
+    from accounts.models import Profile
+
+    # Get all user profiles (volunteers only)
+    volunteers = Profile.objects.filter(role='user')
+
+    stats = []
+    for profile in volunteers:
+        # Calculate stats for each volunteer
+        total_hours = Task.objects.filter(
+            volunteer=profile.user,
+            status='مكتملة'
+        ).aggregate(total=Sum('hours'))['total'] or 0
+
+        participations_count = Task.objects.filter(
+            volunteer=profile.user
+        ).exclude(status='ملغاة').count()
+
+        successes_count = Task.objects.filter(
+            volunteer=profile.user,
+            status='مكتملة'
+        ).count()
+
+        stats.append({
+            'id': profile.user.id,
+            'gender': profile.gender,
+            'total_hours': total_hours,
+            'participations_count': participations_count,
+            'successes_count': successes_count,
+        })
+
+    return Response(stats)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def public_submit_suggestion(request):
+    """
+    POST /api/public-suggestions/
+    Submit a suggestion from the public suggest page
+    No authentication required
+
+    Payload:
+    {
+        "title": "Suggestion title",
+        "description": "Suggestion description",
+        "submitted_by": "email@example.com"
+    }
+    """
+    serializer = SuggestionSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'message': 'تم استلام اقتراحك بنجاح'
+        }, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

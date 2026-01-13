@@ -182,18 +182,18 @@ export default function Volunteers() {
   const BRAND_DARK = '#711f2c';
   const BRAND_GOLD = '#DFC775';
 
-    // Load volunteers from backend
+    // Load volunteers from backend (public endpoint)
     useEffect(() => {
       const fetchVolunteers = async () => {
         try {
           setIsLoading(true);
           setError(null);
-  
-          const res = await fetch(`${API_BASE_URL}/api/admin/volunteers/`);
+
+          const res = await fetch(`${API_BASE_URL}/api/public-volunteers-stats/`);
           if (!res.ok) {
             throw new Error('Failed to load volunteers');
           }
-  
+
           const data = await res.json();
           setVolunteers(data);
         } catch (err) {
@@ -203,7 +203,7 @@ export default function Volunteers() {
           setIsLoading(false);
         }
       };
-  
+
       fetchVolunteers();
     }, []);
   
