@@ -1335,8 +1335,8 @@ def reject_volunteer_application(request, application_id):
 def public_volunteers_stats(request):
     """
     GET /api/public-volunteers-stats/
-    Returns volunteer statistics for the public volunteers page
-    No authentication required
+    Returns volunteer statistics for the public volunteers page.
+    No authentication required.
     """
     from accounts.models import Profile
 
