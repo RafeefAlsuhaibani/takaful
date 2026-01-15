@@ -13,6 +13,7 @@ import {
     Trash2,
     Save,
     User,
+    X,
 } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";  // ✅ ADD THIS LINE
 import { API_BASE_URL } from "../../../config";  // ✅ ADD THIS LINE TOO
