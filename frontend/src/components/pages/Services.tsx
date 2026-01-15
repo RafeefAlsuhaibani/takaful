@@ -141,6 +141,17 @@ function Services() {
       {/* Filter Chips */}
       <section className="py-8 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
+          {/* Request Service Button */}
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={() => navigate('/request-service')}
+              className="bg-[#6F1A28] text-white px-6 py-3 rounded-full font-bold text-lg hover:bg-[#8d2e46] transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+            >
+              <Icon name="Package" size={20} />
+              هل تحتاج خدمة؟ اطلبها الآن
+            </button>
+          </div>
+
           <div className="flex flex-wrap items-center justify-center gap-3">
             {filters.map((filter) => (
               <Chip

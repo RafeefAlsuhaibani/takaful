@@ -6,6 +6,7 @@ from . import views
 router = DefaultRouter()
 router.register(r'projects', views.ProjectViewSet, basename='project')
 router.register(r'services', views.ServiceViewSet, basename='service')
+router.register(r'service-requests', views.ServiceRequestViewSet, basename='service-request')  # NEW: Service requests
 router.register(r'volunteers-old', views.VolunteerViewSet, basename='volunteer-old')  # Old volunteer model
 router.register(r'suggestions', views.SuggestionViewSet, basename='suggestion')
 router.register(r'assignments', views.ProjectAssignmentViewSet, basename='assignment')
@@ -17,6 +18,8 @@ urlpatterns = [
     path('public-volunteers-stats/', views.public_volunteers_stats, name='public-volunteers-stats'),
     path('public-suggestions/', views.public_submit_suggestion, name='public-suggestions'),
     path('public-home-stats/', views.public_home_stats, name='public-home-stats'),
+    path('public-services/', views.public_services_list, name='public-services'),  # NEW: List services
+    path('public-service-request/', views.public_submit_service_request, name='public-service-request'),  # NEW: Submit service request
 
     # Include router URLs
     path('', include(router.urls)),

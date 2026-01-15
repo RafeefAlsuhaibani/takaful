@@ -17,6 +17,7 @@ import SignUp from './components/pages/Auth/SignUp';
 import AdminSignIn from './components/pages/admin/AdminSignIn';
 import Suggest from './components/pages/Suggest';
 import About from './components/pages/About';
+import RequestService from './components/pages/RequestService';
 
 // User Pages
 import UserMain from './components/pages/user/Main';
@@ -32,6 +33,7 @@ import VolunteerManagement from './components/pages/admin/VolunteerManagement';
 import AddProjectPage from './components/pages/admin/AddProject';
 import ProjectIdeas from './components/pages/admin/ProjectIdeas';
 import Reports from './components/pages/admin/Reports';
+import ServiceRequests from './components/pages/admin/ServiceRequests';
 
 
 // هذا الكومبوننت هو اللي يقدر يستخدم useLocation
@@ -61,6 +63,7 @@ function AppContent() {
           <Route path="/admin/signin" element={<AdminSignIn />} />
           <Route path="/suggest" element={<Suggest />} />
           <Route path="/about" element={<About />} />
+          <Route path="/request-service" element={<RequestService />} />
 
           {/* صفحات اليوزر */}
           <Route path="/user/main" element={<UserMain />} />
@@ -76,6 +79,7 @@ function AppContent() {
           <Route path="/Admin/tasks" element={<AddProjectPage />} />
           <Route path="/Admin/ideas" element={<ProjectIdeas />} />
           <Route path="/Admin/reports" element={<Reports />} />
+          <Route path="/Admin/service-requests" element={<ServiceRequests />} />
           {/* تبين نضيف المزيد؟ حاضرة */}
         </Routes>
       </main>

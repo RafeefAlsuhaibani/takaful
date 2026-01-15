@@ -1,9 +1,9 @@
 import type { JSX } from "react";
-import { Bell, Home, ClipboardList, ExternalLink, Users, Plus, FileText, UserCheck, Lightbulb } from "lucide-react";
+import { Bell, Home, ClipboardList, ExternalLink, Users, Plus, FileText, UserCheck, Lightbulb, Package } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
-type MenuKey = "home" | "add-project" | "project-ideas" | "volunteer-requests" | "volunteer-applications" | "volunteer-management" | "reports";
+type MenuKey = "home" | "add-project" | "project-ideas" | "volunteer-requests" | "volunteer-applications" | "volunteer-management" | "reports" | "service-requests";
 
 const menuItems = [
     { key: "home" as MenuKey, label: "الرئيسية", icon: Home, to: "/Admin", exact: true },
@@ -12,6 +12,7 @@ const menuItems = [
     { key: "volunteer-requests" as MenuKey, label: "طلبات التطوع", icon: Users, to: "/Admin/requests" },
     { key: "volunteer-applications" as MenuKey, label: "طلبات الانضمام", icon: UserCheck, to: "/Admin/applications" },
     { key: "volunteer-management" as MenuKey, label: "ادارة المتطوعين", icon: ClipboardList, to: "/Admin/management" },
+    { key: "service-requests" as MenuKey, label: "طلبات الخدمات", icon: Package, to: "/Admin/service-requests" },
     { key: "reports" as MenuKey, label: "التقارير", icon: FileText, to: "/Admin/reports" },
 ];
 

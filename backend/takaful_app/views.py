@@ -586,12 +586,107 @@ def volunteer_tasks_report(request):
 
 
 # ============================================================================
-# OTHER VIEWSETS
+# SERVICE & SERVICE REQUEST VIEWSETS
 # ============================================================================
 class ServiceViewSet(viewsets.ModelViewSet):
+    """
+    Admin endpoint for managing services
+    GET /api/services/ - List all services
+    POST /api/services/ - Create new service
+    """
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
     permission_classes = [IsAdmin]
+
+
+class ServiceRequestViewSet(viewsets.ModelViewSet):
+    """
+    Admin endpoint for managing service requests
+    GET /api/service-requests/ - List all service requests
+    GET /api/service-requests/?status=PENDING - Filter by status
+    """
+    queryset = ServiceRequest.objects.all()
+    serializer_class = ServiceRequestSerializer
+    permission_classes = [IsAdmin]
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('service')
+
+        # Filter by status
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        return queryset.order_by('-created_at')
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """
+        POST /api/service-requests/{id}/approve/
+        Approve a service request
+        """
+        service_request = self.get_object()
+
+        if service_request.status != 'PENDING':
+            return Response(
+                {"error": "Only pending requests can be approved"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        service_request.status = 'APPROVED'
+        service_request.save()
+
+        serializer = self.get_serializer(service_request)
+        return Response({
+            "message": "تم قبول طلب الخدمة بنجاح",
+            "request": serializer.data
+        })
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        """
+        POST /api/service-requests/{id}/reject/
+        Reject a service request
+        """
+        service_request = self.get_object()
+
+        if service_request.status != 'PENDING':
+            return Response(
+                {"error": "Only pending requests can be rejected"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        service_request.status = 'REJECTED'
+        service_request.save()
+
+        serializer = self.get_serializer(service_request)
+        return Response({
+            "message": "تم رفض طلب الخدمة",
+            "request": serializer.data
+        })
+
+    @action(detail=True, methods=['post'])
+    def mark_done(self, request, pk=None):
+        """
+        POST /api/service-requests/{id}/mark_done/
+        Mark a service request as done
+        """
+        service_request = self.get_object()
+
+        if service_request.status not in ['PENDING', 'APPROVED']:
+            return Response(
+                {"error": "Cannot mark this request as done"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        service_request.status = 'DONE'
+        service_request.save()
+
+        serializer = self.get_serializer(service_request)
+        return Response({
+            "message": "تم وضع علامة على الطلب كمكتمل",
+            "request": serializer.data
+        })
 
 
 class VolunteerViewSet(viewsets.ModelViewSet):
@@ -1440,4 +1535,47 @@ def public_home_stats(request):
         'beneficiaries': total_beneficiaries,
         'potential_projects': potential_projects,
         'donations': float(total_donations),
+    })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def public_submit_service_request(request):
+    """
+    POST /api/public-service-request/
+    Submit a service request from the public (beneficiaries)
+    No authentication required
+
+    Payload:
+    {
+        "service": 1,  // Service ID
+        "beneficiary_name": "اسم المسجد",
+        "beneficiary_contact": "0500000000",
+        "details": "نحتاج إلى 100 زجاجة ماء للمسجد"
+    }
+    """
+    serializer = ServiceRequestSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'message': 'تم استلام طلبك بنجاح. سيتم مراجعته من قبل الإدارة.',
+            'request_id': serializer.data['id']
+        }, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_services_list(request):
+    """
+    GET /api/public-services/
+    List all active services for public viewing
+    No authentication required
+    """
+    services = Service.objects.filter(is_active=True).order_by('-created_at')
+    serializer = ServiceSerializer(services, many=True)
+    return Response({
+        'results': serializer.data
     })
