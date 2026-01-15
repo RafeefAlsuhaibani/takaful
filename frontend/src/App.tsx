@@ -30,6 +30,7 @@ import VolunteerRequests from './components/pages/admin/VolunteerRequests';
 import VolunteerApplications from './components/pages/admin/VolunteerApplications';
 import VolunteerManagement from './components/pages/admin/VolunteerManagement';
 import AddProjectPage from './components/pages/admin/AddProject';
+import ProjectIdeas from './components/pages/admin/ProjectIdeas';
 import Reports from './components/pages/admin/Reports';
 
 
@@ -73,6 +74,7 @@ function AppContent() {
           <Route path="/Admin/applications" element={<VolunteerApplications />} />
           <Route path="/Admin/management" element={<VolunteerManagement />} />
           <Route path="/Admin/tasks" element={<AddProjectPage />} />
+          <Route path="/Admin/ideas" element={<ProjectIdeas />} />
           <Route path="/Admin/reports" element={<Reports />} />
           {/* تبين نضيف المزيد؟ حاضرة */}
         </Routes>
