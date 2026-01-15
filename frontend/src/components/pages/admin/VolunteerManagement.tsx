@@ -1948,10 +1948,35 @@ const VolunteerManagement: React.FC = () => {
 
     // Filter States
     const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+    const [skillInput, setSkillInput] = useState<string>("");
     const [selectedDays, setSelectedDays] = useState<string[]>([]);
     const [selectedStatus, setSelectedStatus] = useState<string>("");
     const [selectedCity, setSelectedCity] = useState<string>("");
     const [showFilters, setShowFilters] = useState(false);
+
+    // Handle skill input
+    const handleSkillInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && skillInput.trim()) {
+            e.preventDefault();
+            const newSkill = skillInput.trim();
+            if (!selectedSkills.includes(newSkill)) {
+                setSelectedSkills([...selectedSkills, newSkill]);
+            }
+            setSkillInput("");
+        }
+    };
+
+    const removeSkill = (skillToRemove: string) => {
+        setSelectedSkills(selectedSkills.filter(s => s !== skillToRemove));
+    };
+
+    const toggleDay = (day: string) => {
+        if (selectedDays.includes(day)) {
+            setSelectedDays(selectedDays.filter(d => d !== day));
+        } else {
+            setSelectedDays([...selectedDays, day]);
+        }
+    };
 
     // ADD API State
     const [stats, setStats] = useState({
@@ -2037,6 +2062,7 @@ const handleTaskUpdate = () => {
     // Clear all filters
     const clearAllFilters = () => {
         setSelectedSkills([]);
+        setSkillInput("");
         setSelectedDays([]);
         setSelectedStatus("");
         setSelectedCity("");
@@ -2170,62 +2196,82 @@ const handleTaskUpdate = () => {
                     {showFilters && (
                         <div className="bg-[#f3e3e3] rounded-xl p-6 shadow-md space-y-4 animate-fadeIn">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {/* Skills Filter */}
+                                {/* Skills Filter - Text Input */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2 font-[Cairo]">
                                         المهارات
                                     </label>
-                                    <div className="bg-white rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 border border-gray-200">
-                                        {allSkills.map((skill) => (
-                                            <label key={skill} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedSkills.includes(skill)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setSelectedSkills([...selectedSkills, skill]);
-                                                        } else {
-                                                            setSelectedSkills(selectedSkills.filter(s => s !== skill));
-                                                        }
-                                                    }}
-                                                    className="w-4 h-4 text-[#8d2e46] rounded focus:ring-[#8d2e46]"
-                                                />
-                                                <span className="text-sm text-gray-700 font-[Cairo]">{skill}</span>
-                                            </label>
-                                        ))}
-                                        {allSkills.length === 0 && (
-                                            <p className="text-sm text-gray-500 font-[Cairo]">لا توجد مهارات</p>
-                                        )}
-                                    </div>
+                                    <input
+                                        type="text"
+                                        value={skillInput}
+                                        onChange={(e) => setSkillInput(e.target.value)}
+                                        onKeyDown={handleSkillInputKeyDown}
+                                        placeholder="اكتب المهارة واضغط Enter"
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-[Cairo] focus:outline-none focus:ring-2 focus:ring-[#8d2e46] text-sm"
+                                    />
+                                    {selectedSkills.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1">
+                                            {selectedSkills.map((skill) => (
+                                                <span key={skill} className="inline-flex items-center gap-1 bg-[#8d2e46] text-white px-2 py-1 rounded text-xs font-[Cairo]">
+                                                    {skill}
+                                                    <button
+                                                        onClick={() => removeSkill(skill)}
+                                                        className="hover:bg-white/20 rounded-full p-0.5"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {allSkills.length > 0 && (
+                                        <div className="mt-2 text-xs text-gray-500 font-[Cairo]">
+                                            مهارات موجودة: {allSkills.slice(0, 3).join('، ')}
+                                            {allSkills.length > 3 && '...'}
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Available Days Filter */}
+                                {/* Available Days Filter - Dropdown Menu */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2 font-[Cairo]">
                                         الأيام المتاحة
                                     </label>
-                                    <div className="bg-white rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 border border-gray-200">
-                                        {allDays.map((day) => (
-                                            <label key={day} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedDays.includes(day)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setSelectedDays([...selectedDays, day]);
-                                                        } else {
-                                                            setSelectedDays(selectedDays.filter(d => d !== day));
-                                                        }
-                                                    }}
-                                                    className="w-4 h-4 text-[#8d2e46] rounded focus:ring-[#8d2e46]"
-                                                />
-                                                <span className="text-sm text-gray-700 font-[Cairo]">{day}</span>
-                                            </label>
-                                        ))}
-                                        {allDays.length === 0 && (
-                                            <p className="text-sm text-gray-500 font-[Cairo]">لا توجد أيام</p>
-                                        )}
+                                    <div className="relative">
+                                        <select
+                                            value=""
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    toggleDay(e.target.value);
+                                                }
+                                            }}
+                                            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-[Cairo] focus:outline-none focus:ring-2 focus:ring-[#8d2e46]"
+                                        >
+                                            <option value="">اختر يوم</option>
+                                            <option value="السبت">السبت</option>
+                                            <option value="الأحد">الأحد</option>
+                                            <option value="الاثنين">الاثنين</option>
+                                            <option value="الثلاثاء">الثلاثاء</option>
+                                            <option value="الأربعاء">الأربعاء</option>
+                                            <option value="الخميس">الخميس</option>
+                                            <option value="الجمعة">الجمعة</option>
+                                        </select>
                                     </div>
+                                    {selectedDays.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1">
+                                            {selectedDays.map((day) => (
+                                                <span key={day} className="inline-flex items-center gap-1 bg-[#DFC775] text-[#8d2e46] px-2 py-1 rounded text-xs font-[Cairo]">
+                                                    {day}
+                                                    <button
+                                                        onClick={() => toggleDay(day)}
+                                                        className="hover:bg-[#8d2e46]/20 rounded-full p-0.5"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Status Filter */}
