@@ -200,7 +200,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(status='COMPLETED')
 
         return queryset.order_by('-created_at')  # Most recent first
-    
+
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new project - automatically set status to ACTIVE
+        Projects created by admin should be active by default, not pending
+        """
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+
+        # Set status to ACTIVE by default for admin-created projects
+        if 'status' not in data:
+            data['status'] = 'ACTIVE'
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def update(self, request, *args, **kwargs):
         """Handle full updates (PUT)"""
         partial = kwargs.pop('partial', False)
