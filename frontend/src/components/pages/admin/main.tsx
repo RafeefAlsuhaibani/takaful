@@ -817,7 +817,7 @@ export default function AdminMain() {
                         <div className="bg-[#F3E3E3] rounded-b-[16px] sm:rounded-b-[18px] md:rounded-b-[20px] p-3 sm:p-4 md:p-5 lg:p-6 space-y-3 sm:space-y-4" role="tabpanel" style={{ minHeight: '600px' }}>
                             {/* Debug Info - Total Projects */}
                             {!searchQuery.trim() && (
-                                <div className="bg-blue-50 rounded-lg p-2 mb-2 text-xs text-blue-700 font-[Cairo]">
+                                <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 mb-2 text-xs text-[#8d2e46] font-[Cairo]">
                                     إجمالي المشاريع: {activeTab === "افكار المشاريع" ? projectIdeas.length : activeTab === "المشاريع النشطة" ? activeProjects.length : completedProjects.length}
                                 </div>
                             )}
