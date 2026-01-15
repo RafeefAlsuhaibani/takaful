@@ -315,6 +315,25 @@ export default function AdminMain() {
         endDate: '',
     });
 
+    // Filter projects based on search query
+    const filterProjects = (projects: Project[]) => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return projects;
+
+        return projects.filter(project => {
+            const searchText = [
+                project.title,
+                project.description || project.desc || '',
+                project.category || '',
+                project.target_audience || '',
+                project.location || '',
+                project.organization || ''
+            ].join(' ').toLowerCase();
+
+            return searchText.includes(query);
+        });
+    };
+
     // Fetch all data on mount
     useEffect(() => {
         fetchStats();
@@ -761,7 +780,7 @@ export default function AdminMain() {
                         <div className="bg-[#F3E3E3] rounded-b-[16px] sm:rounded-b-[18px] md:rounded-b-[20px] p-3 sm:p-4 md:p-5 lg:p-6 space-y-3 sm:space-y-4" role="tabpanel" style={{ minHeight: '600px' }}>
                             {activeTab === "افكار المشاريع" && (
                                 <>
-                                    {projectIdeas
+                                    {filterProjects(projectIdeas)
                                         .filter(project => !removedProjects.has(project.id))
                                         .slice(0, visibleProjectsCount["افكار المشاريع"])
                                         .map((project) => (
@@ -773,7 +792,7 @@ export default function AdminMain() {
                                                 onReject={() => setRejectConfirmProject(project)}
                                             />
                                         ))}
-                                    {projectIdeas.filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["افكار المشاريع"] && (
+                                    {filterProjects(projectIdeas).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["افكار المشاريع"] && (
                                         <div className="flex justify-center -mb-6 sm:-mb-3">
                                             <button
                                                 onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "افكار المشاريع": prev["افكار المشاريع"] + 2 }))}
@@ -787,13 +806,13 @@ export default function AdminMain() {
 
                             {activeTab === "المشاريع النشطة" && (
                                 <>
-                                    {activeProjects
+                                    {filterProjects(activeProjects)
                                         .filter(project => !removedProjects.has(project.id))
                                         .slice(0, visibleProjectsCount["المشاريع النشطة"])
                                         .map((project) => (
                                             <ProjectCard key={project.id} project={project} showProgress={true} onDetailsClick={() => setSelectedProject(project)} />
                                         ))}
-                                    {activeProjects.filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع النشطة"] && (
+                                    {filterProjects(activeProjects).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع النشطة"] && (
                                         <div className="flex justify-center -mb-6 sm:-mb-3">
                                             <button
                                                 onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "المشاريع النشطة": prev["المشاريع النشطة"] + 2 }))}
@@ -807,13 +826,13 @@ export default function AdminMain() {
 
                             {activeTab === "المشاريع المنتهية" && (
                                 <>
-                                    {completedProjects
+                                    {filterProjects(completedProjects)
                                         .filter(project => !removedProjects.has(project.id))
                                         .slice(0, visibleProjectsCount["المشاريع المنتهية"])
                                         .map((project) => (
                                             <ProjectCard key={project.id} project={project} showProgress={true} isCompleted={true} onDetailsClick={() => setSelectedProject(project)} />
                                         ))}
-                                    {completedProjects.filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع المنتهية"] && (
+                                    {filterProjects(completedProjects).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع المنتهية"] && (
                                         <div className="flex justify-center -mb-6 sm:-mb-3">
                                             <button
                                                 onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "المشاريع المنتهية": prev["المشاريع المنتهية"] + 2 }))}
