@@ -387,7 +387,7 @@ export default function Volunteers() {
             <div className="flex items-center justify-center">
               <button
                 type="button"
-                onClick={() => navigate(user?.role === 'admin' ? '/admin' : '/user')}
+                onClick={() => navigate(user?.role === 'admin' ? '/Admin' : '/user/main')}
                 className="
                   rounded-full bg-[#711f2c]
                   hover:bg-[#5a1823]
