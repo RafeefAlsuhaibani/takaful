@@ -35,6 +35,7 @@ interface Volunteer {
     phone: string;
     status: string;
     skills: string[];
+    available_days: string[];
     completed_tasks: number;  // CHANGE from completedTasks
     current_tasks: number;  //  CHANGE from currentTasks
     rating: number;
@@ -2030,7 +2031,9 @@ const handleTaskUpdate = () => {
             " " +
             v.location +
             " " +
-            v.skills.join(" ")
+            v.skills.join(" ") +
+            " " +
+            (v.available_days || []).join(" ")
         ).toLowerCase();
         return haystack.includes(term);
     });

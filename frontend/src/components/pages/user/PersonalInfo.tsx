@@ -5,6 +5,16 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { API_BASE_URL } from "../../../config";
 import TagInput from "../../forms/TagInput";
 
+// Map English qualification to Arabic
+const qualificationMap: { [key: string]: string } = {
+  'High School': 'ثانوية عامة',
+  'Diploma': 'دبلوم',
+  'Bachelor': 'بكالوريوس',
+  'Master': 'ماجستير',
+  'PhD': 'دكتوراه',
+  'Other': 'أخرى'
+};
+
 export default function PersonalInfo() {
   const { access, isAuthenticated } = useAuth();
 
@@ -423,7 +433,7 @@ export default function PersonalInfo() {
                   />
                 ) : (
                   <p className="text-gray-700 text-base">
-                    <span className="font-semibold">المؤهل :</span> {formData.qualification || 'غير محدد'}
+                    <span className="font-semibold">المؤهل :</span> {qualificationMap[formData.qualification] || formData.qualification || 'غير محدد'}
                   </p>
                 )}
               </div>
