@@ -1944,7 +1944,14 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
 const VolunteerManagement: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const { access } = useAuth();  //  ADD
-    
+
+    // Filter States
+    const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+    const [selectedDays, setSelectedDays] = useState<string[]>([]);
+    const [selectedStatus, setSelectedStatus] = useState<string>("");
+    const [selectedCity, setSelectedCity] = useState<string>("");
+    const [showFilters, setShowFilters] = useState(false);
+
     // ADD API State
     const [stats, setStats] = useState({
         total_volunteers: 0,
@@ -2020,22 +2027,66 @@ const handleTaskUpdate = () => {
 };
 
 
+    // Get unique values for filters
+    const allSkills = Array.from(new Set(volunteers.flatMap(v => v.skills || [])));
+    const allDays = Array.from(new Set(volunteers.flatMap(v => v.available_days || [])));
+    const allCities = Array.from(new Set(volunteers.map(v => v.location).filter(Boolean)));
+    const allStatuses = ["نشط", "غير نشط", "مشغول"];
+
+    // Clear all filters
+    const clearAllFilters = () => {
+        setSelectedSkills([]);
+        setSelectedDays([]);
+        setSelectedStatus("");
+        setSelectedCity("");
+        setSearchTerm("");
+    };
+
+    // Check if any filters are active
+    const hasActiveFilters = selectedSkills.length > 0 || selectedDays.length > 0 || selectedStatus || selectedCity || term;
+
     const filteredVolunteers = volunteers.filter((v) => {
-        if (!term) return true;
-        const haystack = (
-            v.name +
-            " " +
-            v.email +
-            " " +
-            v.phone +
-            " " +
-            v.location +
-            " " +
-            v.skills.join(" ") +
-            " " +
-            (v.available_days || []).join(" ")
-        ).toLowerCase();
-        return haystack.includes(term);
+        // Search term filter
+        if (term) {
+            const haystack = (
+                v.name +
+                " " +
+                v.email +
+                " " +
+                v.phone +
+                " " +
+                v.location +
+                " " +
+                v.skills.join(" ") +
+                " " +
+                (v.available_days || []).join(" ")
+            ).toLowerCase();
+            if (!haystack.includes(term)) return false;
+        }
+
+        // Skills filter
+        if (selectedSkills.length > 0) {
+            const hasSkill = selectedSkills.some(skill => (v.skills || []).includes(skill));
+            if (!hasSkill) return false;
+        }
+
+        // Available days filter
+        if (selectedDays.length > 0) {
+            const hasDay = selectedDays.some(day => (v.available_days || []).includes(day));
+            if (!hasDay) return false;
+        }
+
+        // Status filter
+        if (selectedStatus) {
+            if (v.status !== selectedStatus) return false;
+        }
+
+        // City filter
+        if (selectedCity) {
+            if (v.location !== selectedCity) return false;
+        }
+
+        return true;
     });
 
     const filteredTasks = tasks.filter((t) => {
@@ -2067,23 +2118,207 @@ const handleTaskUpdate = () => {
     return (
         <AdminLayout>
             <section dir="rtl" className="space-y-8">
-                {/* البحث */}
-                <div dir="ltr" className="flex justify-start">
-                    <div className="relative w-[321px] h-[42px]">
-                        <div className="absolute inset-0 bg-[#faf6f76b] rounded-[20px] shadow-[inset_0px_0px_8px_#f3e3e3e0,0px_4px_15px_#8d2e4682]" />
-
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="البحث عن متطوع او مهارة...."
-                            className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pl-10 pr-3 text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
-                        />
-
-                        <div className="absolute top-1/2 -translate-y-1/2 left-[10px]">
-                            <FiSearch className="w-[16px] h-[16px] text-[#4e4a4b]" />
+                {/* البحث والفلاتر */}
+                <div dir="rtl" className="space-y-4">
+                    <div className="flex items-center gap-4">
+                        {/* Search Bar */}
+                        <div dir="ltr" className="flex-1">
+                            <div className="relative w-full max-w-md h-[42px]">
+                                <div className="absolute inset-0 bg-[#faf6f76b] rounded-[20px] shadow-[inset_0px_0px_8px_#f3e3e3e0,0px_4px_15px_#8d2e4682]" />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="البحث عن متطوع او مهارة...."
+                                    className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pl-10 pr-3 text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
+                                />
+                                <div className="absolute top-1/2 -translate-y-1/2 left-[10px]">
+                                    <FiSearch className="w-[16px] h-[16px] text-[#4e4a4b]" />
+                                </div>
+                            </div>
                         </div>
+
+                        {/* Filter Toggle Button */}
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="px-6 py-2.5 bg-[#8d2e46] hover:bg-[#6b1e2a] text-white rounded-xl font-[Cairo] font-semibold transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                            الفلاتر
+                            {hasActiveFilters && (
+                                <span className="bg-[#DFC775] text-[#8d2e46] px-2 py-0.5 rounded-full text-xs font-bold">
+                                    {[selectedSkills.length, selectedDays.length, selectedStatus ? 1 : 0, selectedCity ? 1 : 0, term ? 1 : 0].reduce((a, b) => a + b, 0)}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Clear Filters Button */}
+                        {hasActiveFilters && (
+                            <button
+                                onClick={clearAllFilters}
+                                className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-[Cairo] font-medium transition-colors"
+                            >
+                                مسح الفلاتر
+                            </button>
+                        )}
                     </div>
+
+                    {/* Filter Panel */}
+                    {showFilters && (
+                        <div className="bg-[#f3e3e3] rounded-xl p-6 shadow-md space-y-4 animate-fadeIn">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {/* Skills Filter */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-[Cairo]">
+                                        المهارات
+                                    </label>
+                                    <div className="bg-white rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 border border-gray-200">
+                                        {allSkills.map((skill) => (
+                                            <label key={skill} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedSkills.includes(skill)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedSkills([...selectedSkills, skill]);
+                                                        } else {
+                                                            setSelectedSkills(selectedSkills.filter(s => s !== skill));
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 text-[#8d2e46] rounded focus:ring-[#8d2e46]"
+                                                />
+                                                <span className="text-sm text-gray-700 font-[Cairo]">{skill}</span>
+                                            </label>
+                                        ))}
+                                        {allSkills.length === 0 && (
+                                            <p className="text-sm text-gray-500 font-[Cairo]">لا توجد مهارات</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Available Days Filter */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-[Cairo]">
+                                        الأيام المتاحة
+                                    </label>
+                                    <div className="bg-white rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 border border-gray-200">
+                                        {allDays.map((day) => (
+                                            <label key={day} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDays.includes(day)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedDays([...selectedDays, day]);
+                                                        } else {
+                                                            setSelectedDays(selectedDays.filter(d => d !== day));
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 text-[#8d2e46] rounded focus:ring-[#8d2e46]"
+                                                />
+                                                <span className="text-sm text-gray-700 font-[Cairo]">{day}</span>
+                                            </label>
+                                        ))}
+                                        {allDays.length === 0 && (
+                                            <p className="text-sm text-gray-500 font-[Cairo]">لا توجد أيام</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Status Filter */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-[Cairo]">
+                                        الحالة
+                                    </label>
+                                    <select
+                                        value={selectedStatus}
+                                        onChange={(e) => setSelectedStatus(e.target.value)}
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-[Cairo] focus:outline-none focus:ring-2 focus:ring-[#8d2e46]"
+                                    >
+                                        <option value="">الكل</option>
+                                        {allStatuses.map((status) => (
+                                            <option key={status} value={status}>{status}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* City Filter */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-[Cairo]">
+                                        المدينة
+                                    </label>
+                                    <select
+                                        value={selectedCity}
+                                        onChange={(e) => setSelectedCity(e.target.value)}
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-[Cairo] focus:outline-none focus:ring-2 focus:ring-[#8d2e46]"
+                                    >
+                                        <option value="">الكل</option>
+                                        {allCities.map((city) => (
+                                            <option key={city} value={city}>{city}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Active Filters Summary */}
+                            {hasActiveFilters && (
+                                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-300">
+                                    <span className="text-sm font-semibold text-gray-700 font-[Cairo]">الفلاتر النشطة:</span>
+                                    {selectedSkills.map((skill) => (
+                                        <span key={skill} className="bg-[#8d2e46] text-white px-3 py-1 rounded-full text-xs font-[Cairo] flex items-center gap-1">
+                                            {skill}
+                                            <button
+                                                onClick={() => setSelectedSkills(selectedSkills.filter(s => s !== skill))}
+                                                className="hover:bg-white/20 rounded-full p-0.5"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    {selectedDays.map((day) => (
+                                        <span key={day} className="bg-[#DFC775] text-[#8d2e46] px-3 py-1 rounded-full text-xs font-[Cairo] flex items-center gap-1">
+                                            {day}
+                                            <button
+                                                onClick={() => setSelectedDays(selectedDays.filter(d => d !== day))}
+                                                className="hover:bg-[#8d2e46]/20 rounded-full p-0.5"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    {selectedStatus && (
+                                        <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-[Cairo] flex items-center gap-1">
+                                            الحالة: {selectedStatus}
+                                            <button
+                                                onClick={() => setSelectedStatus("")}
+                                                className="hover:bg-white/20 rounded-full p-0.5"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </span>
+                                    )}
+                                    {selectedCity && (
+                                        <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-[Cairo] flex items-center gap-1">
+                                            المدينة: {selectedCity}
+                                            <button
+                                                onClick={() => setSelectedCity("")}
+                                                className="hover:bg-white/20 rounded-full p-0.5"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Results Count */}
+                            <div className="text-center text-sm text-gray-600 font-[Cairo]">
+                                عرض <span className="font-bold text-[#8d2e46]">{filteredVolunteers.length}</span> من أصل <span className="font-bold">{volunteers.length}</span> متطوع
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <ProjectOverviewSection stats={stats} />
