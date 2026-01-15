@@ -1413,3 +1413,31 @@ def public_submit_suggestion(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_home_stats(request):
+    """
+    GET /api/public-home-stats/
+    Returns aggregated statistics for home page (Hero section)
+    No authentication required
+    """
+    # Total beneficiaries from all projects
+    total_beneficiaries = Project.objects.aggregate(
+        total=Sum('beneficiaries')
+    )['total'] or 0
+
+    # Total potential projects (all non-cancelled projects)
+    potential_projects = Project.objects.exclude(status='CANCELLED').count()
+
+    # Total donations amount
+    total_donations = Project.objects.aggregate(
+        total=Sum('donation_amount')
+    )['total'] or 0
+
+    return Response({
+        'beneficiaries': total_beneficiaries,
+        'potential_projects': potential_projects,
+        'donations': float(total_donations),
+    })
