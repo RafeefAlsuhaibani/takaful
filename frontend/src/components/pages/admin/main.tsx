@@ -320,18 +320,32 @@ export default function AdminMain() {
         const query = searchQuery.trim().toLowerCase();
         if (!query) return projects;
 
-        return projects.filter(project => {
+        console.log('🔍 Searching for:', query);
+        console.log('📊 Total projects to search:', projects.length);
+
+        const filtered = projects.filter(project => {
             const searchText = [
-                project.title,
+                project.title || '',
                 project.description || project.desc || '',
                 project.category || '',
                 project.target_audience || '',
                 project.location || '',
-                project.organization || ''
+                project.organization || '',
+                project.supervisor || '',
+                project.tags?.join(' ') || ''
             ].join(' ').toLowerCase();
 
-            return searchText.includes(query);
+            const matches = searchText.includes(query);
+
+            if (matches) {
+                console.log('✅ Match found:', project.title);
+            }
+
+            return matches;
         });
+
+        console.log('✨ Filtered results:', filtered.length);
+        return filtered;
     };
 
     // Fetch all data on mount
@@ -371,7 +385,9 @@ export default function AdminMain() {
             });
             if (pendingResponse.ok) {
                 const pendingData = await pendingResponse.json();
-                setProjectIdeas(pendingData.results || pendingData);
+                const ideas = pendingData.results || pendingData;
+                console.log('📋 Loaded project ideas:', ideas.length, ideas);
+                setProjectIdeas(ideas);
             }
 
             // Fetch active projects
@@ -380,7 +396,9 @@ export default function AdminMain() {
             });
             if (activeResponse.ok) {
                 const activeData = await activeResponse.json();
-                setActiveProjects(activeData.results || activeData);
+                const active = activeData.results || activeData;
+                console.log('✅ Loaded active projects:', active.length, active);
+                setActiveProjects(active);
             }
 
             // Fetch completed projects
@@ -389,7 +407,9 @@ export default function AdminMain() {
             });
             if (completedResponse.ok) {
                 const completedData = await completedResponse.json();
-                setCompletedProjects(completedData.results || completedData);
+                const completed = completedData.results || completedData;
+                console.log('🎉 Loaded completed projects:', completed.length, completed);
+                setCompletedProjects(completed);
             }
         } catch (error) {
             console.error('Error fetching projects:', error);
@@ -778,6 +798,13 @@ export default function AdminMain() {
                         </div>
 
                         <div className="bg-[#F3E3E3] rounded-b-[16px] sm:rounded-b-[18px] md:rounded-b-[20px] p-3 sm:p-4 md:p-5 lg:p-6 space-y-3 sm:space-y-4" role="tabpanel" style={{ minHeight: '600px' }}>
+                            {/* Debug Info - Total Projects */}
+                            {!searchQuery.trim() && (
+                                <div className="bg-blue-50 rounded-lg p-2 mb-2 text-xs text-blue-700 font-[Cairo]">
+                                    إجمالي المشاريع: {activeTab === "افكار المشاريع" ? projectIdeas.length : activeTab === "المشاريع النشطة" ? activeProjects.length : completedProjects.length}
+                                </div>
+                            )}
+
                             {/* Search Results Info */}
                             {searchQuery.trim() && (
                                 <div className="bg-white rounded-lg p-3 mb-4 flex items-center justify-between border border-[#DFC775]">
