@@ -379,42 +379,59 @@ export default function AdminMain() {
     const fetchProjects = async () => {
         setLoading(true);
         try {
+            console.log('🚀 Starting to fetch projects...');
+            console.log('🔑 Access token:', access ? 'Present' : 'Missing');
+            console.log('🌐 API URL:', API_BASE_URL);
+
             // Fetch pending projects (ideas)
-            const pendingResponse = await fetch(`${API_BASE_URL}/api/admin/projects/?status=pending`, {
+            console.log('📋 Fetching pending projects...');
+            const pendingResponse = await fetch(`${API_BASE_URL}/api/projects/?status=pending`, {
                 headers: { 'Authorization': `Bearer ${access}` }
             });
+            console.log('📋 Pending response status:', pendingResponse.status);
             if (pendingResponse.ok) {
                 const pendingData = await pendingResponse.json();
-                const ideas = pendingData.results || pendingData;
+                const ideas = Array.isArray(pendingData) ? pendingData : (pendingData.results || []);
                 console.log('📋 Loaded project ideas:', ideas.length, ideas);
                 setProjectIdeas(ideas);
+            } else {
+                console.error('❌ Failed to fetch pending projects:', pendingResponse.status, await pendingResponse.text());
             }
 
             // Fetch active projects
-            const activeResponse = await fetch(`${API_BASE_URL}/api/admin/projects/?status=active`, {
+            console.log('✅ Fetching active projects...');
+            const activeResponse = await fetch(`${API_BASE_URL}/api/projects/?status=active`, {
                 headers: { 'Authorization': `Bearer ${access}` }
             });
+            console.log('✅ Active response status:', activeResponse.status);
             if (activeResponse.ok) {
                 const activeData = await activeResponse.json();
-                const active = activeData.results || activeData;
+                const active = Array.isArray(activeData) ? activeData : (activeData.results || []);
                 console.log('✅ Loaded active projects:', active.length, active);
                 setActiveProjects(active);
+            } else {
+                console.error('❌ Failed to fetch active projects:', activeResponse.status, await activeResponse.text());
             }
 
             // Fetch completed projects
-            const completedResponse = await fetch(`${API_BASE_URL}/api/admin/projects/?status=completed`, {
+            console.log('🎉 Fetching completed projects...');
+            const completedResponse = await fetch(`${API_BASE_URL}/api/projects/?status=completed`, {
                 headers: { 'Authorization': `Bearer ${access}` }
             });
+            console.log('🎉 Completed response status:', completedResponse.status);
             if (completedResponse.ok) {
                 const completedData = await completedResponse.json();
-                const completed = completedData.results || completedData;
+                const completed = Array.isArray(completedData) ? completedData : (completedData.results || []);
                 console.log('🎉 Loaded completed projects:', completed.length, completed);
                 setCompletedProjects(completed);
+            } else {
+                console.error('❌ Failed to fetch completed projects:', completedResponse.status, await completedResponse.text());
             }
         } catch (error) {
-            console.error('Error fetching projects:', error);
+            console.error('💥 Error fetching projects:', error);
         } finally {
             setLoading(false);
+            console.log('✨ Finished fetching projects');
         }
     };
 
