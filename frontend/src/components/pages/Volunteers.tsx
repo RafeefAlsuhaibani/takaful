@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import { Users, Clock, CheckCircle, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
+import { useAuth } from '../../contexts/AuthContext';
 
 
 /* ============================
@@ -170,7 +171,9 @@ type Volunteer = {
 
 export default function Volunteers() {
   const navigate = useNavigate();
-// backend
+  const { isAuthenticated, user } = useAuth();
+
+  // backend
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -343,42 +346,63 @@ export default function Volunteers() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() => navigate('/signup')}
-              className="
-                rounded-full bg-[#711f2c]
-                hover:bg-[#5a1823]
-                text-white font-semibold
-                px-10 py-3.5
-                transition-all duration-200
-                focus-visible:ring-2 ring-[#711f2c] ring-offset-2 ring-offset-white
-                shadow-[0_10px_25px_rgba(113,31,44,.35)]
-                hover:shadow-lg
-              "
-            >
-              تسجيل جديد كمتطوع
-            </button>
+          {!isAuthenticated ? (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/signup')}
+                className="
+                  rounded-full bg-[#711f2c]
+                  hover:bg-[#5a1823]
+                  text-white font-semibold
+                  px-10 py-3.5
+                  transition-all duration-200
+                  focus-visible:ring-2 ring-[#711f2c] ring-offset-2 ring-offset-white
+                  shadow-[0_10px_25px_rgba(113,31,44,.35)]
+                  hover:shadow-lg
+                "
+              >
+                تسجيل جديد كمتطوع
+              </button>
 
-            <button
-              type="button"
-              onClick={() => navigate('/signin')}
-              className="
-                rounded-full border-2 border-[#DFC775]
-                text-[#711f2c]
-                bg-white
-                hover:bg-[#fff8e3]
-                font-semibold
-                px-10 py-3.5
-                transition-all duration-200
-                focus-visible:ring-2 ring-[#DFC775] ring-offset-2 ring-offset-white
-                hover:shadow-lg
-              "
-            >
-              تسجيل الدخول
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => navigate('/signin')}
+                className="
+                  rounded-full border-2 border-[#DFC775]
+                  text-[#711f2c]
+                  bg-white
+                  hover:bg-[#fff8e3]
+                  font-semibold
+                  px-10 py-3.5
+                  transition-all duration-200
+                  focus-visible:ring-2 ring-[#DFC775] ring-offset-2 ring-offset-white
+                  hover:shadow-lg
+                "
+              >
+                تسجيل الدخول
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => navigate(user?.role === 'admin' ? '/admin' : '/user')}
+                className="
+                  rounded-full bg-[#711f2c]
+                  hover:bg-[#5a1823]
+                  text-white font-semibold
+                  px-10 py-3.5
+                  transition-all duration-200
+                  focus-visible:ring-2 ring-[#711f2c] ring-offset-2 ring-offset-white
+                  shadow-[0_10px_25px_rgba(113,31,44,.35)]
+                  hover:shadow-lg
+                "
+              >
+                الذهاب إلى لوحة التحكم
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
