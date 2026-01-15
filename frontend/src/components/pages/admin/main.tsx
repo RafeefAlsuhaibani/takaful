@@ -778,68 +778,120 @@ export default function AdminMain() {
                         </div>
 
                         <div className="bg-[#F3E3E3] rounded-b-[16px] sm:rounded-b-[18px] md:rounded-b-[20px] p-3 sm:p-4 md:p-5 lg:p-6 space-y-3 sm:space-y-4" role="tabpanel" style={{ minHeight: '600px' }}>
+                            {/* Search Results Info */}
+                            {searchQuery.trim() && (
+                                <div className="bg-white rounded-lg p-3 mb-4 flex items-center justify-between border border-[#DFC775]">
+                                    <div className="flex items-center gap-2">
+                                        <FiSearch className="text-[#8d2e46]" />
+                                        <span className="text-sm text-gray-700 font-[Cairo]">
+                                            نتائج البحث عن: "<span className="font-bold text-[#8d2e46]">{searchQuery}</span>"
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="text-xs text-gray-600 hover:text-[#8d2e46] font-[Cairo] flex items-center gap-1"
+                                    >
+                                        <X size={14} />
+                                        مسح البحث
+                                    </button>
+                                </div>
+                            )}
+
                             {activeTab === "افكار المشاريع" && (
                                 <>
-                                    {filterProjects(projectIdeas)
-                                        .filter(project => !removedProjects.has(project.id))
-                                        .slice(0, visibleProjectsCount["افكار المشاريع"])
-                                        .map((project) => (
-                                            <ProjectCard
-                                                key={project.id}
-                                                project={project}
-                                                onDetailsClick={() => setSelectedProject(project)}
-                                                onApprove={() => handleApproveProject(project.id)}
-                                                onReject={() => setRejectConfirmProject(project)}
-                                            />
-                                        ))}
-                                    {filterProjects(projectIdeas).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["افكار المشاريع"] && (
-                                        <div className="flex justify-center -mb-6 sm:-mb-3">
-                                            <button
-                                                onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "افكار المشاريع": prev["افكار المشاريع"] + 2 }))}
-                                                className="py-2 text-sm text-gray-700 font-[Cairo] mt-2">
-                                                عرض المزيد
-                                            </button>
+                                    {filterProjects(projectIdeas).filter(project => !removedProjects.has(project.id)).length === 0 ? (
+                                        <div className="text-center py-12 bg-white rounded-xl">
+                                            <FiSearch className="mx-auto text-gray-400 mb-3" size={48} />
+                                            <p className="text-gray-600 text-lg font-[Cairo]">
+                                                {searchQuery.trim() ? 'لا توجد نتائج للبحث' : 'لا توجد أفكار مشاريع حالياً'}
+                                            </p>
                                         </div>
+                                    ) : (
+                                        <>
+                                            {filterProjects(projectIdeas)
+                                                .filter(project => !removedProjects.has(project.id))
+                                                .slice(0, visibleProjectsCount["افكار المشاريع"])
+                                                .map((project) => (
+                                                    <ProjectCard
+                                                        key={project.id}
+                                                        project={project}
+                                                        onDetailsClick={() => setSelectedProject(project)}
+                                                        onApprove={() => handleApproveProject(project.id)}
+                                                        onReject={() => setRejectConfirmProject(project)}
+                                                    />
+                                                ))}
+                                            {filterProjects(projectIdeas).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["افكار المشاريع"] && (
+                                                <div className="flex justify-center -mb-6 sm:-mb-3">
+                                                    <button
+                                                        onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "افكار المشاريع": prev["افكار المشاريع"] + 2 }))}
+                                                        className="py-2 text-sm text-gray-700 font-[Cairo] mt-2">
+                                                        عرض المزيد ({filterProjects(projectIdeas).filter(project => !removedProjects.has(project.id)).length - visibleProjectsCount["افكار المشاريع"]} متبقية)
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </>
                             )}
 
                             {activeTab === "المشاريع النشطة" && (
                                 <>
-                                    {filterProjects(activeProjects)
-                                        .filter(project => !removedProjects.has(project.id))
-                                        .slice(0, visibleProjectsCount["المشاريع النشطة"])
-                                        .map((project) => (
-                                            <ProjectCard key={project.id} project={project} showProgress={true} onDetailsClick={() => setSelectedProject(project)} />
-                                        ))}
-                                    {filterProjects(activeProjects).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع النشطة"] && (
-                                        <div className="flex justify-center -mb-6 sm:-mb-3">
-                                            <button
-                                                onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "المشاريع النشطة": prev["المشاريع النشطة"] + 2 }))}
-                                                className="py-2 text-sm text-gray-700 font-[Cairo] mt-2">
-                                                عرض المزيد
-                                            </button>
+                                    {filterProjects(activeProjects).filter(project => !removedProjects.has(project.id)).length === 0 ? (
+                                        <div className="text-center py-12 bg-white rounded-xl">
+                                            <FiSearch className="mx-auto text-gray-400 mb-3" size={48} />
+                                            <p className="text-gray-600 text-lg font-[Cairo]">
+                                                {searchQuery.trim() ? 'لا توجد نتائج للبحث' : 'لا توجد مشاريع نشطة حالياً'}
+                                            </p>
                                         </div>
+                                    ) : (
+                                        <>
+                                            {filterProjects(activeProjects)
+                                                .filter(project => !removedProjects.has(project.id))
+                                                .slice(0, visibleProjectsCount["المشاريع النشطة"])
+                                                .map((project) => (
+                                                    <ProjectCard key={project.id} project={project} showProgress={true} onDetailsClick={() => setSelectedProject(project)} />
+                                                ))}
+                                            {filterProjects(activeProjects).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع النشطة"] && (
+                                                <div className="flex justify-center -mb-6 sm:-mb-3">
+                                                    <button
+                                                        onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "المشاريع النشطة": prev["المشاريع النشطة"] + 2 }))}
+                                                        className="py-2 text-sm text-gray-700 font-[Cairo] mt-2">
+                                                        عرض المزيد ({filterProjects(activeProjects).filter(project => !removedProjects.has(project.id)).length - visibleProjectsCount["المشاريع النشطة"]} متبقية)
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </>
                             )}
 
                             {activeTab === "المشاريع المنتهية" && (
                                 <>
-                                    {filterProjects(completedProjects)
-                                        .filter(project => !removedProjects.has(project.id))
-                                        .slice(0, visibleProjectsCount["المشاريع المنتهية"])
-                                        .map((project) => (
-                                            <ProjectCard key={project.id} project={project} showProgress={true} isCompleted={true} onDetailsClick={() => setSelectedProject(project)} />
-                                        ))}
-                                    {filterProjects(completedProjects).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع المنتهية"] && (
-                                        <div className="flex justify-center -mb-6 sm:-mb-3">
-                                            <button
-                                                onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "المشاريع المنتهية": prev["المشاريع المنتهية"] + 2 }))}
-                                                className="py-2 text-sm text-gray-700 font-[Cairo] mt-2">
-                                                عرض المزيد
-                                            </button>
+                                    {filterProjects(completedProjects).filter(project => !removedProjects.has(project.id)).length === 0 ? (
+                                        <div className="text-center py-12 bg-white rounded-xl">
+                                            <FiSearch className="mx-auto text-gray-400 mb-3" size={48} />
+                                            <p className="text-gray-600 text-lg font-[Cairo]">
+                                                {searchQuery.trim() ? 'لا توجد نتائج للبحث' : 'لا توجد مشاريع منتهية حالياً'}
+                                            </p>
                                         </div>
+                                    ) : (
+                                        <>
+                                            {filterProjects(completedProjects)
+                                                .filter(project => !removedProjects.has(project.id))
+                                                .slice(0, visibleProjectsCount["المشاريع المنتهية"])
+                                                .map((project) => (
+                                                    <ProjectCard key={project.id} project={project} showProgress={true} isCompleted={true} onDetailsClick={() => setSelectedProject(project)} />
+                                                ))}
+                                            {filterProjects(completedProjects).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع المنتهية"] && (
+                                                <div className="flex justify-center -mb-6 sm:-mb-3">
+                                                    <button
+                                                        onClick={() => setVisibleProjectsCount(prev => ({ ...prev, "المشاريع المنتهية": prev["المشاريع المنتهية"] + 2 }))}
+                                                        className="py-2 text-sm text-gray-700 font-[Cairo] mt-2">
+                                                        عرض المزيد ({filterProjects(completedProjects).filter(project => !removedProjects.has(project.id)).length - visibleProjectsCount["المشاريع المنتهية"]} متبقية)
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </>
                             )}
