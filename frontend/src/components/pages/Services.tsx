@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { services } from '../../data/services';
 import type { Service } from '../../types';
 import Icon from '../ui/Icon';
 import Chip from '../ui/Chip';
@@ -21,9 +20,9 @@ function Services() {
   const [activeService, setActiveService] = useState<Service | null>(null);
   const navigate = useNavigate();
 
-    // Backend data state 
-    const [servicesData, setServicesData] = useState<Service[]>(services);
-    const [loading, setLoading] = useState(false);
+    // Backend data state
+    const [servicesData, setServicesData] = useState<Service[]>([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
 
@@ -169,14 +168,22 @@ function Services() {
       {/* Services Grid */}
       <section className="py-16">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {servicesList}
-          </div>
-
-          {filteredServices.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">لا توجد خدمات في هذه الفئة</p>
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {servicesList}
+              </div>
+
+              {filteredServices.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">لا توجد خدمات في هذه الفئة</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
