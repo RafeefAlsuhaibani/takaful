@@ -32,14 +32,14 @@ function Services() {
         try {
           setLoading(true);
           setError(null);
-  
-          const res = await fetch(`${API_BASE_URL}/api/admin/services/`);
+
+          const res = await fetch(`${API_BASE_URL}/api/public-services/`);
           if (!res.ok) {
             throw new Error('فشل في تحميل الخدمات');
           }
-  
-          const data: Service[] = await res.json();
-          setServicesData(data);
+
+          const data = await res.json();
+          setServicesData(data.results || data);
         } catch (err) {
           console.error(err);
           setError('حدث خطأ أثناء تحميل الخدمات');
@@ -47,7 +47,7 @@ function Services() {
           setLoading(false);
         }
       };
-  
+
       fetchServices();
     }, []);
   
