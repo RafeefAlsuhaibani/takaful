@@ -1746,7 +1746,7 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
                             تفاصيل أداء المتطوعين
                         </h3>
 
-                        <table className="min-w-full text-[12px] font-[Cairo] text-right">
+                        <table className="w-full min-w-[680px] text-[12px] font-[Cairo] text-right">
                             <thead>
                                 <tr className="text-[#6b6567] border-b border-[#e0cfd4]">
                                     <th className="py-2 px-2 font-normal">المتطوع</th>
