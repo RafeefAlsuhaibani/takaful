@@ -261,7 +261,7 @@ export default function AddProject() {
                       </option>
                     ))}
                   </select>
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <svg className="w-5 h-5 text-[#8d2e46]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -415,7 +415,7 @@ export default function AddProject() {
                     onChange={(e) => handleInputChange('startDate', e.target.value)}
                     className="w-full bg-white rounded-xl border border-[#8d2e46] px-4 py-2.5 pr-10 text-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-[#8d2e46] focus:border-[#8d2e46] text-right"
                   />
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8d2e46] w-5 h-5 pointer-events-none" />
+                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8d2e46] w-5 h-5 pointer-events-none" />
                 </div>
                 {errors.startDate && <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>}
               </div>
@@ -432,7 +432,7 @@ export default function AddProject() {
                     onChange={(e) => handleInputChange('endDate', e.target.value)}
                     className="w-full bg-white rounded-xl border border-[#8d2e46] px-4 py-2.5 pr-10 text-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-[#8d2e46] focus:border-[#8d2e46] text-right"
                   />
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8d2e46] w-5 h-5 pointer-events-none" />
+                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8d2e46] w-5 h-5 pointer-events-none" />
                 </div>
                 {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>}
               </div>

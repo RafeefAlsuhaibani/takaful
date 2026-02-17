@@ -1785,7 +1785,7 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
                                                             }}
                                                         />
                                                     </div>
-                                                    <span className="text-[#2e2b2c] min-w-[32px] text-left">
+                                                    <span className="text-[#2e2b2c] min-w-[32px] text-right">
                                                         {rate}%
                                                     </span>
                                                 </div>
@@ -2157,9 +2157,9 @@ const handleTaskUpdate = () => {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="البحث عن متطوع او مهارة...."
-                                    className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pl-10 pr-3 text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
+                                    className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pr-10 pl-3 text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
                                 />
-                                <div className="absolute top-1/2 -translate-y-1/2 left-[10px]">
+                                <div className="absolute top-1/2 -translate-y-1/2 right-[10px]">
                                     <FiSearch className="w-[16px] h-[16px] text-[#4e4a4b]" />
                                 </div>
                             </div>

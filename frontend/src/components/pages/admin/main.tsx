@@ -744,10 +744,10 @@ export default function AdminMain() {
                             placeholder="البحث..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pl-9 sm:pl-10 pr-3 text-[13px] sm:text-[14px] md:text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
+                            className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pr-9 sm:pr-10 pl-3 text-[13px] sm:text-[14px] md:text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
                             aria-label="البحث في المشاريع"
                         />
-                        <div className="absolute top-1/2 -translate-y-1/2 left-[8px] sm:left-[10px]">
+                        <div className="absolute top-1/2 -translate-y-1/2 right-[8px] sm:right-[10px]">
                             <FiSearch className="w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] md:w-[16px] md:h-[16px] text-[#4e4a4b]" />
                         </div>
                     </div>
