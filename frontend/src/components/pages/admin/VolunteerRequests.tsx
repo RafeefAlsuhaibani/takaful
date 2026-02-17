@@ -106,7 +106,7 @@ export default function VolunteerRequests() {
 
   return (
     <AdminLayout>
-      <div className="h-full">
+      <div className="h-full w-full overflow-x-hidden">
         {/* Search Bar */}
         <div className="flex justify-start mb-6">
           <div className="relative w-full max-w-sm h-[42px]">
@@ -126,7 +126,7 @@ export default function VolunteerRequests() {
 
         {/* Title Banner */}
         <div className="flex justify-center mb-8">
-          <div className="bg-[#f3e3e3] rounded-[19px] px-6 sm:px-12 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-[340px] sm:w-auto">
+          <div className="bg-[#f3e3e3] rounded-[19px] px-4 sm:px-8 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-md">
             <h1 className="text-3xl font-bold text-[#2e2b2c] text-center font-[Cairo]">طلبات التطوع</h1>
           </div>
         </div>
@@ -136,7 +136,7 @@ export default function VolunteerRequests() {
           {filteredVolunteers.map((volunteer) => (
             <div
               key={volunteer.id}
-              className="bg-[#f3e3e3] rounded-[18px] p-6 border border-[#e0cfd4] shadow-[0px_3px_15px_#8d2e4633]"
+              className="bg-[#f3e3e3] rounded-[18px] p-4 sm:p-6 border border-[#e0cfd4] shadow-[0px_3px_15px_#8d2e4633]"
             >
               {/* Header with Name and Avatar */}
               <div className="flex items-center gap-4 mb-4">
@@ -154,7 +154,7 @@ export default function VolunteerRequests() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-700">
                   <Mail size={16} className="text-gray-600" />
-                  <span>{volunteer.email}</span>
+                  <span className="break-all">{volunteer.email}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-700">
                   <Phone size={16} className="text-gray-600" />

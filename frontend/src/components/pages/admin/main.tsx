@@ -49,7 +49,7 @@ function ProjectStatusDropdown({ currentStatus, onStatusChange }: { currentStatu
         <div className="relative" dir="rtl">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border-2 border-[#6F1A28] rounded-[8px] sm:rounded-[8px] md:rounded-[20px] min-w-[140px] sm:min-w-[160px] md:min-w-[180px] shadow-sm hover:shadow-md transition-shadow"
+                className="flex w-full max-w-[180px] sm:max-w-[200px] items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border-2 border-[#6F1A28] rounded-[8px] sm:rounded-[8px] md:rounded-[20px] shadow-sm hover:shadow-md transition-shadow"
                 aria-label="اختيار حالة المشروع"
             >
                 {/* ✅ FIXED: Changed from "حالة المشروع" to {currentStatus} */}
@@ -943,7 +943,7 @@ export default function AdminMain() {
                     </div>
 
                     {/* Requests Column */}
-                    <div className="w-full lg:w-[300px] xl:w-[340px] lg:flex-shrink-0">
+                    <div className="w-full lg:w-[300px] xl:w-[340px] lg:flex-shrink-0 lg:min-w-0">
                         <div className="bg-[#F3E3E3] rounded-[16px] sm:rounded-[18px] md:rounded-[20px] p-3 sm:p-4 md:p-5 lg:p-6 shadow-lg border border-[#f0d8c2]">
                             <h3 className="text-[#6F1A28] font-bold text-[16px] sm:text-[17px] md:text-[18px] lg:text-[19px] mb-3 sm:mb-4 font-[Cairo]">
                                 طلبات المشاركة بالمشاريع

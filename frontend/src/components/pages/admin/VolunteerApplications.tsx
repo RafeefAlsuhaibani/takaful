@@ -157,7 +157,7 @@ export default function VolunteerApplications() {
 
   return (
     <AdminLayout>
-      <div className="h-full">
+      <div className="h-full w-full overflow-x-hidden">
         {/* Search Bar and Filter */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
           {/* Search */}
@@ -178,7 +178,7 @@ export default function VolunteerApplications() {
           </div>
 
           {/* Status Filter */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setStatusFilter('قيد المراجعة')}
               className={`px-4 py-2 rounded-xl font-[Cairo] transition-colors ${
@@ -224,7 +224,7 @@ export default function VolunteerApplications() {
 
         {/* Title Banner */}
         <div className="flex justify-center mb-8">
-          <div className="bg-[#f3e3e3] rounded-[19px] px-6 sm:px-12 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-[340px] sm:w-auto">
+          <div className="bg-[#f3e3e3] rounded-[19px] px-4 sm:px-8 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-md">
             <h1 className="text-3xl font-bold text-[#2e2b2c] text-center font-[Cairo]">طلبات الانضمام للمشاريع</h1>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function VolunteerApplications() {
           {filteredApplications.map((application) => (
             <div
               key={application.id}
-              className="bg-[#f3e3e3] rounded-[18px] p-6 border border-[#e0cfd4] shadow-[0px_3px_15px_#8d2e4633]"
+              className="bg-[#f3e3e3] rounded-[18px] p-4 sm:p-6 border border-[#e0cfd4] shadow-[0px_3px_15px_#8d2e4633]"
             >
               {/* Header with Volunteer Name and Status */}
               <div className="flex items-center justify-between mb-4">

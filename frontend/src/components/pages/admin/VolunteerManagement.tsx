@@ -812,7 +812,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                     onClick={() => setSelectedVolunteer(null)}
                 >
                     <div
-                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-[95%] max-w-[650px] px-6 py-5 space-y-4"
+                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-full max-w-[650px] mx-3 sm:mx-0 px-4 sm:px-6 py-5 space-y-4"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex flex-col md:flex-row items-center gap-4">
@@ -937,7 +937,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                     onClick={() => setAssignVolunteer(null)}
                 >
                     <div
-                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-[95%] max-w-[750px] px-6 py-5 space-y-4"
+                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-full max-w-[750px] mx-3 sm:mx-0 px-4 sm:px-6 py-5 space-y-4"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex flex-col gap-2 mb-2">
@@ -1058,7 +1058,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                     onClick={() => setSelectedTask(null)}
                 >
                     <div
-                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-[95%] max-w-[720px] px-6 py-5 space-y-4"
+                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-full max-w-[720px] mx-3 sm:mx-0 px-4 sm:px-6 py-5 space-y-4"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* الهيدر */}
@@ -1193,7 +1193,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                     onClick={handleCloseEditTask}
                 >
                     <div
-                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-[95%] max-w-[720px] px-6 py-5 space-y-4"
+                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-full max-w-[720px] mx-3 sm:mx-0 px-4 sm:px-6 py-5 space-y-4"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* الهيدر */}
@@ -1438,7 +1438,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                     onClick={() => setIsCreatingTask(false)}
                 >
                     <div
-                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-[95%] max-w-[720px] px-6 py-5 space-y-4"
+                        className="bg-[#fdf8f9] rounded-[20px] shadow-[0px_8px_25px_#00000040] w-full max-w-[720px] mx-3 sm:mx-0 px-4 sm:px-6 py-5 space-y-4"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* الهيدر */}
@@ -1681,12 +1681,12 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
             </div>
 
             {/* التبويبات */}
-            <div className="w-full max-w-[420px] mx-auto bg-[#c87981] rounded-[18px] px-2 py-2 shadow-[0px_3px_15px_#8d2e4626] flex flex-row-reverse gap-1 justify-between">
+            <div className="w-full max-w-[420px] mx-auto bg-[#c87981] rounded-[18px] px-2 py-2 shadow-[0px_3px_15px_#8d2e4626] flex flex-row-reverse flex-wrap gap-1 justify-between">
                 <button
                     type="button"
                     onClick={() => setActiveTab("projects")}
                     className={[
-                        "flex-1 min-w-[160px] px-4 py-2 rounded-[14px] text-sm md:text-base font-[Cairo] text-center transition-all duration-150",
+                        "flex-1 min-w-0 px-3 sm:px-4 py-2 rounded-[14px] text-sm md:text-base font-[Cairo] text-center transition-all duration-150",
                         activeTab === "projects"
                             ? "bg-[#fdf8f9] text-[#2e2b2c] shadow-[0px_2px_8px_#8d2e4680]"
                             : "bg-transparent text-[#fdf8f9]",
@@ -1698,7 +1698,7 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
                     type="button"
                     onClick={() => setActiveTab("volunteers")}
                     className={[
-                        "flex-1 min-w-[160px] px-4 py-2 rounded-[14px] text-sm md:text-base font-[Cairo] text-center transition-all duration-150",
+                        "flex-1 min-w-0 px-3 sm:px-4 py-2 rounded-[14px] text-sm md:text-base font-[Cairo] text-center transition-all duration-150",
                         activeTab === "volunteers"
                             ? "bg-[#fdf8f9] text-[#2e2b2c] shadow-[0px_2px_8px_#8d2e4680]"
                             : "bg-transparent text-[#fdf8f9]",
@@ -2144,10 +2144,10 @@ const handleTaskUpdate = () => {
 
     return (
         <AdminLayout>
-            <section dir="rtl" className="space-y-8">
+            <section dir="rtl" className="space-y-8 overflow-x-hidden">
                 {/* البحث والفلاتر */}
                 <div dir="rtl" className="space-y-4">
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
                         {/* Search Bar */}
                         <div className="flex-1">
                             <div className="relative w-full max-w-md h-[42px]">
@@ -2168,7 +2168,7 @@ const handleTaskUpdate = () => {
                         {/* Filter Toggle Button */}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className="px-6 py-2.5 bg-[#8d2e46] hover:bg-[#6b1e2a] text-white rounded-xl font-[Cairo] font-semibold transition-colors flex items-center gap-2"
+                            className="w-full sm:w-auto px-6 py-2.5 bg-[#8d2e46] hover:bg-[#6b1e2a] text-white rounded-xl font-[Cairo] font-semibold transition-colors flex items-center justify-center gap-2"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -2185,7 +2185,7 @@ const handleTaskUpdate = () => {
                         {hasActiveFilters && (
                             <button
                                 onClick={clearAllFilters}
-                                className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-[Cairo] font-medium transition-colors"
+                                className="w-full sm:w-auto px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-[Cairo] font-medium transition-colors"
                             >
                                 مسح الفلاتر
                             </button>

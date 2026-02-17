@@ -208,10 +208,10 @@ export default function AddProject() {
 
   return (
     <AdminLayout>
-      <div className="h-full">
+      <div className="h-full w-full overflow-x-hidden">
         {/* Title Banner */}
         <div className="flex justify-center mb-8">
-          <div className="bg-[#f3e3e3] rounded-[19px] px-6 sm:px-12 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-[340px] sm:w-auto">
+          <div className="bg-[#f3e3e3] rounded-[19px] px-4 sm:px-8 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-md">
             <h1 className="text-3xl font-bold text-[#2e2b2c] text-center font-[Cairo]">بيانات اضافة مشروع</h1>
           </div>
         </div>
@@ -219,7 +219,7 @@ export default function AddProject() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information Section */}
-          <div className="bg-[#f3e3e3] rounded-[19px] p-6 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673]">
+          <div className="bg-[#f3e3e3] rounded-[19px] p-4 sm:p-6 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673]">
             {/* Header */}
             <div className="text-right mb-6 relative">
               <h2 className="text-2xl font-bold text-[#2e2b2c] mb-2 font-[Cairo]">المعلومات الاساسية</h2>
@@ -310,7 +310,7 @@ export default function AddProject() {
           </div>
 
           {/* Planning Details Section */}
-          <div className="bg-[#f3e3e3] rounded-[19px] p-6 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673]">
+          <div className="bg-[#f3e3e3] rounded-[19px] p-4 sm:p-6 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673]">
             {/* Header */}
             <div className="text-right mb-6 relative">
               <h2 className="text-2xl font-bold text-[#2e2b2c] mb-2 font-[Cairo]">تفاصيل التخطيط</h2>
@@ -440,7 +440,7 @@ export default function AddProject() {
           </div>
 
           {/* Additional Details Section */}
-          <div className="bg-[#f3e3e3] rounded-[19px] p-6 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673]">
+          <div className="bg-[#f3e3e3] rounded-[19px] p-4 sm:p-6 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673]">
             {/* Header */}
             <div className="text-right mb-6 relative">
               <h2 className="text-2xl font-bold text-[#2e2b2c] mb-2 font-[Cairo]">تفاصيل اضافية</h2>
@@ -482,13 +482,13 @@ export default function AddProject() {
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
             <Button
               type="submit"
               variant="primary"
               size="lg"
               disabled={isSubmitting}
-              className="bg-[#8D2E46] hover:bg-[#6B1E2A] text-white px-8 py-3 rounded-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-[#8D2E46] hover:bg-[#6B1E2A] text-white px-8 py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={20} />
               {isSubmitting ? 'جاري الحفظ...' : 'حفظ المشروع'}
@@ -499,7 +499,7 @@ export default function AddProject() {
               size="lg"
               onClick={handleReset}
               disabled={isSubmitting}
-              className="bg-[#fdf8f9] hover:bg-gray-50 text-[#8D2E46] border border-[#e0cfd4] px-8 py-3 rounded-[999px] flex items-center gap-2 font-[Cairo] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-[#fdf8f9] hover:bg-gray-50 text-[#8D2E46] border border-[#e0cfd4] px-8 py-3 rounded-[999px] flex items-center justify-center gap-2 font-[Cairo] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X size={20} />
               الغاء
