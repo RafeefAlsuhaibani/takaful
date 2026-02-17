@@ -2149,7 +2149,7 @@ const handleTaskUpdate = () => {
                 <div dir="rtl" className="space-y-4">
                     <div className="flex items-center gap-4">
                         {/* Search Bar */}
-                        <div dir="ltr" className="flex-1">
+                        <div className="flex-1">
                             <div className="relative w-full max-w-md h-[42px]">
                                 <div className="absolute inset-0 bg-[#faf6f76b] rounded-[20px] shadow-[inset_0px_0px_8px_#f3e3e3e0,0px_4px_15px_#8d2e4682]" />
                                 <input

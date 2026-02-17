@@ -736,7 +736,7 @@ export default function AdminMain() {
         <AdminLayout>
             <div className="h-full overflow-x-hidden">
                 {/* Search Bar */}
-                <div dir="ltr" className="flex justify-start mb-5 sm:mb-6">
+                <div className="flex justify-start mb-5 sm:mb-6">
                     <div className="relative w-full max-w-[280px] sm:max-w-[300px] md:max-w-[321px] h-[38px] sm:h-[40px] md:h-[42px]">
                         <div className="absolute inset-0 bg-[#faf6f76b] rounded-[20px] shadow-[inset_0px_0px_8px_#f3e3e3e0,0px_4px_15px_#8d2e4682]" />
                         <input

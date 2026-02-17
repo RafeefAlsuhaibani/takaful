@@ -161,7 +161,7 @@ export default function VolunteerApplications() {
         {/* Search Bar and Filter */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
           {/* Search */}
-          <div dir="ltr" className="flex justify-start">
+          <div className="flex justify-start">
             <div className="relative w-[321px] h-[42px]">
               <div className="absolute inset-0 bg-[#faf6f76b] rounded-[20px] shadow-[inset_0px_0px_8px_#f3e3e3e0,0px_4px_15px_#8d2e4682]" />
               <input
