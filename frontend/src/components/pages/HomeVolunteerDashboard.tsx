@@ -44,6 +44,7 @@ export default function HomeVolunteerDashboard() {
   }, []);
 
   if (DEBUG_DASHBOARD_SETTINGS) console.log('[HomeVolunteerDashboard] render with settings:', settings);
+  if (!settings.showDashboard) return null;
 
   return (
     <section className="relative z-10 bg-[#f8f3f1] py-12" dir="rtl">
@@ -55,43 +56,49 @@ export default function HomeVolunteerDashboard() {
         </div>
 
         {/* Row 1: KPI Cards */}
-        {settings.showKPIs && (
+        {(settings.showKPIs || settings.showVolunteerBars) && (
           <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Card className="h-full rounded-2xl border border-[#eadfda] bg-[#fffdfa] p-5 shadow-[0_2px_12px_rgba(107,31,43,0.06)]">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#DFC775]">
-                  <Icon name="Clock" className="text-white" size={20} />
+            {settings.showKPIs && (
+              <Card className="h-full rounded-2xl border border-[#eadfda] bg-[#fffdfa] p-5 shadow-[0_2px_12px_rgba(107,31,43,0.06)]">
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#DFC775]">
+                    <Icon name="Clock" className="text-white" size={20} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[#5b3b34]">عدد الساعات التطوعية</h3>
+                  <p className="mt-1 text-xs text-[#8d726b]">مجموع ساعات التطوع</p>
+                  <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{STATIC_DATA.kpis.hours}</div>
+                  <p className="mt-2 text-xs text-[#8d726b]">حسب بيانات العام الحالي</p>
                 </div>
-                <h3 className="text-base font-semibold text-[#5b3b34]">عدد الساعات التطوعية</h3>
-                <p className="mt-1 text-xs text-[#8d726b]">مجموع ساعات التطوع</p>
-                <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{STATIC_DATA.kpis.hours}</div>
-                <p className="mt-2 text-xs text-[#8d726b]">حسب بيانات العام الحالي</p>
-              </div>
-            </Card>
+              </Card>
+            )}
 
-            <Card className="h-full rounded-2xl border border-[#eadfda] bg-[#fffdfa] p-5 shadow-[0_2px_12px_rgba(107,31,43,0.06)]">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#DFC775]">
-                  <Icon name="Heart" className="text-white" size={20} />
+            {settings.showKPIs && (
+              <Card className="h-full rounded-2xl border border-[#eadfda] bg-[#fffdfa] p-5 shadow-[0_2px_12px_rgba(107,31,43,0.06)]">
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#DFC775]">
+                    <Icon name="Heart" className="text-white" size={20} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[#5b3b34]">قيمة إسهام المتطوع</h3>
+                  <p className="mt-1 text-xs text-[#8d726b]">قيمة الأثر الإجمالي</p>
+                  <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{STATIC_DATA.kpis.impactValue}</div>
+                  <p className="mt-2 text-xs text-[#8d726b]">حسب بيانات العام الحالي</p>
                 </div>
-                <h3 className="text-base font-semibold text-[#5b3b34]">قيمة إسهام المتطوع</h3>
-                <p className="mt-1 text-xs text-[#8d726b]">قيمة الأثر الإجمالي</p>
-                <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{STATIC_DATA.kpis.impactValue}</div>
-                <p className="mt-2 text-xs text-[#8d726b]">حسب بيانات العام الحالي</p>
-              </div>
-            </Card>
+              </Card>
+            )}
 
-            <Card className="h-full rounded-2xl border border-[#eadfda] bg-[#fffdfa] p-5 shadow-[0_2px_12px_rgba(107,31,43,0.06)]">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#DFC775]">
-                  <Icon name="Users" className="text-white" size={20} />
+            {settings.showVolunteerBars && (
+              <Card className="h-full rounded-2xl border border-[#eadfda] bg-[#fffdfa] p-5 shadow-[0_2px_12px_rgba(107,31,43,0.06)]">
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#DFC775]">
+                    <Icon name="Users" className="text-white" size={20} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[#5b3b34]">عدد المتطوعين</h3>
+                  <p className="mt-1 text-xs text-[#8d726b]">إجمالي المتطوعين الحاليين</p>
+                  <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{totalVolunteers.toLocaleString()}</div>
+                  <p className="mt-2 text-xs text-[#8d726b]">يشمل المتطوعين الجدد والمكررين</p>
                 </div>
-                <h3 className="text-base font-semibold text-[#5b3b34]">عدد المتطوعين</h3>
-                <p className="mt-1 text-xs text-[#8d726b]">إجمالي المتطوعين الحاليين</p>
-                <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{totalVolunteers.toLocaleString()}</div>
-                <p className="mt-2 text-xs text-[#8d726b]">يشمل المتطوعين الجدد والمكررين</p>
-              </div>
-            </Card>
+              </Card>
+            )}
           </div>
         )}
 
