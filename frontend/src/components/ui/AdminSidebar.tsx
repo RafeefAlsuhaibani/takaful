@@ -17,13 +17,33 @@ const menuItems = [
     { key: "reports" as MenuKey, label: "التقارير", icon: FileText, to: "/Admin/reports" },
 ];
 
-export default function AdminSidebar(): JSX.Element {
+interface AdminSidebarProps {
+    mobileOpen?: boolean;
+    onMobileOpenChange?: (open: boolean) => void;
+    showMobileToggle?: boolean;
+}
+
+export default function AdminSidebar({
+    mobileOpen,
+    onMobileOpenChange,
+    showMobileToggle = true,
+}: AdminSidebarProps): JSX.Element {
     const { logout } = useAuth();
     const navigate = useNavigate();
-    const [mobileOpen, setMobileOpen] = useState(false);
+    const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+
+    const isMobileControlled = typeof mobileOpen === "boolean";
+    const resolvedMobileOpen = isMobileControlled ? mobileOpen : internalMobileOpen;
+
+    const setMobileOpen = (open: boolean) => {
+        if (!isMobileControlled) {
+            setInternalMobileOpen(open);
+        }
+        onMobileOpenChange?.(open);
+    };
 
     useEffect(() => {
-        if (!mobileOpen) return;
+        if (!resolvedMobileOpen) return;
 
         const styleId = 'cm-no-scroll-style';
         if (!document.getElementById(styleId)) {
@@ -45,7 +65,7 @@ export default function AdminSidebar(): JSX.Element {
             body.classList.remove('cm-no-scroll');
             html.classList.remove('cm-no-scroll');
         };
-    }, [mobileOpen]);
+    }, [resolvedMobileOpen]);
 
     const handleLogout = () => {
         logout();
@@ -56,14 +76,16 @@ export default function AdminSidebar(): JSX.Element {
     return (
         <>
             {/* Mobile open button */}
-            <button
-                type="button"
-                onClick={() => setMobileOpen(true)}
-                className="md:hidden fixed top-4 right-4 z-50 rounded-xl bg-white/95 border border-gray-200 p-2 text-gray-700 shadow-sm"
-                aria-label="فتح القائمة"
-            >
-                <Menu className="w-5 h-5" />
-            </button>
+            {showMobileToggle && (
+                <button
+                    type="button"
+                    onClick={() => setMobileOpen(true)}
+                    className="md:hidden fixed top-4 right-4 z-50 rounded-xl bg-white/95 border border-gray-200 p-2 text-gray-700 shadow-sm"
+                    aria-label="فتح القائمة"
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
+            )}
 
             {/* Desktop sidebar */}
             <aside
@@ -132,12 +154,12 @@ export default function AdminSidebar(): JSX.Element {
 
             {/* Mobile drawer */}
             <div
-                className={`md:hidden fixed inset-0 z-50 transition-opacity ${mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+                className={`md:hidden fixed inset-0 z-50 transition-opacity ${resolvedMobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
                 onClick={() => setMobileOpen(false)}
             >
                 <div className="absolute inset-0 bg-black/40" />
                 <aside
-                    className={`absolute right-0 top-0 h-full w-[min(320px,88vw)] transition-transform ${mobileOpen ? "translate-x-0" : "translate-x-full"}`}
+                    className={`absolute right-0 top-0 h-full w-[min(320px,88vw)] transition-transform ${resolvedMobileOpen ? "translate-x-0" : "translate-x-full"}`}
                     style={{ direction: "rtl" }}
                     onClick={(e) => e.stopPropagation()}
                 >
