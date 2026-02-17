@@ -734,7 +734,7 @@ export default function AdminMain() {
 
     return (
         <AdminLayout>
-            <div className="h-full">
+            <div className="h-full overflow-x-hidden">
                 {/* Search Bar */}
                 <div dir="ltr" className="flex justify-start mb-5 sm:mb-6">
                     <div className="relative w-full max-w-[280px] sm:max-w-[300px] md:max-w-[321px] h-[38px] sm:h-[40px] md:h-[42px]">
@@ -762,7 +762,7 @@ export default function AdminMain() {
                     </div>
 
                     <div className="flex justify-center mb-4">
-                        <div className="w-[700px] h-[2px] bg-[#B98A91] rounded-full shadow-[0_3px_8px_rgba(185,138,145,0.35)]"></div>
+                        <div className="w-full max-w-[700px] h-[2px] bg-[#B98A91] rounded-full shadow-[0_3px_8px_rgba(185,138,145,0.35)]"></div>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
@@ -997,7 +997,7 @@ export default function AdminMain() {
                 {/* Bottom Project Section */}
                 {activeProject ? (
                     <div className="bg-[#F3E3E3] rounded-[16px] sm:rounded-[18px] md:rounded-[20px] p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl border border-[#f0d8c2] w-full relative" dir="rtl">
-                        <div className="flex items-start justify-between gap-4 mb-4 sm:mb-8 flex-row-reverse">
+                        <div className="flex flex-col md:flex-row-reverse md:items-start justify-between gap-4 mb-4 sm:mb-8">
 
                             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                 <button
@@ -1040,7 +1040,7 @@ export default function AdminMain() {
                                 </p>
                             </div>
 
-                            <div className="flex justify-start flex-shrink-0">
+                            <div className="flex justify-start md:justify-start flex-shrink-0 self-start">
                                 <ProjectStatusDropdown
                                     currentStatus={projectStatus}
                                     onStatusChange={handleStatusChange}
@@ -1094,7 +1094,7 @@ export default function AdminMain() {
                                     %{activeProject.progress}
                                 </span>
 
-                                <div className="w-[200px] bg-gray-300 rounded-full h-3 overflow-hidden">
+                                <div className="w-full max-w-[200px] bg-gray-300 rounded-full h-3 overflow-hidden">
                                     <div className="bg-yellow-400 h-3 rounded-full" style={{ width: `${activeProject.progress}%`, marginLeft: 'auto', }} />
                                 </div>
                             </div>
