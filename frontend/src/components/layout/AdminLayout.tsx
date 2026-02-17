@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Menu } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useState } from "react";
 import AdminSidebar from "../ui/AdminSidebar";
 
 interface AdminLayoutProps {
@@ -10,23 +9,6 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-    const location = useLocation();
-
-    const pageTitle = useMemo(() => {
-        const pathname = location.pathname.toLowerCase();
-        const titles: Record<string, string> = {
-            "/admin": "لوحة الإدارة",
-            "/admin/requests": "طلبات التطوع",
-            "/admin/applications": "طلبات الانضمام",
-            "/admin/management": "إدارة المتطوعين",
-            "/admin/tasks": "إضافة مشروع",
-            "/admin/ideas": "أفكار المشاريع",
-            "/admin/reports": "التقارير",
-            "/admin/service-requests": "طلبات الخدمات",
-        };
-
-        return titles[pathname] ?? "لوحة الإدارة";
-    }, [location.pathname]);
 
     return (
         <div
@@ -39,27 +21,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 showMobileToggle={false}
             />
 
-            <main className="flex-1 min-w-0 md:mr-64">
-                <header className="sticky top-0 z-40 border-b border-white/30 bg-[#fdf8f9]/90 backdrop-blur-sm">
-                    <div className="h-16 px-4 sm:px-6 flex items-center justify-between">
-                        <h1 className="text-[#4e2a35] font-bold text-base sm:text-lg font-[Cairo] truncate">
-                            {pageTitle}
-                        </h1>
-                        <button
-                            type="button"
-                            onClick={() => setMobileDrawerOpen(true)}
-                            className="md:hidden rounded-xl border border-[#cfaab3] bg-white/90 p-2 text-[#4e2a35] shadow-sm"
-                            aria-label="فتح القائمة"
-                        >
-                            <Menu className="w-5 h-5" />
-                        </button>
-                    </div>
-                </header>
+            <main className="flex-1 pr-3 pl-3 md:pr-4 md:pl-8 py-4 md:py-8 mr-0 md:mr-64 min-w-0">
+                <div className="sticky top-0 z-40 mb-3 rounded-2xl border border-white/30 bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/85 flex items-center justify-between shadow-sm md:hidden">
+                    <button
+                        type="button"
+                        onClick={() => setMobileDrawerOpen(true)}
+                        className="rounded-lg p-2 text-gray-700 hover:bg-gray-100 md:hidden"
+                        aria-label="فتح القائمة"
+                    >
+                        <Menu size={20} />
+                    </button>
+                    <h2 className="text-sm md:text-base font-semibold text-gray-800 text-right flex-1 md:flex-none">
+                        لوحة الإدارة
+                    </h2>
+                    <span className="text-sm font-bold text-[#8D2E46]">تكافل</span>
+                </div>
 
-                <div className="px-4 sm:px-6 md:pr-4 md:pl-8 py-6">
-                    <div className="w-full max-w-6xl mx-auto min-h-[calc(100vh-8rem)]">
-                        {children}
-                    </div>
+                <div className="px-2 md:px-10 py-4 md:py-8 max-w-6xl mx-auto min-h-[75vh]">
+                    {children}
                 </div>
             </main>
         </div>
