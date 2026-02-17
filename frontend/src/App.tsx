@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 
 import { AuthProvider } from './contexts/AuthContext';
+import { DashboardSettingsProvider } from './contexts/DashboardSettingsContext';
 import { ToastProvider } from './contexts/ToastContext';
 
 // Layouts
@@ -100,9 +101,11 @@ export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <DashboardSettingsProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </DashboardSettingsProvider>
       </ToastProvider>
     </AuthProvider>
   );
