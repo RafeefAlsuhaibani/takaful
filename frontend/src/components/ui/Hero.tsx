@@ -1,10 +1,45 @@
+import { useEffect, useState } from 'react';
 import { Lightbulb, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { mockStats } from '../../data/home';
 import StatCounter from './StatCounter';
 import Card from './Card';
+import { API_BASE_URL } from '../../config';
+
+interface Stats {
+  beneficiaries: number;
+  potential_projects: number;
+  donations: number;
+}
 
 export default function Hero() {
+  const [stats, setStats] = useState<Stats>({
+    beneficiaries: 67000,
+    potential_projects: 2150,
+    donations: 1500000,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/public-home-stats/`);
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching home stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const displayStats = [
+    { label: 'مستفيد', value: stats.beneficiaries },
+    { label: 'مشروع محتمل', value: stats.potential_projects },
+    { label: 'متبرع', value: Math.floor(stats.donations / 100) },
+  ];
+
   return (
     <section className="relative isolate text-white bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 py-20 md:py-28">
       {/* تأثير الإضاءة */}
@@ -41,14 +76,14 @@ export default function Hero() {
 
         {/* الكروت */}
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-          {mockStats.map((stat, index) => (
+          {displayStats.map((stat, index) => (
             <Card
               key={index}
               className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg px-6 py-6 md:py-7 text-center animate-fadeIn transition-all duration-500"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-sm">
-                <StatCounter value={parseInt(stat.value.replace(/[^\d]/g, ''))} />
+                <StatCounter value={stat.value} />
               </div>
               <div className="mt-1 text-sm md:text-base text-white/85">
                 {stat.label}
