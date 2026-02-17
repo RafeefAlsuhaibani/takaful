@@ -18,7 +18,7 @@ import AdminSignIn from './components/pages/admin/AdminSignIn';
 import Suggest from './components/pages/Suggest';
 import About from './components/pages/About';
 import RequestService from './components/pages/RequestService';
-import WaterSupplyRequestPage from './components/pages/WaterSupplyRequestPage';
+import WaterSupplyRequestPage from './components/pages/WaterSupplyRequestPage.tsx';
 
 // User Pages
 import UserMain from './components/pages/user/Main';
