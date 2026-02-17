@@ -608,40 +608,42 @@ export default function Reports() {
                 </div>
 
                 {/* Generate Report Section */}
-                <div className="bg-white p-6 rounded-2xl shadow">
+                <div className="bg-white p-3 sm:p-6 rounded-2xl shadow overflow-x-hidden">
                     <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <Plus className="w-5 h-5" />
                         إنشاء تقرير جديد
                     </h2>
-                    <div className="flex gap-4 items-end">
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                <Calendar className="w-4 h-4 inline ml-1" />
-                                من تاريخ (اختياري)
-                            </label>
-                            <input
-                                type="date"
-                                value={dateFrom}
-                                onChange={(e) => setDateFrom(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ab686f]"
-                            />
-                        </div>
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                <Calendar className="w-4 h-4 inline ml-1" />
-                                إلى تاريخ (اختياري)
-                            </label>
-                            <input
-                                type="date"
-                                value={dateTo}
-                                onChange={(e) => setDateTo(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ab686f]"
-                            />
+                    <div className="flex flex-col gap-4 sm:gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <Calendar className="w-4 h-4 inline ml-1" />
+                                    من تاريخ (اختياري)
+                                </label>
+                                <input
+                                    type="date"
+                                    value={dateFrom}
+                                    onChange={(e) => setDateFrom(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ab686f]"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <Calendar className="w-4 h-4 inline ml-1" />
+                                    إلى تاريخ (اختياري)
+                                </label>
+                                <input
+                                    type="date"
+                                    value={dateTo}
+                                    onChange={(e) => setDateTo(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ab686f]"
+                                />
+                            </div>
                         </div>
                         <button
                             onClick={handleGenerateReport}
                             disabled={generating}
-                            className="px-8 py-2 bg-[#ab686f] text-white rounded-xl hover:bg-[#9a5860] disabled:bg-gray-400 flex items-center gap-2"
+                            className="w-full sm:w-auto px-8 py-2 bg-[#ab686f] text-white rounded-xl hover:bg-[#9a5860] disabled:bg-gray-400 flex items-center justify-center gap-2"
                         >
                             <BarChart3 className="w-5 h-5" />
                             {generating ? 'جاري الإنشاء...' : 'إنشاء تقرير'}
@@ -654,7 +656,7 @@ export default function Reports() {
                 </div>
 
                 {/* Reports List */}
-                <div className="bg-white p-6 rounded-2xl shadow">
+                <div className="bg-white p-3 sm:p-6 rounded-2xl shadow overflow-x-hidden">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">التقارير المحفوظة</h2>
 
                     {loading ? (
@@ -663,10 +665,10 @@ export default function Reports() {
                             <p className="text-gray-600 mt-4">جاري التحميل...</p>
                         </div>
                     ) : reports.length === 0 ? (
-                        <div className="text-center py-12">
+                        <div className="min-h-[180px] sm:min-h-[260px] flex flex-col items-center justify-center text-center gap-3">
                             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-600">لا توجد تقارير محفوظة</p>
-                            <p className="text-sm text-gray-500 mt-2">قم بإنشاء تقرير جديد للبدء</p>
+                            <p className="text-sm text-gray-500">قم بإنشاء تقرير جديد للبدء</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -675,7 +677,7 @@ export default function Reports() {
                                     key={report.id}
                                     className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
                                 >
-                                    <div className="flex justify-between items-start">
+                                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-between items-start">
                                         <div className="flex-1">
                                             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                                 <FileText className="w-5 h-5 text-[#ab686f]" />
@@ -684,7 +686,7 @@ export default function Reports() {
                                             <p className="text-sm text-gray-600 mt-1">
                                                 تم الإنشاء: {formatDate(report.generated_at)}
                                             </p>
-                                            <div className="flex gap-6 mt-3 text-sm text-gray-600">
+                                            <div className="flex flex-wrap gap-3 sm:gap-6 mt-3 text-sm text-gray-600">
                                                 <span className="flex items-center gap-1">
                                                     <FolderKanban className="w-4 h-4" />
                                                     مشاريع: {report.total_projects}
@@ -703,7 +705,7 @@ export default function Reports() {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 self-end sm:self-start">
                                             <button
                                                 onClick={() => handleViewReport(report)}
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
