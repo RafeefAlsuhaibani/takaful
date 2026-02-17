@@ -211,7 +211,7 @@ export default function AddProject() {
       <div className="h-full">
         {/* Title Banner */}
         <div className="flex justify-center mb-8">
-          <div className="bg-[#f3e3e3] rounded-[19px] px-12 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-fit min-w-[300px]">
+          <div className="bg-[#f3e3e3] rounded-[19px] px-6 sm:px-12 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-[340px] sm:w-auto">
             <h1 className="text-3xl font-bold text-[#2e2b2c] text-center font-[Cairo]">بيانات اضافة مشروع</h1>
           </div>
         </div>

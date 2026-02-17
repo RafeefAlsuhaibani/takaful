@@ -162,7 +162,7 @@ export default function VolunteerApplications() {
         <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
           {/* Search */}
           <div className="flex justify-start">
-            <div className="relative w-[321px] h-[42px]">
+            <div className="relative w-full max-w-sm h-[42px]">
               <div className="absolute inset-0 bg-[#faf6f76b] rounded-[20px] shadow-[inset_0px_0px_8px_#f3e3e3e0,0px_4px_15px_#8d2e4682]" />
               <input
                 type="text"
@@ -224,7 +224,7 @@ export default function VolunteerApplications() {
 
         {/* Title Banner */}
         <div className="flex justify-center mb-8">
-          <div className="bg-[#f3e3e3] rounded-[19px] px-12 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-fit min-w-[300px]">
+          <div className="bg-[#f3e3e3] rounded-[19px] px-6 sm:px-12 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-[340px] sm:w-auto">
             <h1 className="text-3xl font-bold text-[#2e2b2c] text-center font-[Cairo]">طلبات الانضمام للمشاريع</h1>
           </div>
         </div>

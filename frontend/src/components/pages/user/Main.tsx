@@ -716,7 +716,7 @@ function OpportunitiesSection() {
           onClick={handleCancelApply}
         >
           <div
-            className="bg-white rounded-3xl p-5 sm:p-8 w-[92vw] max-w-[400px] shadow-2xl border-4 border-[#C49FA3]"
+            className="bg-white rounded-3xl p-5 sm:p-8 w-full max-w-sm sm:max-w-md mx-4 shadow-2xl border-4 border-[#C49FA3]"
             style={{ direction: 'rtl' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -985,7 +985,7 @@ function TasksSection({ onMoreClick }: TasksSectionProps) {
           onClick={handleCancelWithdraw}
         >
           <div
-            className="bg-white rounded-3xl p-5 sm:p-8 w-[92vw] max-w-[400px] shadow-2xl border-4 border-[#E2C9A2]"
+            className="bg-white rounded-3xl p-5 sm:p-8 w-full max-w-sm sm:max-w-md mx-4 shadow-2xl border-4 border-[#E2C9A2]"
             style={{ direction: 'rtl' }}
             onClick={(e) => e.stopPropagation()}
           >

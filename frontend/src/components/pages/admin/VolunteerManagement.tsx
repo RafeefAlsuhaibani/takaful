@@ -1801,13 +1801,13 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
                     <div className="space-y-3">
                         {/* الدروب ليست على اليسار */}
                         <div className="flex justify-end">
-                            <div className="relative w-[220px]">
+                            <div className="relative w-full max-w-[220px]">
                                 <button
                                     type="button"
                                     onClick={() =>
                                         setIsVolunteerSelectOpen((prev) => !prev)
                                     }
-                                    className="w-[220px] h-[40px] rounded-[18px] border border-[#e0cfd4] bg-[#fdf8f9] px-4 pr-4 pl-8 text-[13px] text-[#2e2b2c] font-[Cairo] flex items-center justify-between"
+                                    className="w-full h-[40px] rounded-[18px] border border-[#e0cfd4] bg-[#fdf8f9] px-4 pr-4 pl-8 text-[13px] text-[#2e2b2c] font-[Cairo] flex items-center justify-between"
                                 >
                                     <span className="flex-1 text-right">
                                         {selectedVolunteer || "اختر متطوع"}
@@ -1816,7 +1816,7 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
                                 </button>
 
                                 {isVolunteerSelectOpen && (
-                                    <div className="absolute z-[100] mt-1 w-[220px] rounded-[12px] bg-white shadow-[0px_8px_20px_#00000080] border-2 border-[#8d2e46] overflow-hidden text-[13px] max-h-[220px] overflow-y-auto custom-scrollbar">
+                                    <div className="absolute z-[100] mt-1 w-full rounded-[12px] bg-white shadow-[0px_8px_20px_#00000080] border-2 border-[#8d2e46] overflow-hidden text-[13px] max-h-[220px] overflow-y-auto custom-scrollbar">
                                         {volunteersPerformance.length === 0 ? (
                                             <div className="px-4 py-3 text-center text-[#6b6567]">
                                                 لا يوجد متطوعون
