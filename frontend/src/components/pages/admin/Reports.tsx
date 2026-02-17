@@ -398,7 +398,7 @@ export default function Reports() {
     if (viewingReport) {
         return (
             <AdminLayout>
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-x-hidden">
                     {/* Header */}
                     <div className="flex justify-between items-center">
                         <div>
@@ -519,8 +519,8 @@ export default function Reports() {
                                 <Lightbulb className="w-3 h-3" />
                                 نسبة الإنجاز محسوبة تلقائياً من المهام المكتملة (المهام المكتملة ÷ إجمالي المهام)
                             </p>
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[760px]">
+                            <div className="w-full overflow-x-auto">
+                                <table className="w-full min-w-[820px]">
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-4 py-3 text-right text-sm font-semibold">اسم المشروع</th>
@@ -595,7 +595,7 @@ export default function Reports() {
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
+            <div className="space-y-6 overflow-x-hidden">
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>

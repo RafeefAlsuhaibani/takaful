@@ -1741,12 +1741,13 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
             {activeTab === "volunteers" && (
                 <div className="space-y-4">
                     {/* جدول المتطوعين */}
-                    <div className="bg-[#fdf8f9] rounded-[18px] shadow-[0px_3px_15px_#8d2e4626] px-5 py-4 overflow-x-auto">
+                    <div className="bg-[#fdf8f9] rounded-[18px] shadow-[0px_3px_15px_#8d2e4626] px-4 sm:px-5 py-4">
                         <h3 className="text-[15px] font-[Cairo] font-semibold text-[#2e2b2c] mb-3 text-right">
                             تفاصيل أداء المتطوعين
                         </h3>
 
-                        <table className="w-full min-w-[680px] text-[12px] font-[Cairo] text-right">
+                        <div className="w-full overflow-x-auto">
+                        <table className="w-full min-w-[720px] text-[12px] font-[Cairo] text-right">
                             <thead>
                                 <tr className="text-[#6b6567] border-b border-[#e0cfd4]">
                                     <th className="py-2 px-2 font-normal">المتطوع</th>
@@ -1795,6 +1796,7 @@ const PerformanceReportsSection: React.FC<PerformanceReportsSectionProps> = ({
                                 })}
                             </tbody>
                         </table>
+                        </div>
                     </div>
 
                     {/* اختيار متطوع + التقرير الفردي */}
