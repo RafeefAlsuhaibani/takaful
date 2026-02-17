@@ -39,16 +39,19 @@ import ServiceRequests from './components/pages/admin/ServiceRequests';
 // هذا الكومبوننت هو اللي يقدر يستخدم useLocation
 function AppContent() {
   const location = useLocation();
+  const pathname = location.pathname.toLowerCase();
 
   // بدون هيدر وفوتر
-  const isUserPage = location.pathname.startsWith('/user');
-  const isAdminPage = location.pathname.startsWith('/Admin');
+  const isUserPage = pathname.startsWith('/user');
+  const isAdminPage = pathname.startsWith('/admin');
+  const isAdminSignInPage = pathname === '/admin/signin';
+  const hidePublicChrome = isUserPage || (isAdminPage && !isAdminSignInPage);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
       {/* Navbar للصفحات العامة فقط */}
-      {!isUserPage && !isAdminPage && <Navbar />}
+      {!hidePublicChrome && <Navbar />}
 
       <main className="flex-1">
         <Routes>
@@ -85,7 +88,7 @@ function AppContent() {
       </main>
 
       {/* Footer للصفحات العامة فقط */}
-      {!isUserPage && !isAdminPage && <Footer />}
+      {!hidePublicChrome && <Footer />}
     </div>
   );
 }
