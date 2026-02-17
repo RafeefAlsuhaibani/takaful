@@ -99,7 +99,7 @@ export default function UserProfileDropdown({ userName, userRole }: UserProfileD
   };
 
   const handleAdminClick = () => {
-    navigate('/admin');
+    navigate('/Admin');
     setIsOpen(false);
     setFocusedIndex(-1);
   };
