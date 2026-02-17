@@ -4,9 +4,12 @@ import Icon from '../ui/Icon';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Hero from '../ui/Hero';
+import HomeVolunteerDashboard from './HomeVolunteerDashboard';
+import { useDashboardSettings } from '../../contexts/useDashboardSettings';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const { settings } = useDashboardSettings();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,24 +30,23 @@ export default function Home() {
   }
 
   return (
-    <div className="relative min-h-screen bg-white overflow-x-hidden">
+    <div className="relative min-h-screen bg-white overflow-hidden">
       <Hero />
-
-      <section className="py-10 sm:py-12 md:py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="animate-fadeIn" style={{ animationDelay: '0.2s' }}>
-              <Card className="p-4 sm:p-5 md:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg h-full">
-                <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 mb-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">
+              <Card className="p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
                       شارك في مشروع تكافلي
                     </h3>
-                    <p className="text-gray-600 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">
+                    <p className="text-gray-600 mb-6 leading-relaxed">
                       اكتشف مشاريعنا المتنوعة واختر المشروع الذي يناسب اهتماماتك للمشاركة في صنع الأثر
                     </p>
                   </div>
-                  <Icon name="HandHeart" className="text-[#DFC775] sm:ml-4 flex-shrink-0" size={28} />
+                  <Icon name="HandHeart" className="text-[#DFC775] ml-4 flex-shrink-0" size={32} />
                 </div>
                 <Button variant="primary" href="/projects">
                   المشاريع
@@ -53,17 +55,17 @@ export default function Home() {
             </div>
 
             <div className="animate-fadeIn" style={{ animationDelay: '0.4s' }}>
-              <Card className="p-4 sm:p-5 md:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg h-full">
-                <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 mb-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">
+              <Card className="p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
                       اقترح مبادرة تكافلية
                     </h3>
-                    <p className="text-gray-600 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">
+                    <p className="text-gray-600 mb-6 leading-relaxed">
                       شاركنا أفكارك لمبادرات تكافلية جديدة يمكن أن تُحدث أثرًا إيجابيًا في المجتمع
                     </p>
                   </div>
-                  <Icon name="Lightbulb" className="text-[#DFC775] sm:ml-4 flex-shrink-0" size={28} />
+                  <Icon name="Lightbulb" className="text-[#DFC775] ml-4 flex-shrink-0" size={32} />
                 </div>
                 <Button variant="outline" href="/suggest">
                   شارك اقتراحك
@@ -74,25 +76,27 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="services" className="py-10 sm:py-12 md:py-16 bg-gray-50 relative z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8 sm:mb-10 md:mb-12 animate-fadeIn">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight">
+      <HomeVolunteerDashboard />
+
+      <section id="services" className="py-16 bg-gray-50 relative z-10">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12 animate-fadeIn">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               خدماتنا الأساسية المؤثّرة
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {mockServices.map((service, index) => (
               <div
                 key={service.id}
                 className="animate-fadeIn"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <Card className="p-4 sm:p-5 md:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg h-full">
-                  <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">
+                <Card className="p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
                         {service.title}
                       </h3>
                       <p className="text-gray-600 mb-4 text-sm leading-relaxed">
@@ -105,7 +109,7 @@ export default function Home() {
                           service.id === 'balsam' ? 'Stethoscope' :
                             service.id === 'transport' ? 'Ambulance' : 'Users'
                       }
-                      className="text-[#DFC775] sm:ml-4 flex-shrink-0"
+                      className="text-[#DFC775] ml-4 flex-shrink-0"
                       size={24}
                     />
                   </div>
