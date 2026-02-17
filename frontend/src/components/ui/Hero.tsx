@@ -45,7 +45,7 @@ export default function Hero() {
   ];
 
   return (
-    <section className="relative isolate text-white bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 py-20 md:py-28">
+    <section className="relative isolate text-white bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 py-14 sm:py-16 md:py-28 overflow-x-hidden">
       {/* تأثير الإضاءة */}
       <div
         aria-hidden
@@ -56,15 +56,15 @@ export default function Hero() {
         }}
       />
 
-      <div className="max-w-6xl mx-auto px-4 text-center">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
         <div className="animate-slideUp">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.1]">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.15] sm:leading-[1.1]">
             منصة تكافل وأثر
           </h1>
 
           {/* النص الفرعي */}
           <div className="mt-4 mx-auto max-w-2xl">
-            <div className="flex items-center justify-center gap-2 text-base md:text-lg mb-2">
+            <div className="flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg mb-2 flex-wrap">
               <span style={{ color: '#DFC775' }}>حيث يلتقي العطاء بالأثر</span>
               <Lightbulb
                 className="shrink-0"
@@ -72,20 +72,20 @@ export default function Hero() {
                 aria-hidden="true"
               />
             </div>
-            <div className="text-base md:text-lg text-white/85">
+            <div className="text-sm sm:text-base md:text-lg text-white/85">
               انضم إلى مجتمع من المتكافلين واصنع أثرًا يدوم
             </div>
           </div>
         </div>
 
         {/* الكروت */}
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
+        <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
           {loading ? (
             // Loading skeleton
             [1, 2, 3].map((i) => (
               <Card
                 key={i}
-                className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg px-6 py-6 md:py-7 text-center animate-pulse"
+                className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg px-4 sm:px-6 py-5 sm:py-6 md:py-7 text-center animate-pulse"
               >
                 <div className="h-10 bg-white/20 rounded mb-2"></div>
                 <div className="h-4 bg-white/20 rounded w-2/3 mx-auto"></div>
@@ -95,16 +95,16 @@ export default function Hero() {
             displayStats.map((stat, index) => (
               <Card
                 key={index}
-                className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg px-6 py-6 md:py-7 text-center animate-fadeIn transition-all duration-500"
+                className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg px-4 sm:px-6 py-5 sm:py-6 md:py-7 text-center animate-fadeIn transition-all duration-500"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-sm">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white drop-shadow-sm">
                   <StatCounter value={stat.value} />
                   {index === 0 && <span className="text-2xl">+</span>}
                   {index === 1 && <span className="text-2xl">+</span>}
                   {index === 2 && <span className="text-2xl">+</span>}
                 </div>
-                <div className="mt-1 text-sm md:text-base text-white/85">
+                <div className="mt-1 text-xs sm:text-sm md:text-base text-white/85">
                   {stat.label}
                 </div>
               </Card>
@@ -113,11 +113,11 @@ export default function Hero() {
         </div>
 
         {/* الزر */}
-        <div className="mt-8 md:mt-10">
+        <div className="mt-7 sm:mt-8 md:mt-10">
           <Link
             to="/about"
             className="
-              group relative inline-flex items-center justify-center rounded-full px-8 py-3
+              group relative inline-flex items-center justify-center rounded-full px-6 sm:px-8 py-2.5 sm:py-3
               bg-[#DFC775] text-gray-900 font-semibold shadow-sm
               transition-all duration-300
               focus-visible:ring-2 ring-offset-2 ring-brand-600
