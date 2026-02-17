@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { Bell, Settings, Home, ClipboardList, ExternalLink, UserCircle, Menu, X } from 'lucide-react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../config';
+import { useToast } from '../../contexts/ToastContext';
 
 type MenuKey = 'home' | 'personal-info' | 'tasks' | 'settings' | 'takaful';
 
@@ -27,6 +28,8 @@ const menuItems = [
 export default function ArabicSidebar({ children }: SidebarLayoutProps) {
     const { user, access, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { info } = useToast();
     const [volunteerData, setVolunteerData] = useState<ProfileData | null>(null);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -86,7 +89,10 @@ export default function ArabicSidebar({ children }: SidebarLayoutProps) {
 
     const handleSettingsClick = () => {
         setIsMobileSidebarOpen(false);
-        navigate('/user/settings');
+        info({
+            title: 'معلومة',
+            description: 'ميزة الإعدادات قادمة قريبًا إن شاء الله.',
+        });
     };
 
     const handleNavClick = () => {
@@ -146,6 +152,23 @@ export default function ArabicSidebar({ children }: SidebarLayoutProps) {
                     <nav className="flex-1 space-y-1">
                         {menuItems.map((item) => {
                             const Icon = item.icon;
+
+                            if (item.key === 'settings') {
+                                return (
+                                    <button
+                                        key={item.key}
+                                        type="button"
+                                        onClick={handleSettingsClick}
+                                        className={`w-full flex items-center gap-3 px-4 py-2 backdrop-blur rounded-full transition-all ${location.pathname === '/user/settings'
+                                            ? 'bg-white/90 text-gray-800 shadow-sm'
+                                            : 'bg-transparent text-gray-500 hover:bg-white/40'
+                                            }`}
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                        <span className="text-base">{item.label}</span>
+                                    </button>
+                                );
+                            }
 
                             return (
                                 <NavLink
@@ -255,6 +278,24 @@ export default function ArabicSidebar({ children }: SidebarLayoutProps) {
                             <nav className="flex-1 space-y-1">
                                 {menuItems.map((item) => {
                                     const Icon = item.icon;
+
+                                    if (item.key === 'settings') {
+                                        return (
+                                            <button
+                                                key={item.key}
+                                                type="button"
+                                                onClick={handleSettingsClick}
+                                                className={`w-full flex items-center gap-3 px-4 py-2 backdrop-blur rounded-full transition-all ${location.pathname === '/user/settings'
+                                                    ? 'bg-white/90 text-gray-800 shadow-sm'
+                                                    : 'bg-transparent text-gray-500 hover:bg-white/40'
+                                                    }`}
+                                            >
+                                                <Icon className="w-5 h-5" />
+                                                <span className="text-base">{item.label}</span>
+                                            </button>
+                                        );
+                                    }
+
                                     return (
                                         <NavLink
                                             key={item.key}
