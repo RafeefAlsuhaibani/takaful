@@ -50,7 +50,7 @@ export default function Navbar() {
   }, [isMobileMenuOpen]);
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 py-3">
+    <nav className="sticky top-0 z-30 bg-white border-b border-gray-200 py-3">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between">
           {/* Logo - FAR LEFT */}
@@ -111,7 +111,7 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 z-[60] bg-black/40"
+          className="md:hidden fixed inset-0 z-50 bg-black/40"
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <div

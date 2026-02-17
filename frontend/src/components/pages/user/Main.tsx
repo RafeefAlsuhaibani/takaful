@@ -645,7 +645,7 @@ function OpportunitiesSection() {
 
   return (
     <>
-      <div className="fixed top-4 left-4 z-[9999] space-y-2" dir="rtl">
+      <div className="fixed top-4 left-4 z-40 space-y-2" dir="rtl">
         {toasts.map((toast) => (
           <Toast
             key={toast.id}
@@ -712,7 +712,7 @@ function OpportunitiesSection() {
 
       {showApplyPopup && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
           onClick={handleCancelApply}
         >
           <div
@@ -905,7 +905,7 @@ function TasksSection({ onMoreClick }: TasksSectionProps) {
 
   return (
     <>
-      <div className="fixed top-4 left-4 z-[9999] space-y-2" dir="rtl">
+      <div className="fixed top-4 left-4 z-40 space-y-2" dir="rtl">
         {toasts.map((toast) => (
           <Toast
             key={toast.id}
@@ -981,7 +981,7 @@ function TasksSection({ onMoreClick }: TasksSectionProps) {
 
       {showWithdrawPopup && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
           onClick={handleCancelWithdraw}
         >
           <div

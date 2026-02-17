@@ -193,7 +193,7 @@ export default function ArabicSidebar({ children }: SidebarLayoutProps) {
             </div>
 
             <div className="flex-1 m-2 md:m-4 min-w-0">
-                <div className="sticky top-0 z-40 mb-3 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/85 flex items-center justify-between shadow-sm">
+                <div className="sticky top-0 z-30 mb-3 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/85 flex items-center justify-between shadow-sm">
                     <button
                         type="button"
                         onClick={() => setIsMobileSidebarOpen(true)}
@@ -214,7 +214,7 @@ export default function ArabicSidebar({ children }: SidebarLayoutProps) {
             </div>
 
             <div
-                className={`md:hidden fixed inset-0 z-[60] transition-opacity ${isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                className={`md:hidden fixed inset-0 z-50 transition-opacity ${isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 onClick={() => setIsMobileSidebarOpen(false)}
             >
                 <div className="absolute inset-0 bg-black/40" />

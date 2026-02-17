@@ -59,7 +59,7 @@ export default function AdminSidebar(): JSX.Element {
             <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
-                className="md:hidden fixed top-4 right-4 z-[60] rounded-xl bg-white/95 border border-gray-200 p-2 text-gray-700 shadow-sm"
+                className="md:hidden fixed top-4 right-4 z-50 rounded-xl bg-white/95 border border-gray-200 p-2 text-gray-700 shadow-sm"
                 aria-label="فتح القائمة"
             >
                 <Menu className="w-5 h-5" />
@@ -132,7 +132,7 @@ export default function AdminSidebar(): JSX.Element {
 
             {/* Mobile drawer */}
             <div
-                className={`md:hidden fixed inset-0 z-[60] transition-opacity ${mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+                className={`md:hidden fixed inset-0 z-50 transition-opacity ${mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
                 onClick={() => setMobileOpen(false)}
             >
                 <div className="absolute inset-0 bg-black/40" />
