@@ -15,6 +15,16 @@ const filters = [
   { id: 'مكتملة', label: 'الخدمات المكتملة' },
 ];
 
+const WATER_SUPPLY_KEYWORDS = ['water supply', 'سقيا ماء', 'سقيا', 'الماء', 'مشروع السقيا'];
+
+const normalizeText = (value: string) =>
+  value.toLowerCase().trim().replace(/\s+/g, ' ');
+
+const isWaterSupplyService = (title: string) => {
+  const normalizedTitle = normalizeText(title);
+  return WATER_SUPPLY_KEYWORDS.some((keyword) => normalizedTitle.includes(normalizeText(keyword)));
+};
+
 const serviceSteps = [
   {
     num: 1,
@@ -110,7 +120,9 @@ function Services() {
           <ServiceCard
             service={service}
             onDetails={setActiveService}
-            onRegister={() => navigate('/volunteers')}
+            onRegister={(selectedService) =>
+              navigate(isWaterSupplyService(selectedService.title) ? '/services/water-supply' : '/volunteers')
+            }
           />
         </div>
       )),

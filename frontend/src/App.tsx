@@ -18,6 +18,7 @@ import AdminSignIn from './components/pages/admin/AdminSignIn';
 import Suggest from './components/pages/Suggest';
 import About from './components/pages/About';
 import RequestService from './components/pages/RequestService';
+import WaterSupplyRequestPage from './components/pages/WaterSupplyRequestPage';
 
 // User Pages
 import UserMain from './components/pages/user/Main';
@@ -67,6 +68,7 @@ function AppContent() {
           <Route path="/suggest" element={<Suggest />} />
           <Route path="/about" element={<About />} />
           <Route path="/request-service" element={<RequestService />} />
+          <Route path="/services/water-supply" element={<WaterSupplyRequestPage />} />
 
           {/* صفحات اليوزر */}
           <Route path="/user/main" element={<UserMain />} />
