@@ -1,11 +1,12 @@
 import AdminLayout from "../../layout/AdminLayout";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiSearch } from "react-icons/fi";
-import { Eye, EyeOff, ChevronLeft, Users, SquarePen, FolderOpen, FileText, HandCoins, ChevronDown, ChevronUp, CalendarDays, MapPin, User, Clock, AlertTriangle, X } from "lucide-react";
+import { Eye, EyeOff, ChevronLeft, Users, SquarePen, FolderOpen, FileText, HandCoins, ChevronDown, ChevronUp, CalendarDays, MapPin, User, Clock, AlertTriangle, X, Check, Upload } from "lucide-react";
 import Modal from "../../ui/Modal";
 import { useAuth } from "../../../contexts/AuthContext";
 import { API_BASE_URL } from "../../../config";
+import { useDashboardSettings } from "../../../contexts/useDashboardSettings";
 
 
 interface Project {
@@ -32,6 +33,15 @@ interface Project {
     target_audience?: string;
 }
 
+type EditableDashboardKey =
+    | 'showDashboard'
+    | 'showKPIs'
+    | 'showDonut'
+    | 'showVolunteerBars'
+    | 'showTopVolunteers';
+
+type DraftDashboardSettings = Record<EditableDashboardKey, boolean>;
+
 
 // Project Status Dropdown Component
 // Project Status Dropdown Component - FIXED VERSION
@@ -49,7 +59,7 @@ function ProjectStatusDropdown({ currentStatus, onStatusChange }: { currentStatu
         <div className="relative" dir="rtl">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border-2 border-[#6F1A28] rounded-[8px] sm:rounded-[8px] md:rounded-[20px] min-w-[140px] sm:min-w-[160px] md:min-w-[180px] shadow-sm hover:shadow-md transition-shadow"
+                className="flex w-full max-w-[180px] sm:max-w-[200px] items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border-2 border-[#6F1A28] rounded-[8px] sm:rounded-[8px] md:rounded-[20px] shadow-sm hover:shadow-md transition-shadow"
                 aria-label="اختيار حالة المشروع"
             >
                 {/* ✅ FIXED: Changed from "حالة المشروع" to {currentStatus} */}
@@ -272,6 +282,7 @@ function ProjectCard({ project, showProgress = false, isCompleted = false, onDet
 
 export default function AdminMain() {
     const { access } = useAuth();
+    const { settings: dashboardSettings, updateSetting } = useDashboardSettings();
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("افكار المشاريع");
@@ -284,6 +295,25 @@ export default function AdminMain() {
         "المشاريع النشطة": 2,
         "المشاريع المنتهية": 2
     });
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isEditingDashboardSettings, setIsEditingDashboardSettings] = useState(false);
+    const [draftDashboardSettings, setDraftDashboardSettings] = useState<DraftDashboardSettings>({
+        showDashboard: dashboardSettings.showDashboard,
+        showKPIs: dashboardSettings.showKPIs,
+        showDonut: dashboardSettings.showDonut,
+        showVolunteerBars: dashboardSettings.showVolunteerBars,
+        showTopVolunteers: dashboardSettings.showTopVolunteers,
+    });
+    const excelInputRef = useRef<HTMLInputElement | null>(null);
+
+    const dashboardSettingItems: Array<{ key: EditableDashboardKey; label: string }> = [
+        { key: 'showDashboard', label: 'إحصائية المتطوعين' },
+        { key: 'showKPIs', label: 'عدد الساعات التطوعية / قيمة إسهام المتطوع' },
+        { key: 'showDonut', label: 'إحصائية المتطوعين / مجموع الساعات التطوعية للإدارات' },
+        { key: 'showVolunteerBars', label: 'عدد المتطوعين' },
+        { key: 'showTopVolunteers', label: 'أفضل المتطوعين' },
+    ];
 
     // API States
     const [stats, setStats] = useState({
@@ -355,6 +385,18 @@ export default function AdminMain() {
         fetchParticipationRequests();
         fetchActiveProject();
     }, []);
+
+    useEffect(() => {
+        if (!isEditingDashboardSettings) {
+            setDraftDashboardSettings({
+                showDashboard: dashboardSettings.showDashboard,
+                showKPIs: dashboardSettings.showKPIs,
+                showDonut: dashboardSettings.showDonut,
+                showVolunteerBars: dashboardSettings.showVolunteerBars,
+                showTopVolunteers: dashboardSettings.showTopVolunteers,
+            });
+        }
+    }, [dashboardSettings, isEditingDashboardSettings]);
 
     const fetchStats = async () => {
         try {
@@ -694,6 +736,42 @@ export default function AdminMain() {
         }
     };
 
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setIsUploading(true);
+            setUploadedFile(file);
+            const tempMsg = document.createElement('div');
+            tempMsg.textContent = 'تم رفع الملف بنجاح';
+            tempMsg.className = 'fixed top-4 right-4 bg-brand-700 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-[Cairo]';
+            document.body.appendChild(tempMsg);
+            setTimeout(() => {
+                tempMsg.remove();
+                setIsUploading(false);
+            }, 1200);
+        }
+    };
+
+    const handleSaveDashboardSettings = () => {
+        dashboardSettingItems.forEach(({ key }) => {
+            if (dashboardSettings[key] !== draftDashboardSettings[key]) {
+                updateSetting(key, draftDashboardSettings[key]);
+            }
+        });
+        setIsEditingDashboardSettings(false);
+    };
+
+    const handleCancelDashboardSettings = () => {
+        setDraftDashboardSettings({
+            showDashboard: dashboardSettings.showDashboard,
+            showKPIs: dashboardSettings.showKPIs,
+            showDonut: dashboardSettings.showDonut,
+            showVolunteerBars: dashboardSettings.showVolunteerBars,
+            showTopVolunteers: dashboardSettings.showTopVolunteers,
+        });
+        setIsEditingDashboardSettings(false);
+    };
+
     const statsData = [
         {
             value: stats.total_donations,
@@ -734,20 +812,20 @@ export default function AdminMain() {
 
     return (
         <AdminLayout>
-            <div className="h-full">
+            <div className="h-full overflow-x-hidden">
                 {/* Search Bar */}
-                <div dir="ltr" className="flex justify-start mb-5 sm:mb-6">
-                    <div className="relative w-full max-w-[280px] sm:max-w-[300px] md:max-w-[321px] h-[38px] sm:h-[40px] md:h-[42px]">
+                <div className="flex justify-start mb-5 sm:mb-6">
+                    <div className="relative w-full max-w-xs sm:max-w-sm h-[38px] sm:h-[40px] md:h-[42px]">
                         <div className="absolute inset-0 bg-[#faf6f76b] rounded-[20px] shadow-[inset_0px_0px_8px_#f3e3e3e0,0px_4px_15px_#8d2e4682]" />
                         <input
                             type="text"
                             placeholder="البحث..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pl-9 sm:pl-10 pr-3 text-[13px] sm:text-[14px] md:text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
+                            className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pr-9 sm:pr-10 pl-3 text-[13px] sm:text-[14px] md:text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
                             aria-label="البحث في المشاريع"
                         />
-                        <div className="absolute top-1/2 -translate-y-1/2 left-[8px] sm:left-[10px]">
+                        <div className="absolute top-1/2 -translate-y-1/2 right-[8px] sm:right-[10px]">
                             <FiSearch className="w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] md:w-[16px] md:h-[16px] text-[#4e4a4b]" />
                         </div>
                     </div>
@@ -762,7 +840,7 @@ export default function AdminMain() {
                     </div>
 
                     <div className="flex justify-center mb-4">
-                        <div className="w-[700px] h-[2px] bg-[#B98A91] rounded-full shadow-[0_3px_8px_rgba(185,138,145,0.35)]"></div>
+                        <div className="w-full max-w-[700px] h-[2px] bg-[#B98A91] rounded-full shadow-[0_3px_8px_rgba(185,138,145,0.35)]"></div>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
@@ -789,6 +867,119 @@ export default function AdminMain() {
                                 )}
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* Dashboard Management Card */}
+                <div className="flex justify-center mb-4 sm:mb-5 md:mb-6 px-4">
+                    <div className="w-full max-w-5xl rounded-2xl bg-[#F3E3E3] p-4 sm:p-5 md:p-6 shadow-xl border border-[#f0d8c2]" dir="rtl">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <div className="text-right">
+                                <h3 className="text-xl font-bold text-[#6F1A28] font-[Cairo]">إدارة لوحة الإحصائيات</h3>
+                                <p className="mt-1 text-sm text-[#6F1A28]/85 font-[Cairo]">التحكم في العناصر المعروضة على الصفحة الرئيسية</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={isEditingDashboardSettings ? handleSaveDashboardSettings : () => setIsEditingDashboardSettings(true)}
+                                    className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                                    aria-label={isEditingDashboardSettings ? "حفظ إعدادات اللوحة" : "تعديل إعدادات اللوحة"}
+                                >
+                                    {isEditingDashboardSettings ? (
+                                        <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-700" />
+                                    ) : (
+                                        <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                                    )}
+                                </button>
+                                {isEditingDashboardSettings && (
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelDashboardSettings}
+                                        className="px-3 py-1.5 rounded-lg text-sm font-[Cairo] text-[#86676A] border border-[#86676A]/50 hover:bg-white/50 transition-colors"
+                                    >
+                                        إلغاء
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        <section className="rounded-xl bg-white/70 border border-[#e7d3ce] p-4">
+                            <h4 className="text-base font-bold text-[#6F1A28] font-[Cairo] mb-4">العناصر المعروضة</h4>
+                            <div className="mb-4 rounded-lg border border-[#efdeda] bg-white px-3 py-2.5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-[#291613] text-sm font-[Cairo]">السنة الحالية</span>
+                                    <span className="text-[#291613] font-semibold font-[Cairo]">{new Date().getFullYear()}</span>
+                                </div>
+                                <p className="mt-2 text-xs text-[#6F1A28]/80 font-[Cairo] text-right">
+                                    ملاحظة: السنة تتحدث تلقائيًا حسب السنة الحالية.
+                                </p>
+                            </div>
+                            <ul className="space-y-2">
+                                {dashboardSettingItems.map((item) => (
+                                    <li key={item.key} className="rounded-lg border border-[#efdeda] bg-white px-3 py-2.5">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-[#291613] text-sm font-[Cairo] text-right">{item.label}</span>
+                                            {isEditingDashboardSettings ? (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={draftDashboardSettings[item.key]}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setDraftDashboardSettings((prev) => ({ ...prev, [item.key]: checked }));
+                                                    }}
+                                                    className="h-4 w-4 rounded border-gray-300 text-[#6F1A28] focus:ring-[#6F1A28]"
+                                                    aria-label={`تعديل ${item.label}`}
+                                                />
+                                            ) : (
+                                                <span
+                                                    className={`inline-flex items-center justify-center rounded-md p-1 ${dashboardSettings[item.key] ? 'bg-green-50' : 'bg-red-50'}`}
+                                                    aria-label={dashboardSettings[item.key] ? `${item.label} مفعلة` : `${item.label} مخفية`}
+                                                >
+                                                    {dashboardSettings[item.key] ? (
+                                                        <Check size={18} className="text-green-700" />
+                                                    ) : (
+                                                        <X size={18} className="text-red-700" />
+                                                    )}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+
+                        <div className="mt-4 border-t border-[#e6d7d4] pt-4">
+                            <input
+                                ref={excelInputRef}
+                                type="file"
+                                accept=".xlsx,.xls"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                id="excel-upload"
+                                aria-label="رفع ملف إحصائيات"
+                            />
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                                <h4 className="text-base font-bold text-[#6F1A28] font-[Cairo]">البيانات</h4>
+                                <button
+                                    type="button"
+                                    onClick={() => excelInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold font-[Cairo] text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ab686f] focus-visible:ring-offset-2 ${isUploading ? 'bg-[#ab686f]/70 cursor-not-allowed' : 'bg-[#ab686f] hover:bg-[#95545b] shadow-sm hover:shadow-md'}`}
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    <span>{isUploading ? 'جاري الرفع...' : 'رفع ملف إحصائيات (Excel)'}</span>
+                                </button>
+                            </div>
+                            <p className="text-xs text-[#6F1A28]/80 font-[Cairo] text-right">
+                                ارفع ملف .xlsx لتحديث الأرقام المعروضة في الصفحة الرئيسية.
+                            </p>
+                            {uploadedFile && (
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="text-sm text-[#291613] font-[Cairo]">الملف المختار:</span>
+                                    <span className="text-sm font-medium text-[#6F1A28] font-[Cairo]">{uploadedFile.name}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -943,7 +1134,7 @@ export default function AdminMain() {
                     </div>
 
                     {/* Requests Column */}
-                    <div className="w-full lg:w-[300px] xl:w-[340px] lg:flex-shrink-0">
+                    <div className="w-full lg:w-[300px] xl:w-[340px] lg:flex-shrink-0 lg:min-w-0">
                         <div className="bg-[#F3E3E3] rounded-[16px] sm:rounded-[18px] md:rounded-[20px] p-3 sm:p-4 md:p-5 lg:p-6 shadow-lg border border-[#f0d8c2]">
                             <h3 className="text-[#6F1A28] font-bold text-[16px] sm:text-[17px] md:text-[18px] lg:text-[19px] mb-3 sm:mb-4 font-[Cairo]">
                                 طلبات المشاركة بالمشاريع
@@ -997,7 +1188,7 @@ export default function AdminMain() {
                 {/* Bottom Project Section */}
                 {activeProject ? (
                     <div className="bg-[#F3E3E3] rounded-[16px] sm:rounded-[18px] md:rounded-[20px] p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl border border-[#f0d8c2] w-full relative" dir="rtl">
-                        <div className="flex items-start justify-between gap-4 mb-4 sm:mb-8 flex-row-reverse">
+                        <div className="flex flex-col md:flex-row-reverse md:items-start justify-between gap-4 mb-4 sm:mb-8">
 
                             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                 <button
@@ -1040,7 +1231,7 @@ export default function AdminMain() {
                                 </p>
                             </div>
 
-                            <div className="flex justify-start flex-shrink-0">
+                            <div className="flex justify-start md:justify-start flex-shrink-0 self-start">
                                 <ProjectStatusDropdown
                                     currentStatus={projectStatus}
                                     onStatusChange={handleStatusChange}
@@ -1094,7 +1285,7 @@ export default function AdminMain() {
                                     %{activeProject.progress}
                                 </span>
 
-                                <div className="w-[200px] bg-gray-300 rounded-full h-3 overflow-hidden">
+                                <div className="w-full max-w-[200px] bg-gray-300 rounded-full h-3 overflow-hidden">
                                     <div className="bg-yellow-400 h-3 rounded-full" style={{ width: `${activeProject.progress}%`, marginLeft: 'auto', }} />
                                 </div>
                             </div>

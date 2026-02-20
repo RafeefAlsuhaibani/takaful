@@ -157,28 +157,28 @@ export default function VolunteerApplications() {
 
   return (
     <AdminLayout>
-      <div className="h-full">
+      <div className="h-full w-full overflow-x-hidden">
         {/* Search Bar and Filter */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
           {/* Search */}
-          <div dir="ltr" className="flex justify-start">
-            <div className="relative w-[321px] h-[42px]">
+          <div className="flex justify-start">
+            <div className="relative w-full max-w-sm h-[42px]">
               <div className="absolute inset-0 bg-[#faf6f76b] rounded-[20px] shadow-[inset_0px_0px_8px_#f3e3e3e0,0px_4px_15px_#8d2e4682]" />
               <input
                 type="text"
                 placeholder="البحث..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pl-10 pr-3 text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
+                className="absolute inset-0 w-full h-full bg-transparent border-none outline-none pr-10 pl-3 text-[15px] text-[#4e4a4b] [direction:rtl] font-[Cairo]"
               />
-              <div className="absolute top-1/2 -translate-y-1/2 left-[10px]">
+              <div className="absolute top-1/2 -translate-y-1/2 right-[10px]">
                 <FiSearch className="w-[16px] h-[16px] text-[#4e4a4b]" />
               </div>
             </div>
           </div>
 
           {/* Status Filter */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setStatusFilter('قيد المراجعة')}
               className={`px-4 py-2 rounded-xl font-[Cairo] transition-colors ${
@@ -224,7 +224,7 @@ export default function VolunteerApplications() {
 
         {/* Title Banner */}
         <div className="flex justify-center mb-8">
-          <div className="bg-[#f3e3e3] rounded-[19px] px-12 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-fit min-w-[300px]">
+          <div className="bg-[#f3e3e3] rounded-[19px] px-4 sm:px-8 py-4 border border-[#e0cfd4] shadow-[0px_3px_25px_#8d2e4673] w-full max-w-md">
             <h1 className="text-3xl font-bold text-[#2e2b2c] text-center font-[Cairo]">طلبات الانضمام للمشاريع</h1>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function VolunteerApplications() {
           {filteredApplications.map((application) => (
             <div
               key={application.id}
-              className="bg-[#f3e3e3] rounded-[18px] p-6 border border-[#e0cfd4] shadow-[0px_3px_15px_#8d2e4633]"
+              className="bg-[#f3e3e3] rounded-[18px] p-4 sm:p-6 border border-[#e0cfd4] shadow-[0px_3px_15px_#8d2e4633]"
             >
               {/* Header with Volunteer Name and Status */}
               <div className="flex items-center justify-between mb-4">

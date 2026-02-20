@@ -15,6 +15,54 @@ const filters = [
   { id: 'مكتملة', label: 'الخدمات المكتملة' },
 ];
 
+const WATER_SUPPLY_KEYWORDS = ['water supply', 'سقيا ماء', 'سقيا', 'الماء', 'مشروع السقيا'];
+
+const normalizeText = (value: string) =>
+  value.toLowerCase().trim().replace(/\s+/g, ' ');
+
+const isWaterSupplyService = (title: string) => {
+  const normalizedTitle = normalizeText(title);
+  return WATER_SUPPLY_KEYWORDS.some((keyword) => normalizedTitle.includes(normalizeText(keyword)));
+};
+
+const serviceSteps = [
+  {
+    num: 1,
+    label: 'اختر نوع الكفالة',
+    desc: 'تصفح الخدمات المتاحة التي تريد دعمها',
+    icon: 'Lightbulb',
+    above: true,
+  },
+  {
+    num: 2,
+    label: 'مراجعة واعتماد',
+    desc: 'يقوم الفريق المسؤول بمراجعة طلبك واعتماده خلال 24 ساعة',
+    icon: 'ClipboardList',
+    above: false,
+  },
+  {
+    num: 3,
+    label: 'التحضير والتوصيل',
+    desc: 'يتم تكليف أفضل المتطوعين لتحضير وتوصيل الخدمة للمستفيدين',
+    icon: 'HandHeart',
+    above: true,
+  },
+  {
+    num: 4,
+    label: 'التوثيق الميداني',
+    desc: 'يقوم المندوب بتوثيق عملية التسليم بالصور والفيديوهات',
+    icon: 'CheckCircle2',
+    above: false,
+  },
+  {
+    num: 5,
+    label: 'تقرير التنفيذ',
+    desc: 'تستلم تقريراً مفصلاً عن التنفيذ مع الصور والتوثيق كامل',
+    icon: 'CheckCircle2',
+    above: true,
+  },
+];
+
 function Services() {
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [activeService, setActiveService] = useState<Service | null>(null);
@@ -72,7 +120,9 @@ function Services() {
           <ServiceCard
             service={service}
             onDetails={setActiveService}
-            onRegister={() => navigate('/volunteers')}
+            onRegister={(selectedService) =>
+              navigate(isWaterSupplyService(selectedService.title) ? '/services/water-supply' : '/volunteers')
+            }
           />
         </div>
       )),
@@ -137,6 +187,78 @@ function Services() {
         </div>
       </section>
 
+      {/* Service Timeline */}
+      <section className="py-12 md:py-16 bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="relative" dir="rtl">
+            <div className="md:hidden relative space-y-5">
+              <div className="absolute right-1/2 top-3 bottom-3 w-1 -translate-x-1/2 rounded-full bg-brand-600/80" aria-hidden />
+              {serviceSteps.map(({ num, label, desc, icon }) => (
+                <div key={num} className="relative flex flex-col items-center gap-3">
+                  <div className="z-10 w-8 h-8 rounded-full border-2 border-brand-600 bg-white shadow-sm ring-2 ring-white flex items-center justify-center">
+                    <Icon name={icon} size={14} className="text-brand-600" />
+                  </div>
+                  <div className="w-full rounded-xl border border-gray-100 bg-white p-3 text-right shadow-sm">
+                    <p className="text-sm font-bold text-gray-900 leading-tight">{num}. {label}</p>
+                    <p className="mt-2 text-xs text-gray-600 leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block">
+              <div
+                className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-brand-600 shadow-sm"
+                aria-hidden
+              />
+              <div className="relative flex justify-between items-center gap-2 md:gap-4">
+                {serviceSteps.map(({ num, label, desc, icon, above }) => (
+                  <div
+                    key={num}
+                    className="flex flex-1 flex-col items-center justify-center min-w-0"
+                  >
+                    {above ? (
+                      <div className="text-center px-0.5 mb-2 space-y-0.5">
+                        <p className="text-xs md:text-sm font-bold text-gray-900 leading-tight">
+                          {num}. {label}
+                        </p>
+                        <p className="text-[10px] md:text-xs text-gray-500 leading-snug max-w-[140px] md:max-w-[160px] mx-auto">
+                          {desc}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="h-20 md:h-24 shrink-0" aria-hidden />
+                    )}
+                    <div
+                      className="shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-brand-600 bg-white shadow-md ring-2 ring-white flex items-center justify-center"
+                      aria-hidden
+                    >
+                      <Icon
+                        name={icon}
+                        size={18}
+                        className="text-brand-600"
+                      />
+                    </div>
+                    {above ? (
+                      <span className="h-20 md:h-24 shrink-0" aria-hidden />
+                    ) : (
+                      <div className="text-center px-0.5 mt-2 space-y-0.5">
+                        <p className="text-xs md:text-sm font-bold text-gray-900 leading-tight">
+                          {num}. {label}
+                        </p>
+                        <p className="text-[10px] md:text-xs text-gray-500 leading-snug max-w-[140px] md:max-w-[160px] mx-auto">
+                          {desc}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Filter Chips */}
       <section className="py-8 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
@@ -171,6 +293,10 @@ function Services() {
           {loading ? (
             <div className="flex justify-center items-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-red-600">{error}</p>
             </div>
           ) : (
             <>

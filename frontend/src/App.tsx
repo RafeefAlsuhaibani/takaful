@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 
 import { AuthProvider } from './contexts/AuthContext';
+import { DashboardSettingsProvider } from './contexts/DashboardSettingsContext';
 import { ToastProvider } from './contexts/ToastContext';
 
 // Layouts
@@ -18,6 +19,7 @@ import AdminSignIn from './components/pages/admin/AdminSignIn';
 import Suggest from './components/pages/Suggest';
 import About from './components/pages/About';
 import RequestService from './components/pages/RequestService';
+import WaterSupplyRequestPage from './components/pages/WaterSupplyRequestPage.tsx';
 
 // User Pages
 import UserMain from './components/pages/user/Main';
@@ -39,16 +41,19 @@ import ServiceRequests from './components/pages/admin/ServiceRequests';
 // هذا الكومبوننت هو اللي يقدر يستخدم useLocation
 function AppContent() {
   const location = useLocation();
+  const pathname = location.pathname.toLowerCase();
 
   // بدون هيدر وفوتر
-  const isUserPage = location.pathname.startsWith('/user');
-  const isAdminPage = location.pathname.startsWith('/Admin');
+  const isUserPage = pathname.startsWith('/user');
+  const isAdminPage = pathname.startsWith('/admin');
+  const isAdminSignInPage = pathname === '/admin/signin';
+  const hidePublicChrome = isUserPage || (isAdminPage && !isAdminSignInPage);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
       {/* Navbar للصفحات العامة فقط */}
-      {!isUserPage && !isAdminPage && <Navbar />}
+      {!hidePublicChrome && <Navbar />}
 
       <main className="flex-1">
         <Routes>
@@ -64,6 +69,7 @@ function AppContent() {
           <Route path="/suggest" element={<Suggest />} />
           <Route path="/about" element={<About />} />
           <Route path="/request-service" element={<RequestService />} />
+          <Route path="/services/water-supply" element={<WaterSupplyRequestPage />} />
 
           {/* صفحات اليوزر */}
           <Route path="/user/main" element={<UserMain />} />
@@ -85,7 +91,7 @@ function AppContent() {
       </main>
 
       {/* Footer للصفحات العامة فقط */}
-      {!isUserPage && !isAdminPage && <Footer />}
+      {!hidePublicChrome && <Footer />}
     </div>
   );
 }
@@ -95,9 +101,11 @@ export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <DashboardSettingsProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </DashboardSettingsProvider>
       </ToastProvider>
     </AuthProvider>
   );

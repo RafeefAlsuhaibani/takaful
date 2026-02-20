@@ -147,7 +147,7 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-black/50 opacity-0 animate-fadeIn overscroll-none"
+      className="fixed inset-0 z-[60] bg-black/50 opacity-0 animate-fadeIn overscroll-none"
       style={{ animation: 'fadeIn 200ms ease-out forwards', touchAction: 'none' }}
       onClick={handleOverlayClick}
       onTouchMove={(e) => {
@@ -157,7 +157,7 @@ export default function Modal({ open, onClose, children, labelledById, lockTarge
         }
       }}
     >
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ touchAction: 'none' }}>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ touchAction: 'none' }}>
         <div
           ref={dialogRef}
           role="dialog"

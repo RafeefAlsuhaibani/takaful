@@ -645,7 +645,7 @@ function OpportunitiesSection() {
 
   return (
     <>
-      <div className="fixed top-4 left-4 z-[9999] space-y-2" dir="rtl">
+      <div className="fixed top-4 left-4 z-40 space-y-2" dir="rtl">
         {toasts.map((toast) => (
           <Toast
             key={toast.id}
@@ -712,11 +712,11 @@ function OpportunitiesSection() {
 
       {showApplyPopup && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
           onClick={handleCancelApply}
         >
           <div
-            className="bg-white rounded-3xl p-8 w-[400px] shadow-2xl border-4 border-[#C49FA3]"
+            className="bg-white rounded-3xl p-5 sm:p-8 w-full max-w-sm sm:max-w-md mx-4 shadow-2xl border-4 border-[#C49FA3]"
             style={{ direction: 'rtl' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -732,7 +732,7 @@ function OpportunitiesSection() {
               </span>
             </p>
 
-            <div className="flex gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={handleConfirmApply}
                 className="px-6 py-2 bg-gradient-to-r from-[#a83451ff] to-[#E4B106] 
@@ -905,7 +905,7 @@ function TasksSection({ onMoreClick }: TasksSectionProps) {
 
   return (
     <>
-      <div className="fixed top-4 left-4 z-[9999] space-y-2" dir="rtl">
+      <div className="fixed top-4 left-4 z-40 space-y-2" dir="rtl">
         {toasts.map((toast) => (
           <Toast
             key={toast.id}
@@ -981,11 +981,11 @@ function TasksSection({ onMoreClick }: TasksSectionProps) {
 
       {showWithdrawPopup && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
           onClick={handleCancelWithdraw}
         >
           <div
-            className="bg-white rounded-3xl p-8 w-[400px] shadow-2xl border-4 border-[#E2C9A2]"
+            className="bg-white rounded-3xl p-5 sm:p-8 w-full max-w-sm sm:max-w-md mx-4 shadow-2xl border-4 border-[#E2C9A2]"
             style={{ direction: 'rtl' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1001,7 +1001,7 @@ function TasksSection({ onMoreClick }: TasksSectionProps) {
               </span>
             </p>
 
-            <div className="flex gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={handleConfirmWithdraw}
                 className="px-6 py-2 bg-gradient-to-r from-[#a83451ff] to-[#E4B106] 
@@ -1035,7 +1035,7 @@ export default function UserMain() {
 
   return (
     <SidebarLayout>
-      <div className="h-full" dir="rtl">
+      <div className="h-full overflow-x-hidden" dir="rtl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
           <HadithCard />
           <SearchBox />

@@ -4,9 +4,12 @@ import Icon from '../ui/Icon';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Hero from '../ui/Hero';
+import HomeVolunteerDashboard from './HomeVolunteerDashboard';
+import { useDashboardSettings } from '../../contexts/useDashboardSettings';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const { settings } = useDashboardSettings();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -29,7 +32,6 @@ export default function Home() {
   return (
     <div className="relative min-h-screen bg-white overflow-hidden">
       <Hero />
-
       <section className="py-16">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -73,6 +75,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <HomeVolunteerDashboard />
 
       <section id="services" className="py-16 bg-gray-50 relative z-10">
         <div className="max-w-6xl mx-auto px-4">

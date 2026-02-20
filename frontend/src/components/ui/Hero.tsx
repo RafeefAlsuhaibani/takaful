@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Lightbulb, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatCounter from './StatCounter';
@@ -13,11 +13,10 @@ interface Stats {
 
 export default function Hero() {
   const [stats, setStats] = useState<Stats>({
-    beneficiaries: 0,
-    potential_projects: 0,
-    donations: 0,
+    beneficiaries: 67000,
+    potential_projects: 2150,
+    donations: 1500000,
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -29,19 +28,16 @@ export default function Hero() {
         }
       } catch (error) {
         console.error('Error fetching home stats:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchStats();
   }, []);
 
-  // Format stats for display
   const displayStats = [
     { label: 'مستفيد', value: stats.beneficiaries },
     { label: 'مشروع محتمل', value: stats.potential_projects },
-    { label: 'متبرع', value: Math.floor(stats.donations / 100) }, // Estimate donors from donations
+    { label: 'متبرع', value: Math.floor(stats.donations / 100) },
   ];
 
   return (
@@ -80,36 +76,20 @@ export default function Hero() {
 
         {/* الكروت */}
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5 md:gap-6">
-          {loading ? (
-            // Loading skeleton
-            [1, 2, 3].map((i) => (
-              <Card
-                key={i}
-                className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg px-6 py-6 md:py-7 text-center animate-pulse"
-              >
-                <div className="h-10 bg-white/20 rounded mb-2"></div>
-                <div className="h-4 bg-white/20 rounded w-2/3 mx-auto"></div>
-              </Card>
-            ))
-          ) : (
-            displayStats.map((stat, index) => (
-              <Card
-                key={index}
-                className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg px-6 py-6 md:py-7 text-center animate-fadeIn transition-all duration-500"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-sm">
-                  <StatCounter value={stat.value} />
-                  {index === 0 && <span className="text-2xl">+</span>}
-                  {index === 1 && <span className="text-2xl">+</span>}
-                  {index === 2 && <span className="text-2xl">+</span>}
-                </div>
-                <div className="mt-1 text-sm md:text-base text-white/85">
-                  {stat.label}
-                </div>
-              </Card>
-            ))
-          )}
+          {displayStats.map((stat, index) => (
+            <Card
+              key={index}
+              className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg px-6 py-6 md:py-7 text-center animate-fadeIn transition-all duration-500"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-sm">
+                <StatCounter value={stat.value} />
+              </div>
+              <div className="mt-1 text-sm md:text-base text-white/85">
+                {stat.label}
+              </div>
+            </Card>
+          ))}
         </div>
 
         {/* الزر */}
