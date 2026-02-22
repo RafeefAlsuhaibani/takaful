@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    Project, Service, ServiceRequest, Volunteer, Suggestion,
+    Project, Service, ServiceRequest, ServiceVolunteerApplication, Volunteer, Suggestion,
     ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication
 )
 from django.contrib.auth.models import User
@@ -55,13 +55,13 @@ class ProjectSerializer(serializers.ModelSerializer):
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ['id', 'title', 'desc', 'status', 'is_active', 'created_at']
+        fields = ['id', 'title', 'desc', 'status', 'service_type', 'is_active', 'created_at']
         read_only_fields = ['created_at']
 
 
 class ServiceRequestSerializer(serializers.ModelSerializer):
     service_title = serializers.CharField(source='service.title', read_only=True)
-    
+
     class Meta:
         model = ServiceRequest
         fields = [
@@ -75,6 +75,32 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = ['created_at']
+
+
+class ServiceVolunteerApplicationSerializer(serializers.ModelSerializer):
+    volunteer_name = serializers.CharField(source='volunteer.profile.name', read_only=True)
+    volunteer_email = serializers.CharField(source='volunteer.email', read_only=True)
+    service_title = serializers.CharField(source='service.title', read_only=True)
+    reviewed_by_name = serializers.CharField(source='reviewed_by.profile.name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = ServiceVolunteerApplication
+        fields = [
+            'id',
+            'volunteer',
+            'volunteer_name',
+            'volunteer_email',
+            'service',
+            'service_title',
+            'status',
+            'message',
+            'admin_notes',
+            'applied_at',
+            'reviewed_at',
+            'reviewed_by',
+            'reviewed_by_name',
+        ]
+        read_only_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'volunteer_name', 'volunteer_email', 'service_title', 'reviewed_by_name']
 
 
 class VolunteerSerializer(serializers.ModelSerializer):

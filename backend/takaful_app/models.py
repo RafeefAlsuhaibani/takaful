@@ -64,9 +64,15 @@ class Service(models.Model):
         ("مكتملة", "مكتملة"),
     ]
 
+    SERVICE_TYPE_CHOICES = [
+        ("للمستفيدين", "للمستفيدين"),  # For beneficiaries (main page)
+        ("للمتطوعين", "للمتطوعين"),    # For volunteers (/services page)
+    ]
+
     title = models.CharField(max_length=200)
     desc = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="متاحة")
+    service_type = models.CharField(max_length=20, choices=SERVICE_TYPE_CHOICES, default="للمتطوعين")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -91,6 +97,37 @@ class ServiceRequest(models.Model):
 
     def __str__(self):
         return f"{self.service.title} for {self.beneficiary_name}"
+
+
+class ServiceVolunteerApplication(models.Model):
+    """
+    Volunteer applications to services
+    When volunteers apply to help with a service, an application is created
+    Admin reviews and accepts/rejects applications
+    """
+    STATUS_CHOICES = [
+        ("قيد المراجعة", "Under Review"),
+        ("مقبول", "Accepted"),
+        ("مرفوض", "Rejected"),
+    ]
+
+    volunteer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="service_applications")
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="volunteer_applications")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="قيد المراجعة")
+    message = models.TextField(blank=True)  # Optional message from volunteer
+    admin_notes = models.TextField(blank=True)  # Notes from admin during review
+
+    applied_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="reviewed_service_applications")
+
+    class Meta:
+        unique_together = ['volunteer', 'service']
+        ordering = ['-applied_at']
+
+    def __str__(self):
+        return f"{self.volunteer.email} - {self.service.title} ({self.status})"
 
 
 class Volunteer(models.Model):

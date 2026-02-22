@@ -16,15 +16,18 @@ export type HomeService = {
 
 // Detailed service type for services page
 export type Service = {
-  id: string;
+  id: string | number;
   title: string;
   desc: string;
   status: "متاحة" | "قادمة" | "مكتملة";
+  service_type: "للمستفيدين" | "للمتطوعين";
+  is_active?: boolean;
+  created_at?: string;
   category?: string;
-  beneficiaries: number;
-  date: string;
-  location: string;
-  org: string;
+  beneficiaries?: number;
+  date?: string;
+  location?: string;
+  org?: string;
   icon?: string;
   details?: {
     summary: string;

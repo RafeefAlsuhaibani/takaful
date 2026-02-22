@@ -9,11 +9,11 @@ from django.db.models import Sum, Count, Q
 from django.utils import timezone
 
 from .models import (
-    Project, Service, ServiceRequest, Volunteer, Suggestion,
+    Project, Service, ServiceRequest, ServiceVolunteerApplication, Volunteer, Suggestion,
     ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication
 )
 from .serializers import (
-    ProjectSerializer, ServiceSerializer, ServiceRequestSerializer,
+    ProjectSerializer, ServiceSerializer, ServiceRequestSerializer, ServiceVolunteerApplicationSerializer,
     VolunteerSerializer, SuggestionSerializer, ProjectAssignmentSerializer,
     TaskSerializer, SubtaskSerializer, VolunteerDetailSerializer,
     VolunteerRequestSerializer, AdminReportSerializer, VolunteerApplicationSerializer
@@ -1571,11 +1571,168 @@ def public_submit_service_request(request):
 def public_services_list(request):
     """
     GET /api/public-services/
-    List all active services for public viewing
+    List all active VOLUNTEER OPPORTUNITY services for /services page
     No authentication required
     """
-    services = Service.objects.filter(is_active=True).order_by('-created_at')
+    services = Service.objects.filter(
+        is_active=True,
+        service_type="للمتطوعين"  # Only volunteer opportunity services
+    ).order_by('-created_at')
     serializer = ServiceSerializer(services, many=True)
     return Response({
         'results': serializer.data
     })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def beneficiary_services_list(request):
+    """
+    GET /api/beneficiary-services/
+    List all active BENEFICIARY services for main page
+    No authentication required
+    """
+    services = Service.objects.filter(
+        is_active=True,
+        service_type="للمستفيدين"  # Only beneficiary services
+    ).order_by('-created_at')
+    serializer = ServiceSerializer(services, many=True)
+    return Response({
+        'results': serializer.data
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def apply_to_service_as_volunteer(request, service_id):
+    """
+    POST /api/services/{service_id}/apply-volunteer/
+    Apply to help with a service as a volunteer
+    Requires authentication
+    """
+    try:
+        service = Service.objects.get(id=service_id)
+        user = request.user
+
+        # Check if already applied
+        existing_application = ServiceVolunteerApplication.objects.filter(
+            service=service,
+            volunteer=user
+        ).first()
+
+        if existing_application:
+            return Response(
+                {'message': 'لقد تقدمت للمساعدة في هذه الخدمة من قبل'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create new application
+        application = ServiceVolunteerApplication.objects.create(
+            volunteer=user,
+            service=service,
+            message=request.data.get('message', ''),
+            status='قيد المراجعة'
+        )
+
+        return Response({
+            'message': 'تم إرسال طلبك للمساعدة بنجاح. سيتم مراجعته من قبل المشرف.',
+            'application_id': application.id
+        })
+
+    except Service.DoesNotExist:
+        return Response(
+            {'error': 'الخدمة غير موجودة'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+
+# ============================================================================
+# ADMIN: SERVICE VOLUNTEER APPLICATIONS MANAGEMENT
+# ============================================================================
+
+@api_view(['GET'])
+@permission_classes([IsAdmin])
+def list_service_volunteer_applications(request):
+    """
+    GET /api/admin/service-volunteer-applications/
+    List all volunteer applications for services with optional status filter
+    """
+    status_filter = request.query_params.get('status', None)
+
+    applications = ServiceVolunteerApplication.objects.select_related(
+        'volunteer__profile', 'service', 'reviewed_by__profile'
+    ).all()
+
+    if status_filter:
+        applications = applications.filter(status=status_filter)
+
+    serializer = ServiceVolunteerApplicationSerializer(applications, many=True)
+    return Response({'results': serializer.data})
+
+
+@api_view(['POST'])
+@permission_classes([IsAdmin])
+def accept_service_volunteer_application(request, application_id):
+    """
+    POST /api/admin/service-volunteer-applications/{application_id}/accept/
+    Accept a volunteer application for a service
+    """
+    try:
+        application = ServiceVolunteerApplication.objects.get(id=application_id)
+
+        if application.status != 'قيد المراجعة':
+            return Response(
+                {'error': 'هذا الطلب تم مراجعته بالفعل'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update application status
+        application.status = 'مقبول'
+        application.reviewed_by = request.user
+        application.reviewed_at = timezone.now()
+        application.admin_notes = request.data.get('admin_notes', '')
+        application.save()
+
+        return Response({
+            'message': 'تم قبول المتطوع للمساعدة في الخدمة'
+        })
+
+    except ServiceVolunteerApplication.DoesNotExist:
+        return Response(
+            {'error': 'الطلب غير موجود'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAdmin])
+def reject_service_volunteer_application(request, application_id):
+    """
+    POST /api/admin/service-volunteer-applications/{application_id}/reject/
+    Reject a volunteer application for a service
+    """
+    try:
+        application = ServiceVolunteerApplication.objects.get(id=application_id)
+
+        if application.status != 'قيد المراجعة':
+            return Response(
+                {'error': 'هذا الطلب تم مراجعته بالفعل'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update application status
+        application.status = 'مرفوض'
+        application.reviewed_by = request.user
+        application.reviewed_at = timezone.now()
+        application.admin_notes = request.data.get('admin_notes', '')
+        application.save()
+
+        return Response({
+            'message': 'تم رفض الطلب'
+        })
+
+    except ServiceVolunteerApplication.DoesNotExist:
+        return Response(
+            {'error': 'الطلب غير موجود'},
+            status=status.HTTP_404_NOT_FOUND
+        )

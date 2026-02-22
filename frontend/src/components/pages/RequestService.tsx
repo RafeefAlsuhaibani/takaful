@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Button from '../ui/Button';
 import { useToast } from '../../contexts/ToastContext';
 import { API_BASE_URL } from '../../config';
@@ -12,6 +13,7 @@ interface Service {
 }
 
 export default function RequestService() {
+  const location = useLocation();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const { success, error } = useToast();
@@ -26,6 +28,14 @@ export default function RequestService() {
   useEffect(() => {
     fetchServices();
   }, []);
+
+  // Pre-select service if passed from navigation
+  useEffect(() => {
+    const state = location.state as { serviceId?: string | number };
+    if (state?.serviceId) {
+      setFormData(prev => ({ ...prev, service: String(state.serviceId) }));
+    }
+  }, [location.state]);
 
   const fetchServices = async () => {
     try {

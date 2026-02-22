@@ -18,8 +18,12 @@ urlpatterns = [
     path('public-volunteers-stats/', views.public_volunteers_stats, name='public-volunteers-stats'),
     path('public-suggestions/', views.public_submit_suggestion, name='public-suggestions'),
     path('public-home-stats/', views.public_home_stats, name='public-home-stats'),
-    path('public-services/', views.public_services_list, name='public-services'),  # NEW: List services
-    path('public-service-request/', views.public_submit_service_request, name='public-service-request'),  # NEW: Submit service request
+    path('public-services/', views.public_services_list, name='public-services'),  # Volunteer opportunity services (/services page)
+    path('beneficiary-services/', views.beneficiary_services_list, name='beneficiary-services'),  # Beneficiary services (main page)
+    path('public-service-request/', views.public_submit_service_request, name='public-service-request'),  # Submit service request
+
+    # Service volunteer applications (requires auth)
+    path('services/<int:service_id>/apply-volunteer/', views.apply_to_service_as_volunteer, name='apply-to-service-volunteer'),
 
     # Include router URLs
     path('', include(router.urls)),
@@ -41,6 +45,11 @@ urlpatterns = [
     path('admin/applications/', views.list_volunteer_applications, name='list-applications'),
     path('admin/applications/<int:application_id>/accept/', views.accept_volunteer_application, name='accept-application'),
     path('admin/applications/<int:application_id>/reject/', views.reject_volunteer_application, name='reject-application'),
+
+    # Service Volunteer Applications (NEW - volunteers applying to help with services)
+    path('admin/service-volunteer-applications/', views.list_service_volunteer_applications, name='list-service-volunteer-applications'),
+    path('admin/service-volunteer-applications/<int:application_id>/accept/', views.accept_service_volunteer_application, name='accept-service-volunteer-application'),
+    path('admin/service-volunteer-applications/<int:application_id>/reject/', views.reject_service_volunteer_application, name='reject-service-volunteer-application'),
 
     # Performance reports (NEW)
     path('reports/projects-progress/', views.projects_progress_report, name='projects-progress'),
