@@ -148,9 +148,44 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ===========================
 
 # CORS Configuration
-# Allow all origins for deployment (Vercel has many preview URLs)
-CORS_ALLOW_ALL_ORIGINS = True
+# Explicit origins for credentials support
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "https://takaful-one.vercel.app,http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
+
+# Also allow Vercel preview URLs
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://takaful-.*\.vercel\.app$",
+]
+
 CORS_ALLOW_CREDENTIALS = True
+
+# Allow all headers and methods
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
