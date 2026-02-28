@@ -10,13 +10,15 @@ from django.utils import timezone
 
 from .models import (
     Project, Service, ServiceRequest, ServiceVolunteerApplication, Volunteer, Suggestion,
-    ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication
+    ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication,
+    VolunteerStatistics
 )
 from .serializers import (
     ProjectSerializer, ServiceSerializer, ServiceRequestSerializer, ServiceVolunteerApplicationSerializer,
     VolunteerSerializer, SuggestionSerializer, ProjectAssignmentSerializer,
     TaskSerializer, SubtaskSerializer, VolunteerDetailSerializer,
-    VolunteerRequestSerializer, AdminReportSerializer, VolunteerApplicationSerializer
+    VolunteerRequestSerializer, AdminReportSerializer, VolunteerApplicationSerializer,
+    VolunteerStatisticsSerializer
 )
 
 
@@ -1736,3 +1738,33 @@ def reject_service_volunteer_application(request, application_id):
             {'error': 'الطلب غير موجود'},
             status=status.HTTP_404_NOT_FOUND
         )
+
+
+# ============================================================================
+# PUBLIC: VOLUNTEER STATISTICS ENDPOINT
+# ============================================================================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_volunteer_statistics(request):
+    """
+    GET /api/public-volunteer-statistics/
+    Returns volunteer statistics for the home page dashboard
+    Optional query param: ?year=2025 (defaults to latest year)
+    """
+    year = request.query_params.get('year', None)
+
+    if year:
+        stats = VolunteerStatistics.objects.filter(year=int(year)).first()
+    else:
+        # Get the most recent year's statistics
+        stats = VolunteerStatistics.objects.first()
+
+    if not stats:
+        return Response({
+            'error': 'No statistics found',
+            'data': None
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = VolunteerStatisticsSerializer(stats)
+    return Response(serializer.data)

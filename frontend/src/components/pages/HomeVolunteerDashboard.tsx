@@ -3,30 +3,57 @@ import Card from '../ui/Card';
 import DonutChart from '../ui/DonutChart';
 import { useDashboardSettings } from '../../contexts/useDashboardSettings';
 import { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../config';
 
-const DEBUG_DASHBOARD_SETTINGS = true;
+interface TopVolunteer {
+  rank: number;
+  name: string;
+  hours: number;
+}
 
-// Static data used for demo purposes
-const STATIC_DATA = {
-  kpis: {
-    hours: '79,584',
-    impactValue: '1.03M',
-  },
-  volunteerCounts: {
-    new: 1240,
-    repeat: 580,
-  },
-  topVolunteers: [
-    { name: 'أحمد علي', hours: 320 },
-    { name: 'سارة محمد', hours: 298 },
-    { name: 'خالد عبدالله', hours: 256 },
-  ],
-};
+interface DepartmentHours {
+  label: string;
+  value: number;
+  percentage: number;
+  color: string;
+}
+
+interface VolunteerStats {
+  year: number;
+  total_volunteers: number;
+  new_volunteers: number;
+  returning_volunteers: number;
+  total_hours: number;
+  hours_display: string;
+  contribution_value_display: string;
+  top_volunteers: TopVolunteer[];
+  department_hours: DepartmentHours[];
+}
 
 export default function HomeVolunteerDashboard() {
   const { settings } = useDashboardSettings();
-  const currentYear = settings?.year ?? new Date().getFullYear();
-  const totalVolunteers = STATIC_DATA.volunteerCounts.new + STATIC_DATA.volunteerCounts.repeat;
+  const [stats, setStats] = useState<VolunteerStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/public-volunteer-statistics/`);
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch volunteer statistics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const currentYear = stats?.year ?? settings?.year ?? new Date().getFullYear();
+  const totalVolunteers = stats?.total_volunteers ?? 0;
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia('(max-width: 640px)').matches;
@@ -43,8 +70,25 @@ export default function HomeVolunteerDashboard() {
     return () => media.removeEventListener('change', onChange);
   }, []);
 
-  if (DEBUG_DASHBOARD_SETTINGS) console.log('[HomeVolunteerDashboard] render with settings:', settings);
+  // Don't render if dashboard is disabled or still loading
   if (!settings.showDashboard) return null;
+  if (loading) {
+    return (
+      <section className="relative z-10 bg-[#f8f3f1] py-12" dir="rtl">
+        <div className="mx-auto max-w-6xl px-4 text-center">
+          <p className="text-[#7f6761]">جاري تحميل الإحصائيات...</p>
+        </div>
+      </section>
+    );
+  }
+  if (!stats) return null;
+
+  // Prepare donut chart segments from department hours
+  const donutSegments = stats.department_hours?.slice(0, 4).map(dept => ({
+    label: dept.label,
+    value: dept.percentage,
+    color: dept.color,
+  })) || [];
 
   return (
     <section className="relative z-10 bg-[#f8f3f1] py-12" dir="rtl">
@@ -66,7 +110,7 @@ export default function HomeVolunteerDashboard() {
                   </div>
                   <h3 className="text-base font-semibold text-[#5b3b34]">عدد الساعات التطوعية</h3>
                   <p className="mt-1 text-xs text-[#8d726b]">مجموع ساعات التطوع</p>
-                  <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{STATIC_DATA.kpis.hours}</div>
+                  <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{stats.hours_display}</div>
                   <p className="mt-2 text-xs text-[#8d726b]">حسب بيانات العام الحالي</p>
                 </div>
               </Card>
@@ -80,7 +124,7 @@ export default function HomeVolunteerDashboard() {
                   </div>
                   <h3 className="text-base font-semibold text-[#5b3b34]">قيمة إسهام المتطوع</h3>
                   <p className="mt-1 text-xs text-[#8d726b]">قيمة الأثر الإجمالي</p>
-                  <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{STATIC_DATA.kpis.impactValue}</div>
+                  <div className="mt-4 text-3xl font-extrabold text-[#6B1F2B] md:text-4xl">{stats.contribution_value_display}</div>
                   <p className="mt-2 text-xs text-[#8d726b]">حسب بيانات العام الحالي</p>
                 </div>
               </Card>
@@ -104,7 +148,7 @@ export default function HomeVolunteerDashboard() {
 
         {/* Row 2: Charts Area */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {settings.showDonut && (
+          {settings.showDonut && donutSegments.length > 0 && (
             <Card className="h-full rounded-2xl border border-[#eadfda] bg-[#fffdfa] p-6 md:p-7 shadow-[0_2px_12px_rgba(107,31,43,0.06)] lg:col-span-2">
               <div className="mb-4 text-right">
                 <h3 className="text-base font-semibold text-[#5b3b34]">مجموع الساعات التطوعية للإدارات</h3>
@@ -114,18 +158,13 @@ export default function HomeVolunteerDashboard() {
                 total={100}
                 size={isMobile ? 210 : 260}
                 strokeWidth={22}
-                segments={[
-                  { label: 'إدارة أ', value: 40, color: '#6B1F2B' },
-                  { label: 'إدارة ب', value: 30, color: '#D6B25E' },
-                  { label: 'إدارة ج', value: 20, color: '#E7B7BE' },
-                  { label: 'أخرى', value: 10, color: '#BFA8A1' },
-                ]}
+                segments={donutSegments}
               />
             </Card>
           )}
 
           <div className={`${settings.showDonut ? 'lg:col-span-1' : 'lg:col-span-3'} space-y-4`}>
-            {settings.showTopVolunteers && (
+            {settings.showTopVolunteers && stats.top_volunteers?.length > 0 && (
               <Card className="h-full rounded-2xl border border-[#eadfda] bg-[#fffdfa] p-5 shadow-[0_2px_12px_rgba(107,31,43,0.06)]">
                 <div className="mb-4 text-right">
                   <h3 className="text-base font-semibold text-[#5b3b34]">أفضل المتطوعين</h3>
@@ -133,14 +172,14 @@ export default function HomeVolunteerDashboard() {
                 </div>
 
                 <div className="space-y-3">
-                  {STATIC_DATA.topVolunteers.map((volunteer, idx) => (
+                  {stats.top_volunteers.map((volunteer) => (
                     <div
-                      key={idx}
+                      key={volunteer.rank}
                       className="flex items-center justify-between border-b border-[#f1e7e4] pb-3 last:border-b-0 last:pb-0"
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3e3cd] text-xs font-bold text-[#6B1F2B]">
-                          {idx + 1}
+                          {volunteer.rank}
                         </div>
 
                         <p className="text-sm font-medium text-[#3f302c]">

@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     Project, Service, ServiceRequest, ServiceVolunteerApplication, Volunteer, Suggestion,
-    ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication
+    ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication,
+    VolunteerStatistics, QuarterlyTarget, DepartmentHours, TopVolunteer
 )
 from django.contrib.auth.models import User
 
@@ -386,3 +387,61 @@ class VolunteerApplicationSerializer(serializers.ModelSerializer):
         if obj.reviewed_by and hasattr(obj.reviewed_by, 'profile'):
             return obj.reviewed_by.profile.name
         return None
+
+
+# ============================================================================
+# VOLUNTEER STATISTICS SERIALIZERS
+# ============================================================================
+
+class QuarterlyTargetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuarterlyTarget
+        fields = ['quarter', 'volunteer_target', 'volunteer_actual', 'hours_target', 'hours_actual']
+
+
+class DepartmentHoursSerializer(serializers.ModelSerializer):
+    label = serializers.CharField(source='department_name_ar')
+    value = serializers.IntegerField(source='hours')
+
+    class Meta:
+        model = DepartmentHours
+        fields = ['label', 'value', 'percentage', 'color', 'department_name', 'department_name_ar']
+
+
+class TopVolunteerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TopVolunteer
+        fields = ['rank', 'name', 'hours']
+
+
+class VolunteerStatisticsSerializer(serializers.ModelSerializer):
+    quarterly_targets = QuarterlyTargetSerializer(many=True, read_only=True)
+    department_hours = DepartmentHoursSerializer(many=True, read_only=True)
+    top_volunteers = TopVolunteerSerializer(many=True, read_only=True)
+
+    # Formatted display values
+    hours_display = serializers.SerializerMethodField()
+    volunteers_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VolunteerStatistics
+        fields = [
+            'year',
+            'total_volunteers',
+            'new_volunteers',
+            'returning_volunteers',
+            'total_hours',
+            'hours_display',
+            'volunteers_display',
+            'total_contribution_value',
+            'contribution_value_display',
+            'quarterly_targets',
+            'department_hours',
+            'top_volunteers',
+        ]
+
+    def get_hours_display(self, obj):
+        return f"{obj.total_hours:,}"
+
+    def get_volunteers_display(self, obj):
+        return f"{obj.total_volunteers:,}"

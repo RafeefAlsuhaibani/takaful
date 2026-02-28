@@ -317,3 +317,100 @@ class VolunteerApplication(models.Model):
 
     def __str__(self):
         return f"{self.volunteer.email} -> {self.project.title} ({self.status})"
+
+
+class VolunteerStatistics(models.Model):
+    """
+    Yearly volunteer statistics for the dashboard
+    """
+    year = models.IntegerField(unique=True)
+
+    # Volunteer counts
+    total_volunteers = models.IntegerField(default=0)
+    new_volunteers = models.IntegerField(default=0)
+    returning_volunteers = models.IntegerField(default=0)
+
+    # Hours
+    total_hours = models.IntegerField(default=0)
+
+    # Value
+    total_contribution_value = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    contribution_value_display = models.CharField(max_length=50, blank=True)  # e.g., "1.03M"
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Volunteer Statistics"
+        ordering = ['-year']
+
+    def __str__(self):
+        return f"Volunteer Statistics {self.year}"
+
+
+class QuarterlyTarget(models.Model):
+    """
+    Quarterly targets for volunteers and hours
+    """
+    QUARTER_CHOICES = [
+        (1, "Q1 - الربع الأول"),
+        (2, "Q2 - الربع الثاني"),
+        (3, "Q3 - الربع الثالث"),
+        (4, "Q4 - الربع الرابع"),
+    ]
+
+    statistics = models.ForeignKey(VolunteerStatistics, on_delete=models.CASCADE, related_name="quarterly_targets")
+    quarter = models.IntegerField(choices=QUARTER_CHOICES)
+
+    volunteer_target = models.IntegerField(default=0)
+    volunteer_actual = models.IntegerField(default=0)
+
+    hours_target = models.IntegerField(default=0)
+    hours_actual = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ['statistics', 'quarter']
+        ordering = ['quarter']
+
+    def __str__(self):
+        return f"Q{self.quarter} - {self.statistics.year}"
+
+
+class DepartmentHours(models.Model):
+    """
+    Hours distribution by department
+    """
+    statistics = models.ForeignKey(VolunteerStatistics, on_delete=models.CASCADE, related_name="department_hours")
+
+    department_name = models.CharField(max_length=200)
+    department_name_ar = models.CharField(max_length=200)
+    hours = models.IntegerField(default=0)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    color = models.CharField(max_length=20, default="#6B1F2B")  # For chart display
+
+    class Meta:
+        ordering = ['-hours']
+
+    def __str__(self):
+        return f"{self.department_name_ar} - {self.hours} hours"
+
+
+class TopVolunteer(models.Model):
+    """
+    Top volunteers by hours for a given year
+    """
+    statistics = models.ForeignKey(VolunteerStatistics, on_delete=models.CASCADE, related_name="top_volunteers")
+
+    rank = models.IntegerField()
+    name = models.CharField(max_length=200)
+    hours = models.IntegerField(default=0)
+
+    # Optional link to actual volunteer user
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        unique_together = ['statistics', 'rank']
+        ordering = ['rank']
+
+    def __str__(self):
+        return f"#{self.rank} {self.name} - {self.hours} hours"

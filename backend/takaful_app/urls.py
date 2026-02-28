@@ -21,6 +21,7 @@ urlpatterns = [
     path('public-services/', views.public_services_list, name='public-services'),  # Volunteer opportunity services (/services page)
     path('beneficiary-services/', views.beneficiary_services_list, name='beneficiary-services'),  # Beneficiary services (main page)
     path('public-service-request/', views.public_submit_service_request, name='public-service-request'),  # Submit service request
+    path('public-volunteer-statistics/', views.public_volunteer_statistics, name='public-volunteer-statistics'),  # Volunteer statistics for home page
 
     # Service volunteer applications (requires auth)
     path('services/<int:service_id>/apply-volunteer/', views.apply_to_service_as_volunteer, name='apply-to-service-volunteer'),
