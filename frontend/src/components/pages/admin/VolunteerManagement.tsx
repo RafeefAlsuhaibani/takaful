@@ -264,8 +264,6 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                         id: p.id,
                         name: p.title || p.name  // ✅ Use title field from backend
                     }));
-                    console.log('✅ Projects loaded:', projectList.length, 'projects');
-                    console.log('Projects:', projectList);
                     setProjects(projectList);
                 } else {
                     console.error('❌ Failed to fetch projects:', response.status);
@@ -475,20 +473,14 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                 })
             });
 
-            console.log('Assignment response status:', response.status);
-            console.log('Assignment response ok:', response.ok);
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Assignment successful!', result);
-                console.log('✅ Updated task:', result.task);
-                console.log('✅ Volunteer name in response:', result.task.volunteer_name);
 
                 // Update local state with the updated task
                 setTasks((prev) => {
                     const updatedTasks = prev.map((t) => {
                         if (t.id === result.task.id) {
-                            console.log('Updating task ID', t.id, 'from:', t, 'to:', result.task);
                             return result.task;
                         }
                         return t;
@@ -500,13 +492,10 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                 setAssignVolunteer(null);
 
                 // Show success message
-                console.log('✅ Showing success alert');
                 alert(`✅ تم تعيين المهمة بنجاح لـ ${assignVolunteer.name}`);
 
                 // Refresh data to get latest state from server
-                console.log('Refreshing data...');
                 onTaskUpdate();
-                console.log('✅ Data refresh complete');
             } else {
                 // Not OK response
                 const errorText = await response.text();
@@ -2008,8 +1997,6 @@ const fetchStats = async () => {
         });
         if (response.ok) {
             const data = await response.json();
-            console.log('Volunteers data:', data);
-            console.log('Results:', data.results);
             setStats(data);
         }
     } catch (error) {

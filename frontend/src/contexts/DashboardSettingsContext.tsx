@@ -1,7 +1,5 @@
 import React, { createContext, useEffect, useState } from 'react';
 
-const DEBUG_DASHBOARD_SETTINGS = true;
-// TEMP fallback until backend dashboard settings endpoint exists.
 const STORAGE_KEY = 'dashboardSettings';
 const LEGACY_STORAGE_KEY = 'takaful:dashboardSettings';
 
@@ -40,24 +38,18 @@ export const DashboardSettingsProvider: React.FC<{ children: React.ReactNode }> 
     // Load once on mount
     useEffect(() => {
         try {
-            if (DEBUG_DASHBOARD_SETTINGS) console.log('[DashboardSettings] loading from localStorage:', STORAGE_KEY);
             const raw = localStorage.getItem(STORAGE_KEY);
             const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
             if (raw) {
                 const parsed = JSON.parse(raw) as Partial<DashboardSettings>;
-                if (DEBUG_DASHBOARD_SETTINGS) console.log('[DashboardSettings] loaded:', parsed);
                 setSettings((prev) => ({ ...prev, ...parsed }));
             } else if (legacyRaw) {
                 const parsed = JSON.parse(legacyRaw) as Partial<DashboardSettings>;
-                if (DEBUG_DASHBOARD_SETTINGS) console.log('[DashboardSettings] migrated from legacy key:', parsed);
                 const merged = { ...getDefaultSettings(), ...parsed };
                 setSettings(merged);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-            } else {
-                if (DEBUG_DASHBOARD_SETTINGS) console.log('[DashboardSettings] no stored settings, using defaults');
             }
-        } catch (e) {
-            if (DEBUG_DASHBOARD_SETTINGS) console.error('[DashboardSettings] failed to load, using defaults.', e);
+        } catch {
             setSettings(getDefaultSettings());
         } finally {
             setHydrated(true);
@@ -69,15 +61,13 @@ export const DashboardSettingsProvider: React.FC<{ children: React.ReactNode }> 
     useEffect(() => {
         if (!hydrated) return;
         try {
-            if (DEBUG_DASHBOARD_SETTINGS) console.log('[DashboardSettings] saving to localStorage:', STORAGE_KEY, settings);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-        } catch (e) {
-            if (DEBUG_DASHBOARD_SETTINGS) console.error('[DashboardSettings] failed to save', e);
+        } catch {
+            // Silently fail if localStorage is not available
         }
     }, [settings, hydrated]);
 
     const updateSetting = <K extends keyof DashboardSettings>(key: K, value: DashboardSettings[K]) => {
-        if (DEBUG_DASHBOARD_SETTINGS) console.log('[DashboardSettings] updateSetting:', key, value);
         setSettings((prev) => ({ ...prev, [key]: value }));
     };
 

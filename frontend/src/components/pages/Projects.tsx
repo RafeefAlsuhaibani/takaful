@@ -108,7 +108,6 @@ function Projects() {
         }
 
         const data: Project[] = await res.json();
-        console.log('Public projects fetched:', data.length);
         setProjectsData(data);
       } catch (err) {
         console.error('Error fetching public projects:', err);

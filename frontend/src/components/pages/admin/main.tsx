@@ -350,8 +350,6 @@ export default function AdminMain() {
         const query = searchQuery.trim().toLowerCase();
         if (!query) return projects;
 
-        console.log('🔍 Searching for:', query);
-        console.log('📊 Total projects to search:', projects.length);
 
         const filtered = projects.filter(project => {
             const searchText = [
@@ -368,13 +366,11 @@ export default function AdminMain() {
             const matches = searchText.includes(query);
 
             if (matches) {
-                console.log('✅ Match found:', project.title);
             }
 
             return matches;
         });
 
-        console.log('✨ Filtered results:', filtered.length);
         return filtered;
     };
 
@@ -421,50 +417,38 @@ export default function AdminMain() {
     const fetchProjects = async () => {
         setLoading(true);
         try {
-            console.log('🚀 Starting to fetch projects...');
-            console.log('🔑 Access token:', access ? 'Present' : 'Missing');
-            console.log('🌐 API URL:', API_BASE_URL);
 
             // Fetch pending projects (ideas)
-            console.log('📋 Fetching pending projects...');
             const pendingResponse = await fetch(`${API_BASE_URL}/api/projects/?status=pending`, {
                 headers: { 'Authorization': `Bearer ${access}` }
             });
-            console.log('📋 Pending response status:', pendingResponse.status);
             if (pendingResponse.ok) {
                 const pendingData = await pendingResponse.json();
                 const ideas = Array.isArray(pendingData) ? pendingData : (pendingData.results || []);
-                console.log('📋 Loaded project ideas:', ideas.length, ideas);
                 setProjectIdeas(ideas);
             } else {
                 console.error('❌ Failed to fetch pending projects:', pendingResponse.status, await pendingResponse.text());
             }
 
             // Fetch active projects
-            console.log('✅ Fetching active projects...');
             const activeResponse = await fetch(`${API_BASE_URL}/api/projects/?status=active`, {
                 headers: { 'Authorization': `Bearer ${access}` }
             });
-            console.log('✅ Active response status:', activeResponse.status);
             if (activeResponse.ok) {
                 const activeData = await activeResponse.json();
                 const active = Array.isArray(activeData) ? activeData : (activeData.results || []);
-                console.log('✅ Loaded active projects:', active.length, active);
                 setActiveProjects(active);
             } else {
                 console.error('❌ Failed to fetch active projects:', activeResponse.status, await activeResponse.text());
             }
 
             // Fetch completed projects
-            console.log('🎉 Fetching completed projects...');
             const completedResponse = await fetch(`${API_BASE_URL}/api/projects/?status=completed`, {
                 headers: { 'Authorization': `Bearer ${access}` }
             });
-            console.log('🎉 Completed response status:', completedResponse.status);
             if (completedResponse.ok) {
                 const completedData = await completedResponse.json();
                 const completed = Array.isArray(completedData) ? completedData : (completedData.results || []);
-                console.log('🎉 Loaded completed projects:', completed.length, completed);
                 setCompletedProjects(completed);
             } else {
                 console.error('❌ Failed to fetch completed projects:', completedResponse.status, await completedResponse.text());
@@ -473,7 +457,6 @@ export default function AdminMain() {
             console.error('💥 Error fetching projects:', error);
         } finally {
             setLoading(false);
-            console.log('✨ Finished fetching projects');
         }
     };
 
@@ -521,7 +504,6 @@ export default function AdminMain() {
 
     const handleApproveProject = async (projectId: number) => {
         try {
-            console.log('✅ Approving project:', projectId);
             const response = await fetch(`${API_BASE_URL}/api/admin/projects/${projectId}/approve/`, {
                 method: 'POST',
                 headers: {
@@ -532,8 +514,6 @@ export default function AdminMain() {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Project approved successfully:', data);
-                console.log('   New status:', data.project?.status, '→', data.project?.status_display);
 
                 // Remove from current view (افكار المشاريع)
                 setRemovedProjects(prev => new Set(prev).add(projectId));
@@ -584,7 +564,6 @@ export default function AdminMain() {
             };
 
             const englishStatus = statusMap[newStatus] || newStatus;
-            console.log('🔍 Filtering projects by status:', newStatus, '→', englishStatus);
 
             // Fetch a project with the selected status (FILTER, not EDIT)
             const response = await fetch(
@@ -598,7 +577,6 @@ export default function AdminMain() {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('📦 Received project:', data);
 
                 if (data) {
                     // Display the fetched project in bottom section
@@ -615,10 +593,8 @@ export default function AdminMain() {
                         startDate: data.start_date || '',
                         endDate: data.end_date || '',
                     });
-                    console.log('✅ Project displayed successfully');
                 } else {
                     // No project found with this status
-                    console.log('⚠️ No project found with status:', newStatus);
                     setActiveProject(null);
                     setProjectStatus(newStatus);
                 }
@@ -693,12 +669,9 @@ export default function AdminMain() {
             if (projectStatus && projectStatus !== "حالة المشروع") {
                 const statusToSend = statusMap[projectStatus] || projectStatus;
                 payload.status = statusToSend;
-                console.log('💾 Saving project with status change:', projectStatus, '→', statusToSend);
             } else {
-                console.log('💾 Saving project edits (no status change)');
             }
 
-            console.log('📤 Sending payload:', payload);
 
             const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
                 method: 'PATCH',
@@ -711,7 +684,6 @@ export default function AdminMain() {
     
             if (response.ok) {
                 const updatedProject = await response.json();
-                console.log('✅ Project saved successfully:', updatedProject);
                 alert('تم حفظ التعديلات بنجاح!');
                 setShowEditModal(false);
 

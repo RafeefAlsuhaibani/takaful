@@ -59,7 +59,6 @@ export default function PersonalInfo() {
         if (!res.ok) throw new Error("Failed to fetch profile");
   
         const data = await res.json();
-        console.log("Profile data:", data); // Debug
         
         // Map backend response to frontend format
         setFormData({

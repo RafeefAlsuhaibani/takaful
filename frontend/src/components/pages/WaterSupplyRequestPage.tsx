@@ -166,7 +166,6 @@ export default function WaterSupplyRequestPage() {
     }
 
     // Log form data
-    console.log(formData);
 
     // Show success toast
     success({

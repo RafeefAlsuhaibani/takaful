@@ -134,7 +134,6 @@ const cleanPhone = (value: string) => digitsOnly(value).slice(0, 9);       // ma
       
   
       const data = await res.json();
-      console.log("REGISTER RESPONSE:", data);
 
       if (!res.ok) {
         alert(JSON.stringify(data, null, 2));
