@@ -24,6 +24,10 @@ urlpatterns = [
     path('public-volunteer-statistics/', views.public_volunteer_statistics, name='public-volunteer-statistics'),  # Volunteer statistics for home page
     path('public-water-supply-request/', views.public_water_supply_request, name='public-water-supply-request'),  # Water supply request
 
+    # Admin statistics management
+    path('admin/volunteer-statistics/', views.admin_volunteer_statistics, name='admin-volunteer-statistics'),
+    path('admin/upload-statistics/', views.upload_volunteer_statistics, name='upload-statistics'),
+
     # Service volunteer applications (requires auth)
     path('services/<int:service_id>/apply-volunteer/', views.apply_to_service_as_volunteer, name='apply-to-service-volunteer'),
 

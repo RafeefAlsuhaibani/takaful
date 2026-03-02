@@ -120,9 +120,10 @@ function Services() {
           <ServiceCard
             service={service}
             onDetails={setActiveService}
-            onRegister={(selectedService) =>
-              navigate(isWaterSupplyService(selectedService.title) ? '/services/water-supply' : '/volunteers')
+            onRequestService={(selectedService: Service) =>
+              navigate(isWaterSupplyService(selectedService.title) ? '/services/water-supply' : '/request-service')
             }
+            onVolunteer={() => navigate('/volunteers')}
           />
         </div>
       )),

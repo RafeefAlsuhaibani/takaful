@@ -297,6 +297,16 @@ export default function AdminMain() {
     });
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [showStatsModal, setShowStatsModal] = useState(false);
+    const [statsFormData, setStatsFormData] = useState({
+        total_volunteers: 0,
+        new_volunteers: 0,
+        returning_volunteers: 0,
+        total_hours: 0,
+        total_contribution_value: 0,
+        contribution_value_display: '',
+    });
+    const [isSavingStats, setIsSavingStats] = useState(false);
     const [isEditingDashboardSettings, setIsEditingDashboardSettings] = useState(false);
     const [draftDashboardSettings, setDraftDashboardSettings] = useState<DraftDashboardSettings>({
         showDashboard: dashboardSettings.showDashboard,
@@ -724,6 +734,63 @@ export default function AdminMain() {
         }
     };
 
+    const fetchVolunteerStats = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/api/admin/volunteer-statistics/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setStatsFormData({
+                    total_volunteers: data.total_volunteers || 0,
+                    new_volunteers: data.new_volunteers || 0,
+                    returning_volunteers: data.returning_volunteers || 0,
+                    total_hours: data.total_hours || 0,
+                    total_contribution_value: data.total_contribution_value || 0,
+                    contribution_value_display: data.contribution_value_display || '',
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching volunteer stats:', err);
+        }
+    };
+
+    const handleOpenStatsModal = () => {
+        fetchVolunteerStats();
+        setShowStatsModal(true);
+    };
+
+    const handleSaveStats = async () => {
+        setIsSavingStats(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/api/admin/volunteer-statistics/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    year: 2025,
+                    ...statsFormData
+                })
+            });
+            if (res.ok) {
+                setShowStatsModal(false);
+                const tempMsg = document.createElement('div');
+                tempMsg.textContent = 'تم تحديث الإحصائيات بنجاح';
+                tempMsg.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-[Cairo]';
+                document.body.appendChild(tempMsg);
+                setTimeout(() => tempMsg.remove(), 2000);
+            }
+        } catch (err) {
+            console.error('Error saving stats:', err);
+        } finally {
+            setIsSavingStats(false);
+        }
+    };
+
     const handleSaveDashboardSettings = () => {
         dashboardSettingItems.forEach(({ key }) => {
             if (dashboardSettings[key] !== draftDashboardSettings[key]) {
@@ -921,36 +988,20 @@ export default function AdminMain() {
                         </section>
 
                         <div className="mt-4 border-t border-[#e6d7d4] pt-4">
-                            <input
-                                ref={excelInputRef}
-                                type="file"
-                                accept=".xlsx,.xls"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                                id="excel-upload"
-                                aria-label="رفع ملف إحصائيات"
-                            />
                             <div className="mb-2 flex items-center justify-between gap-3">
-                                <h4 className="text-base font-bold text-[#6F1A28] font-[Cairo]">البيانات</h4>
+                                <h4 className="text-base font-bold text-[#6F1A28] font-[Cairo]">إحصائيات الصفحة الرئيسية</h4>
                                 <button
                                     type="button"
-                                    onClick={() => excelInputRef.current?.click()}
-                                    disabled={isUploading}
-                                    className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold font-[Cairo] text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ab686f] focus-visible:ring-offset-2 ${isUploading ? 'bg-[#ab686f]/70 cursor-not-allowed' : 'bg-[#ab686f] hover:bg-[#95545b] shadow-sm hover:shadow-md'}`}
+                                    onClick={handleOpenStatsModal}
+                                    className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold font-[Cairo] text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ab686f] focus-visible:ring-offset-2 bg-[#ab686f] hover:bg-[#95545b] shadow-sm hover:shadow-md"
                                 >
-                                    <Upload className="w-4 h-4" />
-                                    <span>{isUploading ? 'جاري الرفع...' : 'رفع ملف إحصائيات (Excel)'}</span>
+                                    <SquarePen className="w-4 h-4" />
+                                    <span>تعديل الإحصائيات</span>
                                 </button>
                             </div>
                             <p className="text-xs text-[#6F1A28]/80 font-[Cairo] text-right">
-                                ارفع ملف .xlsx لتحديث الأرقام المعروضة في الصفحة الرئيسية.
+                                عدّل أرقام إحصائيات المتطوعين المعروضة في الصفحة الرئيسية.
                             </p>
-                            {uploadedFile && (
-                                <div className="mt-2 flex items-center gap-2">
-                                    <span className="text-sm text-[#291613] font-[Cairo]">الملف المختار:</span>
-                                    <span className="text-sm font-medium text-[#6F1A28] font-[Cairo]">{uploadedFile.name}</span>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -1434,6 +1485,123 @@ export default function AdminMain() {
                     </div>
                 )}
             </div>
+
+            {/* Statistics Edit Modal */}
+            {showStatsModal && (
+                <Modal
+                    open={showStatsModal}
+                    onClose={() => setShowStatsModal(false)}
+                    labelledById="stats-modal-title"
+                >
+                    <div className="p-6" dir="rtl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 id="stats-modal-title" className="text-xl font-bold text-[#6F1A28] font-[Cairo]">
+                                تعديل إحصائيات المتطوعين
+                            </h2>
+                            <button
+                                onClick={() => setShowStatsModal(false)}
+                                className="rounded-lg p-2 hover:bg-gray-100 transition-colors"
+                            >
+                                <X size={20} className="text-gray-600" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 font-[Cairo] mb-1">
+                                        إجمالي المتطوعين
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={statsFormData.total_volunteers}
+                                        onChange={(e) => setStatsFormData({...statsFormData, total_volunteers: parseInt(e.target.value) || 0})}
+                                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-[#6F1A28] focus:outline-none font-[Cairo]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 font-[Cairo] mb-1">
+                                        إجمالي الساعات
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={statsFormData.total_hours}
+                                        onChange={(e) => setStatsFormData({...statsFormData, total_hours: parseInt(e.target.value) || 0})}
+                                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-[#6F1A28] focus:outline-none font-[Cairo]"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 font-[Cairo] mb-1">
+                                        متطوعين جدد
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={statsFormData.new_volunteers}
+                                        onChange={(e) => setStatsFormData({...statsFormData, new_volunteers: parseInt(e.target.value) || 0})}
+                                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-[#6F1A28] focus:outline-none font-[Cairo]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 font-[Cairo] mb-1">
+                                        متطوعين مكررين
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={statsFormData.returning_volunteers}
+                                        onChange={(e) => setStatsFormData({...statsFormData, returning_volunteers: parseInt(e.target.value) || 0})}
+                                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-[#6F1A28] focus:outline-none font-[Cairo]"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 font-[Cairo] mb-1">
+                                        قيمة المساهمة (ريال)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={statsFormData.total_contribution_value}
+                                        onChange={(e) => setStatsFormData({...statsFormData, total_contribution_value: parseInt(e.target.value) || 0})}
+                                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-[#6F1A28] focus:outline-none font-[Cairo]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 font-[Cairo] mb-1">
+                                        عرض القيمة (مثال: 1.03M)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={statsFormData.contribution_value_display}
+                                        onChange={(e) => setStatsFormData({...statsFormData, contribution_value_display: e.target.value})}
+                                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-[#6F1A28] focus:outline-none font-[Cairo]"
+                                        placeholder="1.03M"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={handleSaveStats}
+                                disabled={isSavingStats}
+                                className="flex-1 bg-[#6F1A28] text-white font-bold py-3 rounded-lg hover:bg-[#5a1520] transition-colors font-[Cairo] disabled:opacity-50"
+                            >
+                                {isSavingStats ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                            </button>
+                            <button
+                                onClick={() => setShowStatsModal(false)}
+                                className="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-300 transition-colors font-[Cairo]"
+                            >
+                                إلغاء
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
 
             {/* Project Details Dialog */}
             {selectedProject && (

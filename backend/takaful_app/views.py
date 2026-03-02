@@ -11,8 +11,11 @@ from django.utils import timezone
 from .models import (
     Project, Service, ServiceRequest, ServiceVolunteerApplication, Volunteer, Suggestion,
     ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication,
-    VolunteerStatistics, WaterSupplyRequest
+    VolunteerStatistics, QuarterlyTarget, DepartmentHours, TopVolunteer, WaterSupplyRequest
 )
+import openpyxl
+from io import BytesIO
+from decimal import Decimal
 from .serializers import (
     ProjectSerializer, ServiceSerializer, ServiceRequestSerializer, ServiceVolunteerApplicationSerializer,
     VolunteerSerializer, SuggestionSerializer, ProjectAssignmentSerializer,
@@ -1822,3 +1825,237 @@ def public_water_supply_request(request):
         'success': False,
         'errors': serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdmin])
+def upload_volunteer_statistics(request):
+    """
+    POST /api/admin/upload-statistics/
+    Upload Excel file to update volunteer statistics for home page
+    Requires admin authentication
+    """
+    if 'file' not in request.FILES:
+        return Response({
+            'success': False,
+            'error': 'لم يتم رفع أي ملف'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    excel_file = request.FILES['file']
+
+    try:
+        # Read Excel file
+        wb = openpyxl.load_workbook(BytesIO(excel_file.read()), data_only=True)
+        ws = wb.active
+
+        # Get all rows (skip header)
+        rows = list(ws.iter_rows(min_row=2, values_only=True))
+
+        # Calculate statistics from raw data
+        total_records = len([r for r in rows if r and any(r)])
+
+        # Count unique volunteers by phone or ID
+        volunteer_ids = set()
+        total_hours = 0
+        department_hours_map = {}
+        volunteer_hours_map = {}
+
+        # Find column indices from header
+        headers = [cell.value for cell in ws[1]]
+
+        # Try to find relevant columns
+        hours_col = None
+        dept_col = None
+        name_col = None
+        id_col = None
+
+        for i, h in enumerate(headers):
+            if h:
+                h_lower = str(h).strip()
+                if 'ساع' in h_lower or 'hours' in h_lower.lower():
+                    hours_col = i
+                elif 'إدار' in h_lower or 'قسم' in h_lower or 'department' in h_lower.lower():
+                    dept_col = i
+                elif 'اسم' in h_lower and 'مشروع' not in h_lower:
+                    name_col = i
+                elif 'هوية' in h_lower or 'id' in h_lower.lower():
+                    id_col = i
+
+        for row in rows:
+            if not row or not any(row):
+                continue
+
+            # Get volunteer identifier
+            vol_id = None
+            if id_col is not None and id_col < len(row):
+                vol_id = row[id_col]
+            if vol_id:
+                volunteer_ids.add(str(vol_id))
+
+            # Get hours
+            hours = 0
+            if hours_col is not None and hours_col < len(row):
+                try:
+                    hours = float(row[hours_col] or 0)
+                except (ValueError, TypeError):
+                    hours = 0
+            total_hours += hours
+
+            # Get department
+            dept = 'غير مسند'
+            if dept_col is not None and dept_col < len(row):
+                dept = str(row[dept_col] or 'غير مسند').strip()
+
+            if dept not in department_hours_map:
+                department_hours_map[dept] = 0
+            department_hours_map[dept] += hours
+
+            # Track volunteer hours for top volunteers
+            vol_name = None
+            if name_col is not None and name_col < len(row):
+                vol_name = str(row[name_col] or '').strip()
+            if vol_name:
+                if vol_name not in volunteer_hours_map:
+                    volunteer_hours_map[vol_name] = 0
+                volunteer_hours_map[vol_name] += hours
+
+        # Get or create 2025 statistics
+        year = 2025
+        stats, created = VolunteerStatistics.objects.update_or_create(
+            year=year,
+            defaults={
+                'total_volunteers': len(volunteer_ids) or total_records,
+                'new_volunteers': int(len(volunteer_ids) * 0.78),  # Estimate 78% new
+                'returning_volunteers': int(len(volunteer_ids) * 0.22),  # Estimate 22% returning
+                'total_hours': int(total_hours),
+                'total_contribution_value': Decimal(total_hours * 13),  # 13 SAR per hour
+                'contribution_value_display': f"{total_hours * 13 / 1000000:.2f}M" if total_hours > 100000 else f"{total_hours * 13 / 1000:.0f}K",
+            }
+        )
+
+        # Clear and recreate department hours
+        DepartmentHours.objects.filter(statistics=stats).delete()
+
+        colors = ['#6B1F2B', '#8B5A2B', '#2E8B57', '#4169E1', '#9370DB', '#FF8C00', '#20B2AA', '#DC143C']
+        total_dept_hours = sum(department_hours_map.values()) or 1
+
+        for i, (dept, hours) in enumerate(sorted(department_hours_map.items(), key=lambda x: -x[1])):
+            DepartmentHours.objects.create(
+                statistics=stats,
+                department_name=dept,
+                department_name_ar=dept,
+                hours=int(hours),
+                percentage=Decimal(hours / total_dept_hours * 100),
+                color=colors[i % len(colors)]
+            )
+
+        # Clear and recreate top volunteers
+        TopVolunteer.objects.filter(statistics=stats).delete()
+
+        top_vols = sorted(volunteer_hours_map.items(), key=lambda x: -x[1])[:5]
+        for rank, (name, hours) in enumerate(top_vols, 1):
+            TopVolunteer.objects.create(
+                statistics=stats,
+                rank=rank,
+                name=name,
+                hours=int(hours)
+            )
+
+        return Response({
+            'success': True,
+            'message': 'تم تحديث الإحصائيات بنجاح',
+            'data': {
+                'total_records': total_records,
+                'total_volunteers': len(volunteer_ids) or total_records,
+                'total_hours': int(total_hours),
+                'departments': len(department_hours_map),
+                'top_volunteers': len(top_vols)
+            }
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': f'خطأ في معالجة الملف: {str(e)}'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAdmin])
+def admin_volunteer_statistics(request):
+    """
+    GET/PUT /api/admin/volunteer-statistics/
+    Get or update volunteer statistics for home page dashboard
+    Requires admin authentication
+    """
+    year = request.query_params.get('year', 2025)
+
+    if request.method == 'GET':
+        stats = VolunteerStatistics.objects.filter(year=year).first()
+        if not stats:
+            return Response({'error': 'No statistics found'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = VolunteerStatisticsSerializer(stats)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        data = request.data
+
+        # Get or create statistics for the year
+        stats, created = VolunteerStatistics.objects.update_or_create(
+            year=int(data.get('year', 2025)),
+            defaults={
+                'total_volunteers': int(data.get('total_volunteers', 0)),
+                'new_volunteers': int(data.get('new_volunteers', 0)),
+                'returning_volunteers': int(data.get('returning_volunteers', 0)),
+                'total_hours': int(data.get('total_hours', 0)),
+                'total_contribution_value': Decimal(str(data.get('total_contribution_value', 0))),
+                'contribution_value_display': data.get('contribution_value_display', ''),
+            }
+        )
+
+        # Update quarterly targets if provided
+        quarterly_targets = data.get('quarterly_targets', [])
+        if quarterly_targets:
+            QuarterlyTarget.objects.filter(statistics=stats).delete()
+            for qt in quarterly_targets:
+                QuarterlyTarget.objects.create(
+                    statistics=stats,
+                    quarter=int(qt.get('quarter', 1)),
+                    volunteer_target=int(qt.get('volunteer_target', 0)),
+                    volunteer_actual=int(qt.get('volunteer_actual', 0)),
+                    hours_target=int(qt.get('hours_target', 0)),
+                    hours_actual=int(qt.get('hours_actual', 0)),
+                )
+
+        # Update department hours if provided
+        department_hours = data.get('department_hours', [])
+        if department_hours:
+            DepartmentHours.objects.filter(statistics=stats).delete()
+            for dh in department_hours:
+                DepartmentHours.objects.create(
+                    statistics=stats,
+                    department_name=dh.get('department_name', ''),
+                    department_name_ar=dh.get('department_name_ar', dh.get('label', '')),
+                    hours=int(dh.get('hours', dh.get('value', 0))),
+                    percentage=Decimal(str(dh.get('percentage', 0))),
+                    color=dh.get('color', '#6B1F2B'),
+                )
+
+        # Update top volunteers if provided
+        top_volunteers = data.get('top_volunteers', [])
+        if top_volunteers:
+            TopVolunteer.objects.filter(statistics=stats).delete()
+            for tv in top_volunteers:
+                TopVolunteer.objects.create(
+                    statistics=stats,
+                    rank=int(tv.get('rank', 1)),
+                    name=tv.get('name', ''),
+                    hours=int(tv.get('hours', 0)),
+                )
+
+        serializer = VolunteerStatisticsSerializer(stats)
+        return Response({
+            'success': True,
+            'message': 'تم تحديث الإحصائيات بنجاح',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
