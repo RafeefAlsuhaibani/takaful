@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import CustomDropdown from '../ui/CustomDropdown';
+import { API_BASE_URL } from '../../config';
 
 interface FormErrors {
   applicantName?: string;
@@ -148,7 +149,9 @@ export default function WaterSupplyRequestPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Mark all fields as touched
@@ -165,30 +168,52 @@ export default function WaterSupplyRequestPage() {
       return;
     }
 
-    // Log form data
+    setIsSubmitting(true);
 
-    // Show success toast
-    success({
-      title: 'تم إرسال طلبك بنجاح',
-      description: 'شكراً لتقديمك لطلب سقيا الماء. سيتم التواصل معك قريباً.',
-      duration: 3000,
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/public-water-supply-request/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    // Reset form
-    setFormData({
-      applicantName: '',
-      mobileNumber: '',
-      applicantRole: '',
-      mosqueName: '',
-      neighborhood: '',
-      locationLink: '',
-      worshippersCount: '',
-      donorExists: '',
-      donorName: '',
-      donorPhone: '',
-    });
-    setErrors({});
-    setTouched({});
+      if (response.ok) {
+        // Show success toast
+        success({
+          title: 'تم إرسال طلبك بنجاح',
+          description: 'شكراً لتقديمك لطلب سقيا الماء. سيتم التواصل معك قريباً.',
+          duration: 3000,
+        });
+
+        // Reset form
+        setFormData({
+          applicantName: '',
+          mobileNumber: '',
+          applicantRole: '',
+          mosqueName: '',
+          neighborhood: '',
+          locationLink: '',
+          worshippersCount: '',
+          donorExists: '',
+          donorName: '',
+          donorPhone: '',
+        });
+        setErrors({});
+        setTouched({});
+      } else {
+        throw new Error('فشل في إرسال الطلب');
+      }
+    } catch {
+      success({
+        title: 'حدث خطأ',
+        description: 'فشل في إرسال الطلب. يرجى المحاولة مرة أخرى.',
+        duration: 3000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -522,16 +547,19 @@ export default function WaterSupplyRequestPage() {
             <div className="pt-6">
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="group relative overflow-hidden w-full rounded-lg bg-gradient-to-r from-[#711F2C] to-[#8B2338] text-white font-bold py-4 px-6
                            transition-all duration-300 focus-visible:ring-2 ring-[#711F2C] ring-offset-2
-                           hover:shadow-lg hover:-translate-y-0.5"
+                           hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span className="flex items-center justify-center gap-2">
-                  إرسال
-                  <ArrowLeft
-                    size={18}
-                    className="transition-transform duration-300 group-hover:-translate-x-1"
-                  />
+                  {isSubmitting ? 'جاري الإرسال...' : 'إرسال'}
+                  {!isSubmitting && (
+                    <ArrowLeft
+                      size={18}
+                      className="transition-transform duration-300 group-hover:-translate-x-1"
+                    />
+                  )}
                 </span>
                 <span
                   aria-hidden

@@ -11,14 +11,14 @@ from django.utils import timezone
 from .models import (
     Project, Service, ServiceRequest, ServiceVolunteerApplication, Volunteer, Suggestion,
     ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication,
-    VolunteerStatistics
+    VolunteerStatistics, WaterSupplyRequest
 )
 from .serializers import (
     ProjectSerializer, ServiceSerializer, ServiceRequestSerializer, ServiceVolunteerApplicationSerializer,
     VolunteerSerializer, SuggestionSerializer, ProjectAssignmentSerializer,
     TaskSerializer, SubtaskSerializer, VolunteerDetailSerializer,
     VolunteerRequestSerializer, AdminReportSerializer, VolunteerApplicationSerializer,
-    VolunteerStatisticsSerializer
+    VolunteerStatisticsSerializer, WaterSupplyRequestSerializer
 )
 
 
@@ -1768,3 +1768,57 @@ def public_volunteer_statistics(request):
 
     serializer = VolunteerStatisticsSerializer(stats)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def public_water_supply_request(request):
+    """
+    POST /api/public-water-supply-request/
+    Submit a water supply request for a mosque
+    No authentication required
+    """
+    data = request.data.copy()
+
+    # Convert frontend field names to backend field names
+    field_mapping = {
+        'applicantName': 'applicant_name',
+        'mobileNumber': 'mobile_number',
+        'applicantRole': 'applicant_role',
+        'mosqueName': 'mosque_name',
+        'neighborhood': 'neighborhood',
+        'locationLink': 'location_link',
+        'worshippersCount': 'worshippers_count',
+        'donorExists': 'donor_exists',
+        'donorName': 'donor_name',
+        'donorPhone': 'donor_phone',
+    }
+
+    # Map frontend camelCase to backend snake_case
+    mapped_data = {}
+    for frontend_key, backend_key in field_mapping.items():
+        if frontend_key in data:
+            value = data[frontend_key]
+            # Convert donorExists from string to boolean
+            if frontend_key == 'donorExists':
+                value = value == 'نعم'
+            # Convert worshippersCount to integer
+            elif frontend_key == 'worshippersCount':
+                try:
+                    value = int(value)
+                except (ValueError, TypeError):
+                    value = 0
+            mapped_data[backend_key] = value
+
+    serializer = WaterSupplyRequestSerializer(data=mapped_data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'success': True,
+            'message': 'تم إرسال طلبك بنجاح'
+        }, status=status.HTTP_201_CREATED)
+
+    return Response({
+        'success': False,
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)

@@ -414,3 +414,50 @@ class TopVolunteer(models.Model):
 
     def __str__(self):
         return f"#{self.rank} {self.name} - {self.hours} hours"
+
+
+class WaterSupplyRequest(models.Model):
+    """
+    Water supply requests for mosques (سقيا الماء)
+    Public form submission - no authentication required
+    """
+    STATUS_CHOICES = [
+        ("PENDING", "قيد المراجعة"),
+        ("APPROVED", "مقبول"),
+        ("REJECTED", "مرفوض"),
+        ("COMPLETED", "مكتمل"),
+    ]
+
+    APPLICANT_ROLE_CHOICES = [
+        ("إمام", "إمام"),
+        ("مؤذن", "مؤذن"),
+        ("غير ذلك", "غير ذلك"),
+    ]
+
+    # Applicant Information
+    applicant_name = models.CharField(max_length=200)
+    mobile_number = models.CharField(max_length=20)
+    applicant_role = models.CharField(max_length=50, choices=APPLICANT_ROLE_CHOICES)
+
+    # Mosque Information
+    mosque_name = models.CharField(max_length=200)
+    neighborhood = models.CharField(max_length=200)
+    location_link = models.URLField(max_length=500)
+    worshippers_count = models.IntegerField()
+
+    # Donor Information
+    donor_exists = models.BooleanField(default=False)
+    donor_name = models.CharField(max_length=200, blank=True)
+    donor_phone = models.CharField(max_length=20, blank=True)
+
+    # Status & Tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
+    admin_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.mosque_name} - {self.applicant_name}"

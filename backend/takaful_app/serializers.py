@@ -2,7 +2,8 @@ from rest_framework import serializers
 from .models import (
     Project, Service, ServiceRequest, ServiceVolunteerApplication, Volunteer, Suggestion,
     ProjectAssignment, Task, Subtask, AdminReport, VolunteerApplication,
-    VolunteerStatistics, QuarterlyTarget, DepartmentHours, TopVolunteer
+    VolunteerStatistics, QuarterlyTarget, DepartmentHours, TopVolunteer,
+    WaterSupplyRequest
 )
 from django.contrib.auth.models import User
 
@@ -445,3 +446,30 @@ class VolunteerStatisticsSerializer(serializers.ModelSerializer):
 
     def get_volunteers_display(self, obj):
         return f"{obj.total_volunteers:,}"
+
+
+# ============================================================================
+# WATER SUPPLY REQUEST SERIALIZER
+# ============================================================================
+
+class WaterSupplyRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WaterSupplyRequest
+        fields = [
+            'id',
+            'applicant_name',
+            'mobile_number',
+            'applicant_role',
+            'mosque_name',
+            'neighborhood',
+            'location_link',
+            'worshippers_count',
+            'donor_exists',
+            'donor_name',
+            'donor_phone',
+            'status',
+            'admin_notes',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'status', 'admin_notes']
