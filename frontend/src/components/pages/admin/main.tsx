@@ -1073,7 +1073,21 @@ export default function AdminMain() {
                                                     <ProjectCard
                                                         key={project.id}
                                                         project={project}
-                                                        onDetailsClick={() => setSelectedProject(project)}
+                                                        onDetailsClick={() => {
+                                                            setActiveProject(project);
+                                                            setProjectStatus(project.status === 'ACTIVE' ? 'نشط' : project.status === 'COMPLETED' ? 'مكتمل' : project.status === 'PLANNED' ? 'متوقف' : 'ملغي');
+                                                            setIsProjectHidden(project.is_hidden || false);
+                                                            setEditFormData({
+                                                                projectName: project.title || '',
+                                                                projectType: project.category || '',
+                                                                projectDescription: project.description || project.desc || '',
+                                                                targetAudience: project.target_audience || '',
+                                                                beneficiaries: String(project.beneficiaries || ''),
+                                                                donationAmount: String(project.donation_amount || project.donations || ''),
+                                                                startDate: project.start_date || '',
+                                                                endDate: '',
+                                                            });
+                                                        }}
                                                         onApprove={() => handleApproveProject(project.id)}
                                                         onReject={() => setRejectConfirmProject(project)}
                                                     />
@@ -1107,7 +1121,21 @@ export default function AdminMain() {
                                                 .filter(project => !removedProjects.has(project.id))
                                                 .slice(0, visibleProjectsCount["المشاريع النشطة"])
                                                 .map((project) => (
-                                                    <ProjectCard key={project.id} project={project} showProgress={true} onDetailsClick={() => setSelectedProject(project)} />
+                                                    <ProjectCard key={project.id} project={project} showProgress={true} onDetailsClick={() => {
+                                                        setActiveProject(project);
+                                                        setProjectStatus(project.status === 'ACTIVE' ? 'نشط' : project.status === 'COMPLETED' ? 'مكتمل' : project.status === 'PLANNED' ? 'متوقف' : 'ملغي');
+                                                        setIsProjectHidden(project.is_hidden || false);
+                                                        setEditFormData({
+                                                            projectName: project.title || '',
+                                                            projectType: project.category || '',
+                                                            projectDescription: project.description || project.desc || '',
+                                                            targetAudience: project.target_audience || '',
+                                                            beneficiaries: String(project.beneficiaries || ''),
+                                                            donationAmount: String(project.donation_amount || project.donations || ''),
+                                                            startDate: project.start_date || '',
+                                                            endDate: '',
+                                                        });
+                                                    }} />
                                                 ))}
                                             {filterProjects(activeProjects).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع النشطة"] && (
                                                 <div className="flex justify-center -mb-6 sm:-mb-3">
@@ -1138,7 +1166,21 @@ export default function AdminMain() {
                                                 .filter(project => !removedProjects.has(project.id))
                                                 .slice(0, visibleProjectsCount["المشاريع المنتهية"])
                                                 .map((project) => (
-                                                    <ProjectCard key={project.id} project={project} showProgress={true} isCompleted={true} onDetailsClick={() => setSelectedProject(project)} />
+                                                    <ProjectCard key={project.id} project={project} showProgress={true} isCompleted={true} onDetailsClick={() => {
+                                                        setActiveProject(project);
+                                                        setProjectStatus(project.status === 'ACTIVE' ? 'نشط' : project.status === 'COMPLETED' ? 'مكتمل' : project.status === 'PLANNED' ? 'متوقف' : 'ملغي');
+                                                        setIsProjectHidden(project.is_hidden || false);
+                                                        setEditFormData({
+                                                            projectName: project.title || '',
+                                                            projectType: project.category || '',
+                                                            projectDescription: project.description || project.desc || '',
+                                                            targetAudience: project.target_audience || '',
+                                                            beneficiaries: String(project.beneficiaries || ''),
+                                                            donationAmount: String(project.donation_amount || project.donations || ''),
+                                                            startDate: project.start_date || '',
+                                                            endDate: '',
+                                                        });
+                                                    }} />
                                                 ))}
                                             {filterProjects(completedProjects).filter(project => !removedProjects.has(project.id)).length > visibleProjectsCount["المشاريع المنتهية"] && (
                                                 <div className="flex justify-center -mb-6 sm:-mb-3">
