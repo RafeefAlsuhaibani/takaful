@@ -620,7 +620,7 @@ export default function AdminMain() {
         if (!activeProject) return;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
+            const response = await fetch(`${API_BASE_URL}/api/projects/${activeProject.id}/`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${access}`,
@@ -683,7 +683,7 @@ export default function AdminMain() {
             }
 
 
-            const response = await fetch(`${API_BASE_URL}/api/admin/projects/${activeProject.id}/`, {
+            const response = await fetch(`${API_BASE_URL}/api/projects/${activeProject.id}/`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${access}`,
