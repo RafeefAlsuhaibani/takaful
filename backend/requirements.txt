@@ -8,3 +8,4 @@ python-dotenv==1.2.1
 sqlparse==0.5.3
 gunicorn>=21.2.0
 dj-database-url==2.3.0
+openpyxl==3.1.5
