@@ -22,12 +22,14 @@ interface Project {
     tags?: string[];
     date?: string;
     start_date?: string;
+    end_date?: string;
     organization?: string;
     location?: string;
     hours?: string;
     estimated_hours?: number;
     budget?: string;
     status?: string;
+    status_display?: string;
     is_hidden?: boolean;
     category?: string;
     target_audience?: string;
@@ -344,6 +346,9 @@ export default function AdminMain() {
     const [projectStatus, setProjectStatus] = useState("حالة المشروع");
     const [isProjectHidden, setIsProjectHidden] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [allProjects, setAllProjects] = useState<Project[]>([]);
+    const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [editFormData, setEditFormData] = useState({
         projectName: '',
         projectType: '',
@@ -389,7 +394,7 @@ export default function AdminMain() {
         fetchStats();
         fetchProjects();
         fetchParticipationRequests();
-        fetchActiveProject();
+        fetchAllProjectsForSlider();
     }, []);
 
     useEffect(() => {
@@ -484,9 +489,100 @@ export default function AdminMain() {
         }
     };
 
+    const fetchAllProjectsForSlider = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/projects/`, {
+                headers: { 'Authorization': `Bearer ${access}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const projects = Array.isArray(data) ? data : (data.results || []);
+                setAllProjects(projects);
+                if (projects.length > 0) {
+                    const firstProject = projects[0];
+                    setActiveProject(firstProject);
+                    setCurrentProjectIndex(0);
+                    setProjectStatus(firstProject.status_display || "نشط");
+                    setIsProjectHidden(firstProject.is_hidden || false);
+                    setEditFormData({
+                        projectName: firstProject.title || '',
+                        projectType: firstProject.category || 'أساسي',
+                        projectDescription: firstProject.desc || firstProject.description || '',
+                        targetAudience: firstProject.target_audience || '',
+                        beneficiaries: firstProject.beneficiaries?.toString() || '',
+                        donationAmount: firstProject.donation_amount?.toString() || '',
+                        startDate: firstProject.start_date || '',
+                        endDate: firstProject.end_date || '',
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching projects for slider:', error);
+        }
+    };
+
+    const navigateProject = (direction: 'prev' | 'next') => {
+        if (allProjects.length === 0) return;
+
+        let newIndex = currentProjectIndex;
+        if (direction === 'next') {
+            newIndex = (currentProjectIndex + 1) % allProjects.length;
+        } else {
+            newIndex = currentProjectIndex === 0 ? allProjects.length - 1 : currentProjectIndex - 1;
+        }
+
+        const project = allProjects[newIndex];
+        setCurrentProjectIndex(newIndex);
+        setActiveProject(project);
+        setProjectStatus(project.status_display || "نشط");
+        setIsProjectHidden(project.is_hidden || false);
+        setEditFormData({
+            projectName: project.title || '',
+            projectType: project.category || 'أساسي',
+            projectDescription: project.desc || project.description || '',
+            targetAudience: project.target_audience || '',
+            beneficiaries: project.beneficiaries?.toString() || '',
+            donationAmount: project.donation_amount?.toString() || '',
+            startDate: project.start_date || '',
+            endDate: project.end_date || '',
+        });
+    };
+
+    const handleDeleteProject = async () => {
+        if (!activeProject) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/projects/${activeProject.id}/`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${access}` }
+            });
+
+            if (response.ok) {
+                // Remove from allProjects
+                const updatedProjects = allProjects.filter(p => p.id !== activeProject.id);
+                setAllProjects(updatedProjects);
+
+                // Navigate to next project or set null
+                if (updatedProjects.length > 0) {
+                    const newIndex = Math.min(currentProjectIndex, updatedProjects.length - 1);
+                    setCurrentProjectIndex(newIndex);
+                    setActiveProject(updatedProjects[newIndex]);
+                } else {
+                    setActiveProject(null);
+                }
+
+                setShowDeleteConfirm(false);
+                // Refresh project lists
+                fetchProjects();
+            }
+        } catch (error) {
+            console.error('Error deleting project:', error);
+        }
+    };
+
     const fetchActiveProject = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/my-active-project/`, {
+            const response = await fetch(`${API_BASE_URL}/api/my-active-project/`, {
                 headers: { 'Authorization': `Bearer ${access}` }
             });
             if (response.ok) {
@@ -1211,9 +1307,30 @@ export default function AdminMain() {
                 {/* Bottom Project Section */}
                 {activeProject ? (
                     <div className="bg-[#F3E3E3] rounded-[16px] sm:rounded-[18px] md:rounded-[20px] p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl border border-[#f0d8c2] w-full relative" dir="rtl">
+                        {/* Navigation Arrows */}
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                            <button
+                                onClick={() => navigateProject('next')}
+                                className="p-3 bg-white/80 hover:bg-white rounded-full shadow-lg transition-all hover:scale-110"
+                                aria-label="المشروع التالي"
+                            >
+                                <ChevronLeft className="w-6 h-6 text-[#6F1A28]" />
+                            </button>
+                        </div>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+                            <button
+                                onClick={() => navigateProject('prev')}
+                                className="p-3 bg-white/80 hover:bg-white rounded-full shadow-lg transition-all hover:scale-110"
+                                aria-label="المشروع السابق"
+                            >
+                                <ChevronLeft className="w-6 h-6 text-[#6F1A28] rotate-180" />
+                            </button>
+                        </div>
+
                         <div className="flex flex-col md:flex-row-reverse md:items-start justify-between gap-4 mb-4 sm:mb-8">
 
                             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                                {/* Edit Button */}
                                 <button
                                     onClick={() => setShowEditModal(true)}
                                     className="p-2 hover:bg-white/50 rounded-lg transition-colors"
@@ -1222,6 +1339,7 @@ export default function AdminMain() {
                                     <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                                 </button>
 
+                                {/* Visibility Toggle */}
                                 <div className="relative group">
                                     <button
                                         onClick={handleToggleProjectVisibility}
@@ -1240,9 +1358,29 @@ export default function AdminMain() {
                                         <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
                                     </div>
                                 </div>
+
+                                {/* Delete Button */}
+                                <div className="relative group">
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(true)}
+                                        className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                        aria-label="حذف المشروع"
+                                    >
+                                        <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
+                                    </button>
+
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-white text-gray-700 text-xs rounded-lg shadow-lg border border-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                        حذف المشروع
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="flex-1 text-center">
+                                {/* Project Counter */}
+                                <div className="text-sm text-gray-500 font-[Cairo] mb-2">
+                                    {currentProjectIndex + 1} / {allProjects.length}
+                                </div>
                                 <h2 className="text-[#6F1A28] font-bold text-[19px] sm:text-[20px] md:text-[22px] lg:text-[24px] font-[Cairo] mb-6">
                                     {activeProject.title}
                                 </h2>
@@ -1485,6 +1623,41 @@ export default function AdminMain() {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" dir="rtl">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <AlertTriangle className="w-8 h-8 text-red-500" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 font-[Cairo] mb-2">
+                                حذف المشروع
+                            </h3>
+                            <p className="text-gray-600 font-[Cairo] mb-6">
+                                هل أنت متأكد من حذف مشروع "{activeProject?.title}"؟
+                                <br />
+                                <span className="text-red-500 text-sm">هذا الإجراء لا يمكن التراجع عنه.</span>
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleDeleteProject}
+                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-colors font-[Cairo]"
+                                >
+                                    نعم، احذف
+                                </button>
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl transition-colors font-[Cairo]"
+                                >
+                                    إلغاء
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Statistics Edit Modal */}
             {showStatsModal && (
