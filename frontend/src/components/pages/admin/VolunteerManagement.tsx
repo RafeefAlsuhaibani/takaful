@@ -255,7 +255,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
     React.useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/projects/`, {
+                const response = await fetch(`${API_BASE_URL}/api/projects/`, {
                     headers: { 'Authorization': `Bearer ${access}` }
                 });
                 if (response.ok) {
@@ -285,7 +285,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/tasks/`, {
+            const response = await fetch(`${API_BASE_URL}/api/tasks/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${access}`,
@@ -334,7 +334,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/tasks/${taskId}/`, {
+            const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${access}`
@@ -422,7 +422,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
                 order: index
             }));
 
-            const response = await fetch(`${API_BASE_URL}/api/admin/tasks/${editingTask.id}/`, {
+            const response = await fetch(`${API_BASE_URL}/api/tasks/${editingTask.id}/`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${access}`,
@@ -462,7 +462,7 @@ const TasksVolunteersTabs: React.FC<TasksVolunteersTabsProps> = ({
         if (!assignVolunteer) return;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/tasks/${taskId}/assign/`, {
+            const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/assign/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${access}`,
@@ -1992,7 +1992,7 @@ useEffect(() => {
 
 const fetchStats = async () => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/volunteer-stats/`, {
+        const response = await fetch(`${API_BASE_URL}/api/volunteer-stats/`, {
             headers: { 'Authorization': `Bearer ${access}` }
         });
         if (response.ok) {
@@ -2006,7 +2006,7 @@ const fetchStats = async () => {
 
 const fetchVolunteers = async () => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/volunteers/`, {
+        const response = await fetch(`${API_BASE_URL}/api/volunteers/`, {
             headers: { 'Authorization': `Bearer ${access}` }
         });
         if (response.ok) {
@@ -2021,7 +2021,7 @@ const fetchVolunteers = async () => {
 const fetchTasks = async () => {
     setLoading(true);
     try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/tasks/`, {
+        const response = await fetch(`${API_BASE_URL}/api/tasks/`, {
             headers: { 'Authorization': `Bearer ${access}` }
         });
         if (response.ok) {
